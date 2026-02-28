@@ -15,6 +15,7 @@ HTMLWidgets.widget({
 
     return {
       renderValue: function(x) {
+        console.log(x);
         if (!inst || typeof inst.renderValue !== 'function') return;
         return inst.renderValue(x);
       },

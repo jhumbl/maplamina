@@ -28,7 +28,7 @@ maplamina <- function(
     .__layers = list(),
 
     # Stage 3 target fields
-    .__components = list(views = list(), range = list(), select = list()),
+    .__components = list(views = list(), range = list(), select = list(), legends = list(), summaries = list()),
     .__controls   = list(),
     .__panel      = NULL,
 

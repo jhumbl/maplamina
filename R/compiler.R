@@ -294,6 +294,104 @@
 }
 
 
+.ml_compiler_summary_group_add <- function(controls, bind, label, op, member_id, meta) {
+  if (is.null(bind) || !is.character(bind) || length(bind) != 1L || !nzchar(bind)) {
+    stop("Invalid summaries bind id while compiling controls.", call. = FALSE)
+  }
+  if (is.null(label) || !is.character(label) || length(label) != 1L || !nzchar(label)) {
+    stop("Invalid summaries label while compiling controls for bind '", bind, "'.", call. = FALSE)
+  }
+  if (is.null(op) || !is.character(op) || length(op) != 1L || !nzchar(op)) {
+    stop("Invalid summaries op while compiling controls for bind '", bind, "'.", call. = FALSE)
+  }
+
+  label <- as.character(label)
+  op    <- as.character(op)
+  meta  <- meta %||% list()
+
+  # Ensure the bind id is not reused across incompatible top-level control types
+  if (is.null(controls[[bind]])) {
+    controls[[bind]] <- list(type = "summaries", rows = list(), order = list())
+  } else {
+    if (!identical(controls[[bind]]$type, "summaries")) {
+      stop(
+        "Bind id '", bind, "' is reused across incompatible control types: existing '",
+        controls[[bind]]$type, "' vs new 'summaries'.",
+        call. = FALSE
+      )
+    }
+  }
+
+  grp  <- controls[[bind]]
+  rows <- grp$rows %||% list()
+
+  # Deterministic UI order (list-of-strings to preserve JSON arrays under auto_unbox=TRUE)
+  ord <- grp$order %||% list()
+  if (!is.list(ord)) ord <- as.list(as.character(ord))
+  present_ord <- unlist(ord, use.names = FALSE)
+  if (!label %in% present_ord) ord <- c(ord, list(label))
+  grp$order <- ord
+
+  cur <- rows[[label]]
+  created <- is.null(cur)
+
+  if (created) {
+    cur <- list(op = op, label = label, members = list())
+
+    if (!is.null(meta$digits)) cur$digits <- meta$digits
+    if (!is.null(meta$prefix)) cur$prefix <- meta$prefix
+    if (!is.null(meta$suffix)) cur$suffix <- meta$suffix
+    if (!identical(op, "count") && !is.null(meta$na_rm)) cur$na_rm <- isTRUE(meta$na_rm)
+
+  } else {
+    if (!identical(cur$op, op)) {
+      stop(
+        "Within bind group '", bind, "', summary label '", label,
+        "' is reused across incompatible summary ops: existing '", cur$op,
+        "' vs new '", op, "'.",
+        call. = FALSE
+      )
+    }
+
+    # Formatting fields: require consistency when explicitly set across layers
+    if (!is.null(cur$digits) && !is.null(meta$digits) && !identical(cur$digits, meta$digits)) {
+      stop("Summary '", label, "' under bind '", bind, "' has inconsistent `digits` across layers.", call. = FALSE)
+    }
+    if (is.null(cur$digits) && !is.null(meta$digits)) cur$digits <- meta$digits
+
+    if (!is.null(cur$prefix) && !is.null(meta$prefix) && !identical(cur$prefix, meta$prefix)) {
+      stop("Summary '", label, "' under bind '", bind, "' has inconsistent `prefix` across layers.", call. = FALSE)
+    }
+    if (is.null(cur$prefix) && !is.null(meta$prefix)) cur$prefix <- meta$prefix
+
+    if (!is.null(cur$suffix) && !is.null(meta$suffix) && !identical(cur$suffix, meta$suffix)) {
+      stop("Summary '", label, "' under bind '", bind, "' has inconsistent `suffix` across layers.", call. = FALSE)
+    }
+    if (is.null(cur$suffix) && !is.null(meta$suffix)) cur$suffix <- meta$suffix
+
+    if (!identical(op, "count")) {
+      if (!is.null(cur$na_rm) && !is.null(meta$na_rm) && !identical(isTRUE(cur$na_rm), isTRUE(meta$na_rm))) {
+        stop("Summary '", label, "' under bind '", bind, "' has inconsistent `na_rm` across layers.", call. = FALSE)
+      }
+      if (is.null(cur$na_rm) && !is.null(meta$na_rm)) cur$na_rm <- isTRUE(meta$na_rm)
+    }
+  }
+
+  # Add member id (preserve JSON arrays for length-1)
+  m <- cur$members %||% list()
+  if (!is.list(m)) m <- as.list(as.character(m))
+  mid <- as.character(member_id)
+  present <- unlist(m, use.names = FALSE)
+  if (!mid %in% present) m <- c(m, list(mid))
+  cur$members <- m
+
+  rows[[label]] <- cur
+  grp$rows <- rows
+  controls[[bind]] <- grp
+  controls
+}
+
+
 .ml_compiler_pack_numeric_encoding <- function(store, id_hint, e) {
   # normalize to either scalar value, or value={ref}
   if (!is.null(e$value_values)) {
@@ -729,6 +827,49 @@
   list(layer_id = layer_id, bind = bind, data = data, meta2 = meta2, store = store, nf = nf)
 }
 
+.ml_compiler_summary_common <- function(widget, layers, stores, cid, c) {
+  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
+  bind     <- c$bind  %||% c$bind_id  %||% cid
+
+  if (is.null(layer_id) || is.null(layers[[layer_id]])) {
+    stop("summaries component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
+  }
+
+  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  if (is.null(data)) {
+    stop("Missing data for layer '", layer_id, "' while compiling summaries component '", cid, "'.", call. = FALSE)
+  }
+
+  meta2 <- .ml_compiler_layer_meta2(widget, layers, layer_id, data)
+  n_row <- meta2$n_row
+  store <- stores[[layer_id]]
+
+  spec <- c$spec %||% c$summary %||% c$summaries %||% NULL
+  if (is.null(spec) && inherits(c, "ml_summary")) spec <- c
+  if (is.null(spec)) spec <- c$payload %||% NULL
+
+  sums_in <- NULL
+  if (inherits(spec, "ml_summary")) {
+    sums_in <- list(spec)
+  } else if (is.list(spec) && length(spec) && all(vapply(spec, inherits, logical(1), "ml_summary"))) {
+    sums_in <- spec
+  } else if (is.list(spec) && !is.null(spec$op) && !is.null(spec$column)) {
+    sums_in <- list(structure(spec, class = "ml_summary"))
+  }
+
+  if (is.null(sums_in)) {
+    stop("summaries component '", cid, "' has no valid summary spec.", call. = FALSE)
+  }
+
+  ns <- .ml_normalize_summaries(data, sums_in, n_row)
+  if (is.null(ns) || length(ns) != 1L) {
+    stop("summaries component '", cid, "' must contain exactly 1 summary element after normalization.", call. = FALSE)
+  }
+
+  list(layer_id = layer_id, bind = bind, data = data, meta2 = meta2, store = store, item = ns[[1L]])
+}
+
+
 .ml_compile_component_range <- function(widget, layers, stores, c, compiled, controls) {
   cid <- c$id %||% NULL
   if (is.null(cid) || !is.character(cid) || length(cid) != 1L || !nzchar(cid)) {
@@ -845,6 +986,79 @@
   list(compiled = compiled, controls = controls)
 }
 
+.ml_compile_component_summaries <- function(widget, layers, stores, c, compiled, controls) {
+  cid <- c$id %||% NULL
+  if (is.null(cid) || !is.character(cid) || length(cid) != 1L || !nzchar(cid)) {
+    stop("summaries component missing a valid `id`.", call. = FALSE)
+  }
+
+  common <- .ml_compiler_summary_common(widget, layers, stores, cid, c)
+  layer_id <- common$layer_id
+  bind     <- common$bind
+  position <- .ml_ui_validate_position(c$position %||% NULL)
+  store    <- common$store
+  item     <- common$item %||% list()
+
+  op    <- item$op %||% NULL
+  label <- item$label %||% NULL
+
+  if (is.null(op) || !is.character(op) || length(op) != 1L || !nzchar(op)) {
+    stop("summaries component '", cid, "' has invalid `op` after normalization.", call. = FALSE)
+  }
+  if (is.null(label) || !is.character(label) || length(label) != 1L || !nzchar(label)) {
+    stop("summaries component '", cid, "' has invalid `label` after normalization.", call. = FALSE)
+  }
+
+  values_ref <- NULL
+  if (!identical(op, "count")) {
+    if (is.null(item$values_values)) {
+      stop("summaries component '", cid, "' is missing numeric values for op '", op, "'.", call. = FALSE)
+    }
+    values_ref <- ml_store_ref_numeric(store, paste0("sm.", cid, ".values"), item$values_values)
+  }
+
+  rec <- list(
+    type     = "summaries",
+    id       = cid,
+    layer    = layer_id,
+    bind     = bind,
+    position = position,
+    label    = label,
+    op       = op
+  )
+
+  if (!is.null(item$digits)) rec$digits <- item$digits
+  if (!is.null(item$prefix)) rec$prefix <- item$prefix
+  if (!is.null(item$suffix)) rec$suffix <- item$suffix
+
+  if (!identical(op, "count")) {
+    rec$na_rm <- isTRUE(item$na_rm %||% TRUE)
+    rec$values <- values_ref
+    rec$values_ref_hint <- paste0("sm.", cid, ".values")
+  }
+
+  compiled$summaries[[cid]] <- rec
+
+  controls <- .ml_compiler_summary_group_add(
+    controls,
+    bind = bind,
+    label = label,
+    op = op,
+    member_id = cid,
+    meta = list(
+      digits = item$digits,
+      prefix = item$prefix,
+      suffix = item$suffix,
+      na_rm  = if (!identical(op, "count")) isTRUE(item$na_rm %||% TRUE) else NULL
+    )
+  )
+
+  controls <- .ml_compiler_controls_apply_position(controls, bind, position)
+
+  list(compiled = compiled, controls = controls)
+}
+
+
 .ml_compile_component_legends <- function(widget, layers, stores, c, compiled, controls) {
   cid <- c$id %||% NULL
   if (is.null(cid) || !is.character(cid) || length(cid) != 1L || !nzchar(cid)) {
@@ -895,7 +1109,7 @@
 
   raw <- .ml_compiler_flatten_components_raw(widget$x$.__components_raw)
 
-  compiled <- list(views = list(), range = list(), select = list(), legends = list())
+  compiled <- list(views = list(), range = list(), select = list(), legends = list(), summaries = list())
   controls <- list()
 
   if (!length(raw)) {

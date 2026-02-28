@@ -30,6 +30,7 @@
   comp_range  <- comps$range  %||% list()
   comp_select <- comps$select %||% list()
   comp_legends <- comps$legends %||% list()
+  comp_summaries <- comps$summaries %||% list()
 
   controls <- x$.__controls %||% list()
   if (!is.list(controls)) stop(".__controls must be a list.", call. = FALSE)
@@ -60,7 +61,7 @@
   for (bind in names(controls)) {
     ctl <- controls[[bind]]
 
-    if (is.null(ctl$type) || !ctl$type %in% c("views", "range", "select", "legends", "filters")) {
+    if (is.null(ctl$type) || !ctl$type %in% c("views", "range", "select", "legends", "filters", "summaries")) {
       stop("Control '", bind, "' has invalid type.", call. = FALSE)
     }
 
@@ -140,6 +141,75 @@
 
       next
     }
+
+
+# ---- summaries (group container) ----
+if (identical(ctl$type, "summaries")) {
+
+  rows <- ctl$rows %||% list()
+  if (!is.list(rows) || !length(rows)) {
+    stop("Summaries group '", bind, "' has no rows.", call. = FALSE)
+  }
+
+  lbls <- names(rows)
+  if (is.null(lbls) || !length(lbls) || any(!nzchar(lbls))) {
+    stop("Summaries group '", bind, "' rows must be a named list keyed by label.", call. = FALSE)
+  }
+
+  # deterministic UI order: must exist and match row labels
+  ord <- ctl$order %||% NULL
+  if (is.null(ord) || !length(ord)) {
+    stop("Summaries group '", bind, "' is missing `order`.", call. = FALSE)
+  }
+  ord_vec <- if (is.list(ord)) unlist(ord, use.names = FALSE) else as.character(ord)
+  if (!is.character(ord_vec) || any(!nzchar(ord_vec))) {
+    stop("Summaries group '", bind, "' has invalid `order`.", call. = FALSE)
+  }
+  if (anyDuplicated(ord_vec)) {
+    stop("Summaries group '", bind, "' has duplicate entries in `order`.", call. = FALSE)
+  }
+  if (!setequal(ord_vec, lbls)) {
+    stop("Summaries group '", bind, "' `order` must contain exactly the row labels.", call. = FALSE)
+  }
+
+  for (i in seq_along(rows)) {
+    lbl <- lbls[[i]]
+    row <- rows[[i]] %||% list()
+
+    op <- row$op %||% NULL
+    if (is.null(op) || !is.character(op) || length(op) != 1L || !nzchar(op)) {
+      stop("Summaries group '", bind, "' row '", lbl, "' has invalid `op`.", call. = FALSE)
+    }
+
+    smembers <- row$members %||% NULL
+    if (is.null(smembers) || !length(smembers)) {
+      stop("Summaries group '", bind, "' row '", lbl, "' has no members.", call. = FALSE)
+    }
+    mids <- if (is.list(smembers)) unlist(smembers, use.names = FALSE) else smembers
+    if (!is.character(mids) || !length(mids)) {
+      stop("Summary row members must be component id strings.", call. = FALSE)
+    }
+
+    for (mid in mids) {
+      if (!is.character(mid) || length(mid) != 1L || !nzchar(mid)) {
+        stop("Summary row members must be component id strings.", call. = FALSE)
+      }
+
+      c <- comp_summaries[[mid]]
+      if (is.null(c)) stop("Summaries group '", bind, "' references missing summaries component '", mid, "'.", call. = FALSE)
+      if (!identical(c$bind, bind)) stop("Summaries component '", mid, "' bind mismatch.", call. = FALSE)
+      if (!is.null(c$label) && !identical(c$label, lbl)) stop("Summaries component '", mid, "' label mismatch.", call. = FALSE)
+      if (!is.null(c$op) && !identical(c$op, op)) stop("Summaries component '", mid, "' op mismatch.", call. = FALSE)
+
+      # values ref required for non-count
+      if (!is.null(c$values)) {
+        check_ref_in_layer(c$layer, c$values)
+      }
+    }
+  }
+
+  next
+}
 
     # ---- non-group controls (views/range/select/legends) ----
     members <- ctl$members %||% list()

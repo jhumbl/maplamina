@@ -33,5 +33,6 @@
   .ml_register_component_type("range",  .ml_compile_component_range)
   .ml_register_component_type("select", .ml_compile_component_select)
   .ml_register_component_type("legends", .ml_compile_component_legends)
+  .ml_register_component_type("summaries", .ml_compile_component_summaries)
   invisible(TRUE)
 }
