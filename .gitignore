@@ -1,0 +1,23 @@
+.Rproj.user
+.Rhistory
+.RData
+.httr-oauth
+.DS_Store
+.quarto
+
+# R package build outputs
+.Rcheck/
+man/*.html
+vignettes/*.html
+inst/doc/
+
+# Renviron / secrets
+.Renviron
+.env
+.env.*
+
+# JS / node
+node_modules/
+dist/
+build/
+*.map

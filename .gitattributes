@@ -1,0 +1,19 @@
+* text=auto
+
+# Keep LF for source files (cross-platform sanity)
+*.R     text eol=lf
+*.js    text eol=lf
+*.css   text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+DESCRIPTION text eol=lf
+NAMESPACE    text eol=lf
+
+# Rd docs should be LF
+*.Rd    text eol=lf
+
+# Treat assets as binary to avoid line-ending churn
+*.svg   -text
+*.min.js  -text
+*.min.css -text
