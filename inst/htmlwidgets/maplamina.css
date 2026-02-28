@@ -362,6 +362,36 @@ html, body {
   position: static !important;
 }
 
+/* Summaries (v3 controls) */
+.ml-summaries {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.ml-summary-row {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.ml-summary-label {
+  font-size: 13px !important;
+  color: #374151 !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.ml-summary-value {
+  font-size: 13px !important;
+  color: #111827 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 500 !important;
+  flex: 0 0 auto !important;
+  text-align: right !important;
+}
+
 /* Radio buttons */
 .ml-panel-views form {
   margin: 0 !important;
@@ -1017,3 +1047,57 @@ html, body {
 }
 .ml-popup p { margin: 6px 0; }
 .ml-popup a { color: #1f2937; text-decoration: underline; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ml-summaries {
+  /* no border/card */
+  padding: 4px 0;
+
+  /* rule above and below the whole block */
+  border-top: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.ml-summary-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 12px;
+  align-items: baseline;
+
+  padding: 6px 0;
+
+  /* rule above each row */
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+/* optional: make the first row not “double-lined” against the container top */
+.ml-summary-row:first-child {
+  border-top: none;
+}
+
+.ml-summary-label {
+  opacity: 0.75;
+  font-size: 12px;
+}
+
+.ml-summary-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}

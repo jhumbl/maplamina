@@ -220,8 +220,15 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // Prefer registry dispatch by control type.
     const reg = root.controls && root.controls.registry;
-    let renderer = null;
-    if (type && reg && typeof reg.get === 'function') renderer = reg.get(type);
+    let handler = null;
+    if (type && reg) {
+      if (typeof reg.getHandler === 'function') handler = reg.getHandler(type);
+      else if (typeof reg.get === 'function') {
+        const fn = reg.get(type);
+        if (typeof fn === 'function') handler = { render: fn, update: null };
+      }
+    }
+    let renderer = (handler && typeof handler.render === 'function') ? handler.render : null;
 
     // Fallback: allow direct module dispatch if registry is not yet initialized (load-order safety).
     if (!renderer && type) {
@@ -234,6 +241,53 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     }
 
     renderPlaceholder(mountEl, groupId, controlSpec);
+  }
+
+  // Stage 2: update hook for mounted control groups (no re-mount).
+  // Called by runtime pipeline when job.controls is set.
+  function update(el, x, rt, job) {
+    if (!el) return;
+
+    const mounted = (el.__mlMountedControls && typeof el.__mlMountedControls === 'object')
+      ? el.__mlMountedControls
+      : null;
+
+    if (!mounted) return;
+
+    const reg = root.controls && root.controls.registry;
+
+    for (const gid of Object.keys(mounted)) {
+      const rec = mounted[gid];
+      if (!rec || !rec.mountEl) continue;
+      const controlSpec = rec.controlSpec;
+      const type = controlSpec && controlSpec.type ? normText(controlSpec.type) : '';
+      if (!type) continue;
+
+      let handler = null;
+      if (reg) {
+        if (typeof reg.getHandler === 'function') handler = reg.getHandler(type);
+        else if (typeof reg.get === 'function') {
+          const fn = reg.get(type);
+          if (typeof fn === 'function') handler = { render: fn, update: null };
+        }
+      }
+
+      let updater = (handler && typeof handler.update === 'function') ? handler.update : null;
+
+      // Fallback: allow direct module dispatch if registry isn't initialized.
+      if (!updater) {
+        const api = root.controls && root.controls[type];
+        if (api && typeof api.update === 'function') updater = api.update;
+      }
+
+      if (typeof updater === 'function') {
+        try {
+          updater(rec.mountEl, el, x, rt, gid, controlSpec, job);
+        } catch (e) {
+          try { console.error(e); } catch (_) {}
+        }
+      }
+    }
   }
 
 
@@ -264,7 +318,13 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
   function sync(el, x) {
     const hostApi = root.controls && root.controls.host;
-    if (!hostApi) return;
+    if (!hostApi) {
+      try { el.__mlMountedControls = {}; } catch (_) {}
+      return;
+    }
+
+    // Rebuild the mounted-groups index on each sync.
+    const mountedNow = {};
 
     const specControls = root.spec && root.spec.controls;
     if (!specControls || typeof specControls.getControlGroups !== 'function') {
@@ -328,6 +388,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
           applyBodyClasses(body, gid, controls[gid]);
 
           renderGroup(body, el, x, gid, controls[gid]);
+
+          mountedNow[gid] = { mountEl: body, controlSpec: controls[gid] };
         }
 
         // Remove any slots not referenced anymore
@@ -405,6 +467,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
         applyBodyClasses(body, gid, controls[gid]);
 
         renderGroup(body, el, x, gid, controls[gid]);
+
+        mountedNow[gid] = { mountEl: body, controlSpec: controls[gid] };
       }
     }
 
@@ -420,6 +484,9 @@ function ensureTitleIconLink(panelEl, panelSpec) {
         }
       });
     } catch (_) {}
+
+    // Expose mounted groups for update() calls.
+    try { el.__mlMountedControls = mountedNow; } catch (_) {}
   }
 
   function clear(el) {
@@ -447,6 +514,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // Also remove any legacy per-layer UI
     try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
+
+    try { el.__mlMountedControls = {}; } catch (_) {}
   }
 
   function removeLegacyLayerUI(el) {
@@ -464,6 +533,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
   // v3 API: mounting only.
   root.controls.panel = {
     sync,
+    update,
     clear,
     removeLegacyLayerUI
   };

@@ -120,6 +120,18 @@ filter_range <- function(col, label = NULL, default = NULL, min = NULL, max = NU
         }
       }
 
+      # Warn once per filter element if NA/NaN are present.
+      # These values can never fall within a numeric [min, max] range and therefore will
+      # be excluded by the filter in the UI.
+      if (anyNA(vals)) {
+        lid <- f$.__layer_id %||% "<unknown>"
+        lab <- f$label %||% rhs_label(f$column)
+        warning(
+          "[maplamina][", lid, "] Range filter '", lab, "' contains NA/NaN; these rows will be excluded.",
+          call. = FALSE
+        )
+      }
+
       rngs[[length(rngs) + 1L]] <- list(
         type = "range",
         id   = f$id,
@@ -244,6 +256,10 @@ next_id <- function(prefix) {
   # Cross-layer binding happens later in the compiler by matching `label` within the group.
   for (i in seq_along(filters)) {
     f <- filters[[i]]
+
+    # Attach target layer id for downstream diagnostics (e.g., NA warnings).
+    # This field is ignored by JS and does not affect compilation semantics.
+    f$.__layer_id <- target
 
     # Ensure each filter element has a deterministic, unique component id
     if (is.null(f$id) || !is.character(f$id) || length(f$id) != 1L || !nzchar(f$id)) {

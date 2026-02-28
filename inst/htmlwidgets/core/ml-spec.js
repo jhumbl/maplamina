@@ -181,7 +181,7 @@
 
     // Validate known component buckets (if present). In v3, component buckets are plain objects keyed by component id.
     // Note: R may emit unused buckets as NULL (→ null) or omit them entirely; both are valid.
-    const knownBuckets = ['views', 'legends', 'select', 'range'];
+    const knownBuckets = ['views', 'legends', 'select', 'range', 'summaries'];
     for (const k of knownBuckets) {
       if (Object.prototype.hasOwnProperty.call(comps, k)) {
         const b = comps[k];

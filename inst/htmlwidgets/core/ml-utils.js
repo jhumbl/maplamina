@@ -72,5 +72,38 @@
     return arr;
   }
 
-  root.utils = { isTA, pushWarn, assertTA, now, asArray, normText, safeId, hash32, domKey, stablePairTA };
+  // ---- lightweight number formatting --------------------------------------
+  // Cache Intl.NumberFormat instances by digits for cheap repeated formatting.
+  const __NF_CACHE = new Map();
+
+  function numberFormatter(digits) {
+    const d = (Number.isFinite(digits) ? (digits | 0) : 0);
+    const key = Math.max(0, Math.min(12, d));
+    let nf = __NF_CACHE.get(key);
+    if (!nf) {
+      try {
+        nf = new Intl.NumberFormat(undefined, {
+          minimumFractionDigits: key,
+          maximumFractionDigits: key
+        });
+      } catch (_) {
+        nf = null;
+      }
+      __NF_CACHE.set(key, nf);
+    }
+    return nf;
+  }
+
+  function formatNumber(value, digits) {
+    if (!Number.isFinite(value)) return '';
+    const d = (Number.isFinite(digits) ? (digits | 0) : 0);
+    const key = Math.max(0, Math.min(12, d));
+    const nf = numberFormatter(key);
+    if (nf && typeof nf.format === 'function') {
+      try { return nf.format(value); } catch (_) {}
+    }
+    try { return Number(value).toFixed(key); } catch (_) { return String(value); }
+  }
+
+  root.utils = { isTA, pushWarn, assertTA, now, asArray, normText, safeId, hash32, domKey, stablePairTA, formatNumber };
 })(window);

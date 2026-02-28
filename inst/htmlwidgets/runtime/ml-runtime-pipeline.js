@@ -64,13 +64,14 @@
         // Dominance: rehydrate > layers
         for (const lid of dirtyRehydrate) { dirtyLayers.delete(lid); }
         const doLegends = !!(job && job.legends);
+        const doControls = !!(job && job.controls);
         const allowViewsMotion = !!(job && (job.allowMotionViews || normText(job.reason) === 'views'));
         // Stage 2: only 'views' updates may arm/retain motion transitions.
         // Any other update path (filters, clearTransitions, resize/spec rebuilds, etc.)
         // must rebuild with transitions disabled to avoid accidental animations.
         if (dirtyLayers.size) disableRuntimeTransitions(this, Array.from(dirtyLayers));
         if (!allowViewsMotion && dirtyRehydrate.size) disableRuntimeTransitions(this, Array.from(dirtyRehydrate));
-        if (!dirtyRehydrate.size && !dirtyLayers.size && !doLegends) return;
+        if (!dirtyRehydrate.size && !dirtyLayers.size && !doLegends && !doControls) return;
         const replacements = new Map();
 
         // --- Rehydrate layers (views/spec-driven) ---
@@ -180,7 +181,16 @@ try {
 if (doLegends) {
           try { root.legends && typeof root.legends.applyVisibility === 'function' && root.legends.applyVisibility(el, x); } catch (_) {}
         }
-        // Future: job.controls/job.tooltip hooks can be handled here without adding new schedulers.
+
+        // Stage 2: control updates (e.g. summaries) can run without re-mounting.
+        if (doControls) {
+          try {
+            root.controls && root.controls.panel && typeof root.controls.panel.update === 'function'
+              && root.controls.panel.update(el, x, this, job);
+          } catch (_) {}
+        }
+
+        // Future: job.tooltip hooks can be handled here without adding new schedulers.
     };
   }
 

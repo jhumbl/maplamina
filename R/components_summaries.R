@@ -3,39 +3,39 @@
 # MVP scope:
 # - summary_*() constructors create declarative summary specs.
 # - add_summaries() registers one component per summary row into map$x$.__components_raw.
-# - No compilation happens here; values are evaluated during prerender compilation.
+# - Values are evaluated during prerender compilation.
 
-#' Summary: count rows (optionally count non-missing values)
+
+#' Summary: count rows
 #'
-#' With no `col`, this counts rows (fast path; no column evaluation).
-#' If `col` is provided, the column is validated to exist. When `na_rm = TRUE`,
-#' the summary counts non-missing values in that column.
+#' `summary_count()` counts the number of filtered rows. A column can be supplied
+#' purely to validate that it exists (typo checking); it does not affect the count
+#' in the MVP.
 #'
-#' @param col Optional formula like `~id`. If omitted, counts rows.
+#' @param col Optional formula like `~id` (validated if provided). If omitted, counts rows.
 #' @param label Display label for the summary row.
-#' @param na_rm If `TRUE` and `col` is provided, count non-missing values (non-NA).
 #' @param digits Optional number of digits for formatting (applied in JS).
 #' @param prefix Optional prefix string (applied in JS).
 #' @param suffix Optional suffix string (applied in JS).
 #' @param id Optional component id (otherwise generated deterministically per widget).
 #' @export
-summary_count <- function(col = NULL, label = NULL, na_rm = FALSE, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
+summary_count <- function(col = NULL, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
   if (!is.null(col) && !ml_is_formulaish(col)) {
-    stop("summary_count(): `col` must be NULL or a formula like ~id.", call. = FALSE)
+    stop("summary_count(): `col` must be a formula like ~id (or omitted).", call. = FALSE)
   }
 
-  op <- if (!is.null(col) && isTRUE(na_rm)) "count_non_na" else "count"
-
   structure(list(
-    op = op,
+    op = "count",
     id = id,
     column = col,
     label = label,
-    na_rm = isTRUE(na_rm),
+    # keep plumbing fields for consistency (JS formatting)
     digits = digits,
     prefix = prefix,
-    suffix = suffix
+    suffix = suffix,
+    # keep na_rm plumbing (always TRUE in MVP)
+    na_rm = TRUE
   ), class = "ml_summary")
 }
 
@@ -43,13 +43,12 @@ summary_count <- function(col = NULL, label = NULL, na_rm = FALSE, digits = NULL
 #'
 #' @param col A formula like `~income`.
 #' @param label Display label for the summary row.
-#' @param na_rm Whether to remove missing values.
 #' @param digits Optional number of digits for formatting (applied in JS).
 #' @param prefix Optional prefix string (applied in JS).
 #' @param suffix Optional suffix string (applied in JS).
 #' @param id Optional component id (otherwise generated deterministically per widget).
 #' @export
-summary_max <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
+summary_max <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
   if (missing(col) || is.null(col) || !ml_is_formulaish(col)) {
     stop("summary_max(): `col` must be a formula like ~income.", call. = FALSE)
@@ -60,64 +59,7 @@ summary_max <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix =
     id = id,
     column = col,
     label = label,
-    na_rm = isTRUE(na_rm),
-    digits = digits,
-    prefix = prefix,
-    suffix = suffix
-  ), class = "ml_summary")
-}
-
-#' Summary: mean value
-#'
-#' @param col A formula like `~population_density`.
-#' @param label Display label for the summary row.
-#' @param na_rm Whether to remove missing values.
-#' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
-#' @export
-summary_mean <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
-
-  if (missing(col) || is.null(col) || !ml_is_formulaish(col)) {
-    stop("summary_mean(): `col` must be a formula like ~x.", call. = FALSE)
-  }
-
-  structure(list(
-    op = "mean",
-    id = id,
-    column = col,
-    label = label,
-    na_rm = isTRUE(na_rm),
-    digits = digits,
-    prefix = prefix,
-    suffix = suffix
-  ), class = "ml_summary")
-}
-
-
-#' Summary: sum of values
-#'
-#' @param col A formula like `~income`.
-#' @param label Display label for the summary row.
-#' @param na_rm Whether to remove missing values.
-#' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
-#' @export
-summary_sum <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
-
-  if (missing(col) || is.null(col) || !ml_is_formulaish(col)) {
-    stop("summary_sum(): `col` must be a formula like ~x.", call. = FALSE)
-  }
-
-  structure(list(
-    op = "sum",
-    id = id,
-    column = col,
-    label = label,
-    na_rm = isTRUE(na_rm),
+    na_rm = TRUE,
     digits = digits,
     prefix = prefix,
     suffix = suffix
@@ -128,13 +70,12 @@ summary_sum <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix =
 #'
 #' @param col A formula like `~income`.
 #' @param label Display label for the summary row.
-#' @param na_rm Whether to remove missing values.
 #' @param digits Optional number of digits for formatting (applied in JS).
 #' @param prefix Optional prefix string (applied in JS).
 #' @param suffix Optional suffix string (applied in JS).
 #' @param id Optional component id (otherwise generated deterministically per widget).
 #' @export
-summary_min <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
+summary_min <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
   if (missing(col) || is.null(col) || !ml_is_formulaish(col)) {
     stop("summary_min(): `col` must be a formula like ~x.", call. = FALSE)
@@ -145,20 +86,73 @@ summary_min <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix =
     id = id,
     column = col,
     label = label,
-    na_rm = isTRUE(na_rm),
+    na_rm = TRUE,
     digits = digits,
     prefix = prefix,
     suffix = suffix
   ), class = "ml_summary")
 }
 
+#' Summary: sum of values
+#'
+#' @param col A formula like `~income`.
+#' @param label Display label for the summary row.
+#' @param digits Optional number of digits for formatting (applied in JS).
+#' @param prefix Optional prefix string (applied in JS).
+#' @param suffix Optional suffix string (applied in JS).
+#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @export
+summary_sum <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
+
+  if (missing(col) || is.null(col) || !ml_is_formulaish(col)) {
+    stop("summary_sum(): `col` must be a formula like ~x.", call. = FALSE)
+  }
+
+  structure(list(
+    op = "sum",
+    id = id,
+    column = col,
+    label = label,
+    na_rm = TRUE,
+    digits = digits,
+    prefix = prefix,
+    suffix = suffix
+  ), class = "ml_summary")
+}
+
+#' Summary: mean value
+#'
+#' @param col A formula like `~population_density`.
+#' @param label Display label for the summary row.
+#' @param digits Optional number of digits for formatting (applied in JS).
+#' @param prefix Optional prefix string (applied in JS).
+#' @param suffix Optional suffix string (applied in JS).
+#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @export
+summary_mean <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
+
+  if (missing(col) || is.null(col) || !ml_is_formulaish(col)) {
+    stop("summary_mean(): `col` must be a formula like ~x.", call. = FALSE)
+  }
+
+  structure(list(
+    op = "mean",
+    id = id,
+    column = col,
+    label = label,
+    na_rm = TRUE,
+    digits = digits,
+    prefix = prefix,
+    suffix = suffix
+  ), class = "ml_summary")
+}
 
 # ---- Internal: normalize summary specs to the transport spec ----
 #
 # Returns a list of normalized summary items suitable for compilation.
 # Each item is a plain list with:
-# - op, id, label, digits/prefix/suffix, na_rm (where relevant)
-# - for non-count ops: values_values (numeric vector length n)
+# - op, id, label, digits/prefix/suffix, na_rm (always TRUE in MVP)
+# - for numeric ops: values_values (numeric vector length n)
 .ml_normalize_summaries <- function(data, summaries, n) {
   if (is.null(summaries)) return(NULL)
 
@@ -173,34 +167,55 @@ summary_min <- function(col, label = NULL, na_rm = TRUE, digits = NULL, prefix =
   rhs_label <- function(expr) deparse1(rhs_expr(expr))
 
   out <- list()
+  allowed_ops <- c("count", "min", "max", "sum", "mean", "count_non_na")
 
   for (s in summaries) {
     if (is.null(s$op)) next
 
     op <- as.character(s$op)
+    if (!op %in% allowed_ops) {
+      stop("Unknown summary op '", op, "'.", call. = FALSE)
+    }
 
     # Determine label default
-lbl <- s$label %||% if (op %in% c("count", "count_non_na")) "Count" else rhs_label(s$column)
+    lbl <- s$label %||% if (identical(op, "count")) "Count" else rhs_label(s$column)
 
-item <- list(
-  op = op,
-  id = s$id,
-  label = lbl,
-  digits = s$digits,
-  prefix = s$prefix,
-  suffix = s$suffix
-)
+    item <- list(
+      op = op,
+      id = s$id,
+      label = lbl,
+      digits = s$digits,
+      prefix = s$prefix,
+      suffix = s$suffix,
+      na_rm = TRUE
+    )
 
-if (op %in% c("count", "count_non_na")) {
+    if (identical(op, "count")) {
+      # If a column is provided, evaluate once for validation/typo catching only.
+      if (!is.null(s$column)) {
+        vals <- ml_eval(data, s$column)
 
-  # Fast path: row count requires no column evaluation.
-  if (is.null(s$column)) {
-    item$na_rm <- isTRUE(s$na_rm %||% FALSE)
+        if (!is.null(n) && !is.na(n)) {
+          if (length(vals) == 1L && n > 1L) vals <- rep(vals, n)
+          if (length(vals) != n) {
+            stop(
+              "summary_count(): evaluated column '", rhs_label(s$column),
+              "' returned length ", length(vals), "; expected 1 or ", n, ".",
+              call. = FALSE
+            )
+          }
+        }
+      }
+      out[[length(out) + 1L]] <- item
+      next
+    }
 
-  } else {
-    # If a column is provided, always evaluate it at least once to validate
-    # that it exists (so typos fail early).
+    # Numeric ops (including count_non_na mask)
     vals <- ml_eval(data, s$column)
+
+    if (!is.numeric(vals)) {
+      stop("summary_", op, "(): column must evaluate to numeric.", call. = FALSE)
+    }
 
     # Normalize / validate length (feature-grain)
     if (!is.null(n) && !is.na(n)) {
@@ -214,51 +229,18 @@ if (op %in% c("count", "count_non_na")) {
       }
     }
 
-    # When na_rm = TRUE (op == count_non_na), store a non-missing mask so the
-    # runtime can compute a non-NA count under the active filter mask.
-    if (identical(op, "count_non_na")) {
-      item$values_values <- as.numeric(!is.na(vals))
-      item$na_rm <- TRUE
-    } else {
-      item$na_rm <- isTRUE(s$na_rm %||% FALSE)
-    }
-  }
-
-} else {
-  vals <- ml_eval(data, s$column)
-
-  if (!is.numeric(vals)) {
-    stop("summary_", op, "(): column must evaluate to numeric.", call. = FALSE)
-  }
-
-  # Normalize / validate length (feature-grain)
-  if (!is.null(n) && !is.na(n)) {
-    if (length(vals) == 1L && n > 1L) vals <- rep(vals, n)
-    if (length(vals) != n) {
-      stop(
-        "summary_", op, "(): evaluated column '", rhs_label(s$column),
-        "' returned length ", length(vals), "; expected 1 or ", n, ".",
-        call. = FALSE
-      )
-    }
-  }
-
-  item$values_values <- as.numeric(vals)
-  item$na_rm <- isTRUE(s$na_rm %||% TRUE)
-}
-
-out[[length(out) + 1L]] <- item
+    item$values_values <- as.numeric(vals)
+    out[[length(out) + 1L]] <- item
   }
 
   out
 }
 
-# add_summaries(): register per-layer summary components (no layer mutation)
+# add_summaries(): register per-layer summary components
 #'
 #' Add one or more summary rows that can be bound into a shared summaries card.
 #'
 #' @param map A maplamina widget.
-#' @param ... One or more `summary_*()` objects (or a list of them).
 #' @param id Optional id used as a shorthand bind id when `bind` is omitted.
 #' @param bind Bind group id. Controls merge across layers by (bind, label, op).
 #' @param position Optional UI position hint (applied to the control group).

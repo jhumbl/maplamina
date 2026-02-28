@@ -173,6 +173,9 @@
     // Mount controls from .__controls and optional .__panel
     try { root.controls && root.controls.panel && typeof root.controls.panel.sync === 'function' && root.controls.panel.sync(el, x); } catch (_) {}
 
+    // Stage 2: give reactive controls a chance to compute initial values (no re-mount).
+    try { root.controls && root.controls.panel && typeof root.controls.panel.update === 'function' && root.controls.panel.update(el, x, rt, { reason: 'initial' }); } catch (_) {}
+
     // HUD summary + GPU filters meta
     try {
       const t1 = core.now();

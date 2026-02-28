@@ -225,7 +225,7 @@ function pickActiveViews(rt, x) {
         : Array.from(this.layers.keys());
 
       disableRuntimeTransitions(this, affected);
-      if (typeof this.schedule === 'function') this.schedule({ layers: affected, reason: 'filters' });
+      if (typeof this.schedule === 'function') this.schedule({ layers: affected, controls: true, reason: 'filters' });
     };
 
     rt.clearFilters = function (groupId) {
@@ -246,7 +246,7 @@ function pickActiveViews(rt, x) {
         const idx = this._filterIndex;
         const allIds = (idx && idx.byLayer) ? Array.from(idx.byLayer.keys()) : Array.from(this.layers.keys());
         disableRuntimeTransitions(this, allIds);
-        if (typeof this.schedule === 'function') this.schedule({ layers: allIds, reason: 'filters-clear' });
+        if (typeof this.schedule === 'function') this.schedule({ layers: allIds, controls: true, reason: 'filters-clear' });
         return;
       }
 
@@ -259,7 +259,7 @@ function pickActiveViews(rt, x) {
         : Array.from(this.layers.keys());
 
       disableRuntimeTransitions(this, affected);
-      if (typeof this.schedule === 'function') this.schedule({ layers: affected, reason: 'filters-clear' });
+      if (typeof this.schedule === 'function') this.schedule({ layers: affected, controls: true, reason: 'filters-clear' });
     };
   }
 
