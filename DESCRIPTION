@@ -1,6 +1,6 @@
 Package: maplamina
 Title: High-Performance WebGL Mapping Widgets for R
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Jack", "Humble", email = "maplamina.r@gmail.com", role = c("aut", "cre"))
 Description: Creates interactive maps using MapLibre GL and deck.gl via 'htmlwidgets'.
