@@ -161,6 +161,11 @@ const destroyHud = core.requireFn('hud', 'destroy', 'ml-runtime-widget.js');
         try { MAPLAMINA?.controls?.panel?.removeLegacyLayerUI?.(el); } catch (_) {}
 
 lastSpec = x;
+// HUD: opt-in only (default OFF)
+const showHud = x?.map_options?.hud === true;
+if (!showHud) {
+  try { destroyHud(el); } catch (_) {}
+}
 // v3 normalization: some specs (e.g. legend-only) may omit empty buckets.
 // If the input is already in v3 namespace (has any ".__" keys), coerce
 // missing buckets to empty objects so v3 assertions and downstream code work.
@@ -254,7 +259,7 @@ overlay = ensureOverlay({ el, map, overlay });
           mergeEncodings,
           stripLegacyFields,
           primeRuntimeTransitions,
-          ensureHudParts
+          ensureHudParts: showHud ? ensureHudParts : null
         });
         if (out && Array.isArray(out.currentLayers)) currentLayers = out.currentLayers;
 
