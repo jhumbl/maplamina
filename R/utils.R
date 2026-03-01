@@ -152,7 +152,7 @@ ml_gen_id <- local({
   }
 
   if (is.null(layer_id)) {
-    return(tail(ids, 1L))
+    return(utils::tail(ids, 1L))
   }
 
   if (!is.character(layer_id) || length(layer_id) != 1L) {

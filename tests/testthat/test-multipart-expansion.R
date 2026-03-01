@@ -1,3 +1,5 @@
+testthat::skip_if_not_installed("jsonlite")
+
 ml_decode_f32_blob <- function(layer, semantic_ref) {
   skip_if_not_installed("jsonlite")
 

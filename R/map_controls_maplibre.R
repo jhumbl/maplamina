@@ -99,7 +99,22 @@
   dots
 }
 
-
+#' Add MapLibre navigation controls
+#'
+#' Adds zoom buttons and/or compass control.
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param position Control position: `"topleft"`, `"topright"`, `"bottomleft"`, `"bottomright"`.
+#' @param compass Logical; show compass control.
+#' @param zoom_controls Logical; show zoom buttons.
+#' @param ... Named options passed through to the underlying MapLibre control.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' maplamina() |>
+#'   add_navigation(position = "topright", compass = FALSE)
 add_navigation <- function(
     map,
     position = "topright",
@@ -135,6 +150,21 @@ add_navigation <- function(
     options = options
   )
 }
+
+#' Add MapLibre scale bar
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param position Control position: `"topleft"`, `"topright"`, `"bottomleft"`, `"bottomright"`.
+#' @param unit Units for the scale bar.
+#' @param max_width Maximum scale bar width (pixels).
+#' @param ... Named options passed through to the underlying MapLibre control.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' maplamina() |>
+#'   add_scalebar(unit = "metric")
 add_scalebar <- function(
     map,
     position = "bottomleft",
@@ -163,6 +193,18 @@ add_scalebar <- function(
   )
 }
 
+#' Add MapLibre fullscreen control
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param position Control position: `"topleft"`, `"topright"`, `"bottomleft"`, `"bottomright"`.
+#' @param ... Named options passed through to the underlying MapLibre control.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' maplamina() |>
+#'   add_fullscreen()
 add_fullscreen <- function(
     map,
     position = "topright",
@@ -179,6 +221,19 @@ add_fullscreen <- function(
   )
 }
 
+#' Add MapLibre geolocate control
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param position Control position: `"topleft"`, `"topright"`, `"bottomleft"`, `"bottomright"`.
+#' @param track_user_location Logical; keep tracking after initial locate.
+#' @param ... Named options passed through to the underlying MapLibre control.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' maplamina() |>
+#'   add_geolocate()
 add_geolocate <- function(
     map,
     position = "topright",

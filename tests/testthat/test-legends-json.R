@@ -1,3 +1,5 @@
+testthat::skip_if_not_installed("jsonlite")
+
 testthat::test_that("legend when.view remains an array in JSON even length-1", {
   testthat::skip_if_not(
     requireNamespace("jsonlite", quietly = TRUE),

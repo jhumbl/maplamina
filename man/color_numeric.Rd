@@ -2,7 +2,7 @@
 % Please edit documentation in R/colors.R
 \name{color_numeric}
 \alias{color_numeric}
-\title{Continuous color scale specification (resolved during compilation).}
+\title{Continuous color scale specification}
 \usage{
 color_numeric(
   expr,
@@ -14,6 +14,32 @@ color_numeric(
   clamp = TRUE
 )
 }
+\arguments{
+\item{expr}{A formula selecting a numeric column (e.g. \code{~value}).}
+
+\item{palette}{\code{NULL}, a palette name (passed to \code{grDevices::hcl.colors()}), or a vector of colors.}
+
+\item{domain}{Optional numeric range \code{c(min, max)}; defaults to data range.}
+
+\item{steps}{Number of palette steps for interpolation.}
+
+\item{na_color}{Color used for missing values.}
+
+\item{reverse}{Logical; reverse the palette.}
+
+\item{clamp}{Logical; if \code{TRUE}, clamp values outside \code{domain} to the ends.}
+}
+\value{
+A color scale specification object.
+}
 \description{
-Continuous color scale specification (resolved during compilation).
+Creates a numeric color scale spec that is resolved during widget compilation.
+Use in \code{color}/\code{fill_color} aesthetics (e.g. \code{fill_color = color_numeric(~x)}).
+}
+\examples{
+if (requireNamespace("sf", quietly = TRUE)) {
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  maplamina(nc) |>
+    add_polygons(fill_color = color_numeric(~BIR74))
+}
 }

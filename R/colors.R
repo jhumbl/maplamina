@@ -392,10 +392,28 @@ ml_prepare_color <- function(color, opacity = 1, n, data, env = parent.frame()) 
 # resolves during prerender into a per-row color vector, which is then packed
 # via ml_prepare_color() using the existing dict_rgba/codes machinery.
 
-#' Continuous color scale specification (resolved during compilation).
+#' Continuous color scale specification
 #'
+#' Creates a numeric color scale spec that is resolved during widget compilation.
+#' Use in `color`/`fill_color` aesthetics (e.g. `fill_color = color_numeric(~x)`).
+#'
+#' @param expr A formula selecting a numeric column (e.g. `~value`).
+#' @param palette `NULL`, a palette name (passed to `grDevices::hcl.colors()`), or a vector of colors.
+#' @param domain Optional numeric range `c(min, max)`; defaults to data range.
+#' @param steps Number of palette steps for interpolation.
+#' @param na_color Color used for missing values.
+#' @param reverse Logical; reverse the palette.
+#' @param clamp Logical; if `TRUE`, clamp values outside `domain` to the ends.
+#'
+#' @return A color scale specification object.
 #' @export
-
+#'
+#' @examples
+#' if (requireNamespace("sf", quietly = TRUE)) {
+#'   nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#'   maplamina(nc) |>
+#'     add_polygons(fill_color = color_numeric(~BIR74))
+#' }
 color_numeric <- function(expr, palette = NULL, domain = NULL, steps = 256L,
                           na_color = "#00000000", reverse = FALSE, clamp = TRUE) {
   if (!ml_is_formulaish(expr)) {
@@ -418,10 +436,18 @@ color_numeric <- function(expr, palette = NULL, domain = NULL, steps = 256L,
   )
 }
 
-#' Binned (equal-interval or manual breaks) color scale specification (resolved during compilation).
+#' Binned (equal-interval or manual breaks) color scale specification
 #'
+#' @param expr A formula selecting a numeric column (e.g. `~value`).
+#' @param palette `NULL`, a palette name, or a vector of colors.
+#' @param bins Number of bins, or a numeric vector of breakpoints.
+#' @param domain Optional numeric range `c(min, max)`; defaults to data range.
+#' @param na_color Color used for missing values.
+#' @param reverse Logical; reverse the palette.
+#' @param clamp Logical; if `TRUE`, clamp values outside `domain` to the ends.
+#'
+#' @return A color scale specification object.
 #' @export
-
 color_bin <- function(expr, palette = NULL, bins = 5,
                       domain = NULL,
                       na_color = "#00000000", reverse = FALSE, clamp = TRUE) {
@@ -445,10 +471,18 @@ color_bin <- function(expr, palette = NULL, bins = 5,
   )
 }
 
-#' Quantile color scale specification (resolved during compilation).
+#' Quantile color scale specification
 #'
+#' @param expr A formula selecting a numeric column (e.g. `~value`).
+#' @param palette `NULL`, a palette name, or a vector of colors.
+#' @param n Number of quantile bins.
+#' @param domain Optional numeric range `c(min, max)`; defaults to data range.
+#' @param na_color Color used for missing values.
+#' @param reverse Logical; reverse the palette.
+#' @param clamp Logical; if `TRUE`, clamp values outside `domain` to the ends.
+#'
+#' @return A color scale specification object.
 #' @export
-
 color_quantile <- function(expr, palette = NULL, n = 5,
                            domain = NULL,
                            na_color = "#00000000", reverse = FALSE, clamp = TRUE) {
@@ -472,10 +506,16 @@ color_quantile <- function(expr, palette = NULL, n = 5,
   )
 }
 
-#' Categorical color scale specification (resolved during compilation).
+#' Categorical color scale specification
 #'
+#' @param expr A formula selecting a categorical column (e.g. `~region`).
+#' @param palette `NULL`, a palette name, or a vector of colors.
+#' @param domain Optional character vector of levels (controls ordering and which levels are shown).
+#' @param na_color Color used for missing values.
+#' @param reverse Logical; reverse the palette.
+#'
+#' @return A color scale specification object.
 #' @export
-
 color_factor <- function(expr, palette = NULL, domain = NULL,
                          na_color = "#00000000", reverse = FALSE) {
   if (!ml_is_formulaish(expr)) {

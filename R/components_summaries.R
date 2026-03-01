@@ -1,23 +1,14 @@
-# ---- Summaries capability: DSL + registration ----
-#
-# MVP scope:
-# - summary_*() constructors create declarative summary specs.
-# - add_summaries() registers one component per summary row into map$x$.__components_raw.
-# - Values are evaluated during prerender compilation.
-
-
 #' Summary: count rows
 #'
-#' `summary_count()` counts the number of filtered rows. A column can be supplied
-#' purely to validate that it exists (typo checking); it does not affect the count
-#' in the MVP.
+#' Counts the number of filtered rows.
 #'
-#' @param col Optional formula like `~id` (validated if provided). If omitted, counts rows.
+#' @param col Optional formula like `~id` (validated if provided).
 #' @param label Display label for the summary row.
 #' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @param prefix,suffix Optional prefix/suffix strings (applied in JS).
+#' @param id Optional summary id.
+#'
+#' @return A summary specification object.
 #' @export
 summary_count <- function(col = NULL, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
@@ -41,12 +32,13 @@ summary_count <- function(col = NULL, label = NULL, digits = NULL, prefix = NULL
 
 #' Summary: max value
 #'
-#' @param col A formula like `~income`.
+#' @param col A formula like `~value`.
 #' @param label Display label for the summary row.
 #' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @param prefix,suffix Optional prefix/suffix strings (applied in JS).
+#' @param id Optional summary id.
+#'
+#' @return A summary specification object.
 #' @export
 summary_max <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
@@ -68,12 +60,13 @@ summary_max <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix 
 
 #' Summary: min value
 #'
-#' @param col A formula like `~income`.
+#' @param col A formula like `~value`.
 #' @param label Display label for the summary row.
 #' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @param prefix,suffix Optional prefix/suffix strings (applied in JS).
+#' @param id Optional summary id.
+#'
+#' @return A summary specification object.
 #' @export
 summary_min <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
@@ -95,12 +88,13 @@ summary_min <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix 
 
 #' Summary: sum of values
 #'
-#' @param col A formula like `~income`.
+#' @param col A formula like `~value`.
 #' @param label Display label for the summary row.
 #' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @param prefix,suffix Optional prefix/suffix strings (applied in JS).
+#' @param id Optional summary id.
+#'
+#' @return A summary specification object.
 #' @export
 summary_sum <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
@@ -122,12 +116,13 @@ summary_sum <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix 
 
 #' Summary: mean value
 #'
-#' @param col A formula like `~population_density`.
+#' @param col A formula like `~value`.
 #' @param label Display label for the summary row.
 #' @param digits Optional number of digits for formatting (applied in JS).
-#' @param prefix Optional prefix string (applied in JS).
-#' @param suffix Optional suffix string (applied in JS).
-#' @param id Optional component id (otherwise generated deterministically per widget).
+#' @param prefix,suffix Optional prefix/suffix strings (applied in JS).
+#' @param id Optional summary id.
+#'
+#' @return A summary specification object.
 #' @export
 summary_mean <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix = NULL, id = NULL) {
 
@@ -236,16 +231,28 @@ summary_mean <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix
   out
 }
 
-# add_summaries(): register per-layer summary components
+#' Add summaries to a layer
 #'
-#' Add one or more summary rows that can be bound into a shared summaries card.
+#' Registers one or more summary rows that update with filtering. When multiple
+#' layers share the same `bind`, a single summaries card can be created.
 #'
-#' @param map A maplamina widget.
+#' @param map A maplamina widget created by [maplamina()].
+#' @param ... One or more `summary_*()` objects (or a single list of them).
 #' @param id Optional id used as a shorthand bind id when `bind` is omitted.
-#' @param bind Bind group id. Controls merge across layers by (bind, label, op).
+#' @param bind Bind group id for shared UI control.
 #' @param position Optional UI position hint (applied to the control group).
 #' @param layer_id Target layer id (defaults to the most recently added layer).
+#'
+#' @return The modified map widget.
 #' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_circles(lon = ~long, lat = ~lat) |>
+#'   add_filters(filter_range(~mag), bind = "filters") |>
+#'   add_summaries(summary_mean(~mag, label = "Avg mag"), bind = "summaries") |>
+#'   add_panel(sections = sections(section("filters"), section("summaries")))
 add_summaries <- function(
     map,
     ...,

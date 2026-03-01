@@ -29,19 +29,16 @@ basemaps. Pass any entry directly to the \code{style} argument of
 \code{\link{maplamina}}.
 }
 \examples{
-# Use the default (Carto Positron)
-maplamina(nc) |> add_polygons(fill_color = ~BIR74)
+# Polygons example (sf ships the nc shapefile)
+if (requireNamespace("sf", quietly = TRUE)) {
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 
-# Dark basemap
-maplamina(nc, style = base_tiles$carto_dark_matter) |>
-  add_polygons(fill_color = ~BIR74)
+  maplamina(nc) |>
+    add_polygons(fill_color = color_quantile(~BIR74), stroke = FALSE)
 
-# No-label variant for dense point data
-maplamina(quakes_sf, style = base_tiles$carto_positron_nolabels) |>
-  add_circle_markers(radius = ~mag)
-
-# Any custom MapLibre style URL also works
-maplamina(nc, style = "https://my-tiles.example.com/style.json")
+  maplamina(nc, style = base_tiles$carto_dark_matter) |>
+    add_polygons(fill_color = color_quantile(~BIR74, "Inferno"), stroke = FALSE)
+}
 
 }
 \keyword{datasets}

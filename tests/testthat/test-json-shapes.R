@@ -1,3 +1,5 @@
+testthat::skip_if_not_installed("jsonlite")
+
 test_that("controls use JSON-array-friendly shapes (members/order)", {
   pts <- ml_test_points_sf()
 

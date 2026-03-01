@@ -1,3 +1,23 @@
+#' Create a tooltip/popup template
+#'
+#' Templates use placeholders like `{col}` or `{col:.1f}`. Values are gathered
+#' during widget compilation for fast rendering in the browser.
+#'
+#' @param template A single template string.
+#' @param ... Optional named expressions to bind placeholders (e.g. `mag = ~mag`).
+#'   If omitted, placeholders are resolved by column name.
+#' @param html Logical; if `TRUE`, the template is treated as HTML.
+#'
+#' @return A template specification object.
+#' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_circles(
+#'     lon = ~long, lat = ~lat,
+#'     tooltip = tmpl("Mag {mag:.1f}", mag = ~mag)
+#'   )
 tmpl <- function(template, ..., html = FALSE) {
   stopifnot(is.character(template), length(template) == 1L)
   bindings <- as.list(substitute(list(...)))[-1L]  # named expressions

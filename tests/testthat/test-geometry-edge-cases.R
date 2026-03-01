@@ -1,3 +1,5 @@
+testthat::skip_if_not_installed("jsonlite")
+
 test_that("circle markers: POINT EMPTY either errors or is dropped", {
   skip_if_not_installed("sf")
   sf <- asNamespace("sf")
