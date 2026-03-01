@@ -10,7 +10,7 @@ Not on CRAN yet.
 
 ```r
 # install.packages("devtools")
-devtools::install_github("YOUR_ORG_OR_USER/maplamina")
+devtools::install_github("jhumbl/maplamina")
 ```
 
 ## Quick start
