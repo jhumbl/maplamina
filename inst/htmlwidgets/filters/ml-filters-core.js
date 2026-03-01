@@ -18,10 +18,32 @@
     return [];
   }
 
+  function resolveDefaultSelection(sel) {
+    if (!sel) return [];
+    if (sel.default_indices != null) return toArrayDefaultIndices(sel.default_indices);
+
+    const d = sel.default;
+    if (Array.isArray(d) && d.every(v => typeof v === 'number' && Number.isFinite(v))) return d.slice();
+    if (typeof d === 'number' && Number.isFinite(d)) return [d];
+
+    // v3: defaults are authored as values; map to indices using dict when available
+    const dict = Array.isArray(sel.dict) ? sel.dict : [];
+    const arr = (d == null) ? [] : (Array.isArray(d) ? d : [d]);
+    const out = [];
+    for (const v of arr) {
+      const s = String(v);
+      if (!s.length) continue;
+      for (let i = 0; i < dict.length; i++) {
+        if (String(dict[i]) === s) { out.push(i); break; }
+      }
+    }
+    return out;
+  }
+
   function seedSelectionSet(ui, bindId, sel) {
     ui[bindId] = ui[bindId] || { select: {}, keepOpen: {} };
     if (!ui[bindId].select[sel.id]) {
-      const seed = toArrayDefaultIndices(sel.default_indices || sel.default);
+      const seed = resolveDefaultSelection(sel);
       ui[bindId].select[sel.id] = new Set(seed);
     }
     return ui[bindId].select[sel.id];

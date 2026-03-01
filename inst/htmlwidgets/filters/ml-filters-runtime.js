@@ -29,10 +29,63 @@
 
 
 
+  function uniqStrings(arr) {
+    const out = [];
+    const seen = new Set();
+    for (const v of (Array.isArray(arr) ? arr : [])) {
+      const s = String(v);
+      if (!s.length) continue;
+      if (seen.has(s)) continue;
+      seen.add(s);
+      out.push(s);
+    }
+    return out;
+  }
+
+  function coerceSelectDefaultValues(defVal, dict) {
+    if (defVal == null) return [];
+    const arr = Array.isArray(defVal) ? defVal : [defVal];
+    const out = [];
+    const hasDict = Array.isArray(dict) && dict.length;
+    for (const v of arr) {
+      if (v == null) continue;
+      // If defaults are authored as indices, map through dict when available.
+      if (typeof v === 'number' && Number.isFinite(v) && hasDict) {
+        const dv = dict[v];
+        if (dv != null) out.push(String(dv));
+        continue;
+      }
+      const s = String(v);
+      if (s.length) out.push(s);
+    }
+    return uniqStrings(out);
+  }
+
+  function coerceRangeDefault(defVal, dmin, dmax) {
+    let lo = null, hi = null;
+    if (Array.isArray(defVal) && defVal.length >= 2) {
+      lo = +defVal[0]; hi = +defVal[1];
+    } else if (Number.isFinite(+defVal)) {
+      lo = +defVal; hi = +defVal;
+    }
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return null;
+    if (lo > hi) { const t = lo; lo = hi; hi = t; }
+    if (Number.isFinite(dmin)) lo = Math.max(dmin, lo);
+    if (Number.isFinite(dmax)) hi = Math.min(dmax, hi);
+    if (lo > hi) { const t = lo; lo = hi; hi = t; }
+    return [lo, hi];
+  }
+
+
+
 
   function initFiltersState(rt, x, onlyGroupId) {
     const state = ensureFiltersState(rt);
     const groups = getControlGroupsByType(x, 'filters');
+
+    const comps = (x && x['.__components']) || {};
+    const compSelects = comps.select || {};
+    const compRanges  = comps.range  || {};
 
     // No filters controls -> clear state
     if (!groups.length) {
@@ -83,19 +136,81 @@
         if (!spec || typeof spec !== 'object') continue;
 
         if (spec.type === 'select') {
+          const hasPrev = Object.prototype.hasOwnProperty.call(prev, label);
           const p = prev[label];
-          if (p instanceof Set) next[label] = new Set(p);
-          else if (Array.isArray(p)) next[label] = new Set(p.map(v => String(v)).filter(v => v.length));
-          else if (p != null && p !== '') next[label] = new Set([String(p)]);
-          else next[label] = new Set();
-        } else if (spec.type === 'range') {
-          const p = prev[label];
-          let lo = null, hi = null;
-          if (Array.isArray(p) && p.length >= 2) {
-            lo = +p[0]; hi = +p[1];
-          } else if (spec.domain && Number.isFinite(+spec.domain.min) && Number.isFinite(+spec.domain.max)) {
-            lo = +spec.domain.min; hi = +spec.domain.max;
+
+          if (hasPrev) {
+            if (p instanceof Set) next[label] = new Set(p);
+            else if (Array.isArray(p)) next[label] = new Set(p.map(v => String(v)).filter(v => v.length));
+            else if (p != null && p !== '') next[label] = new Set([String(p)]);
+            else next[label] = new Set();
+            continue;
           }
+
+          // Seed defaults on first render (when no prior state exists)
+          const mergedDict = Array.isArray(spec.dict) ? spec.dict : null;
+          let seed = coerceSelectDefaultValues(spec.default, mergedDict);
+
+          if (!seed.length && Array.isArray(spec.members)) {
+            const acc = [];
+            for (const midRaw of spec.members) {
+              const mid = normText(midRaw);
+              const comp = compSelects[mid];
+              if (!comp || comp.default == null) continue;
+              const dct = mergedDict || (Array.isArray(comp.dict) ? comp.dict : null);
+              acc.push(...coerceSelectDefaultValues(comp.default, dct));
+            }
+            seed = uniqStrings(acc);
+          }
+
+          next[label] = new Set(seed);
+        } else if (spec.type === 'range') {
+          const hasPrev = Object.prototype.hasOwnProperty.call(prev, label);
+          const p = prev[label];
+
+          // Domain fallback (when defaults/previous state missing or invalid)
+          let dmin = null, dmax = null;
+          if (spec.domain && Number.isFinite(+spec.domain.min) && Number.isFinite(+spec.domain.max)) {
+            dmin = +spec.domain.min; dmax = +spec.domain.max;
+          }
+
+          if (hasPrev) {
+            let lo = null, hi = null;
+            if (Array.isArray(p) && p.length >= 2) { lo = +p[0]; hi = +p[1]; }
+            if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
+              if (Number.isFinite(dmin) && Number.isFinite(dmax)) { lo = dmin; hi = dmax; }
+            }
+            if (!Number.isFinite(lo)) lo = 0;
+            if (!Number.isFinite(hi)) hi = lo;
+            if (lo > hi) { const t = lo; lo = hi; hi = t; }
+            next[label] = [lo, hi];
+            continue;
+          }
+
+          // Seed defaults on first render (when no prior state exists)
+          let seed = coerceRangeDefault(spec.default, dmin, dmax);
+
+          if (!seed && Array.isArray(spec.members)) {
+            for (const midRaw of spec.members) {
+              const mid = normText(midRaw);
+              const comp = compRanges[mid];
+              if (!comp || comp.default == null) continue;
+
+              let cmin = dmin, cmax = dmax;
+              if (!(Number.isFinite(cmin) && Number.isFinite(cmax))) {
+                if (Number.isFinite(+comp.min) && Number.isFinite(+comp.max)) { cmin = +comp.min; cmax = +comp.max; }
+                else if (comp.domain && Number.isFinite(+comp.domain.min) && Number.isFinite(+comp.domain.max)) { cmin = +comp.domain.min; cmax = +comp.domain.max; }
+              }
+
+              seed = coerceRangeDefault(comp.default, cmin, cmax);
+              if (seed) break;
+            }
+          }
+
+          let lo = null, hi = null;
+          if (seed && seed.length >= 2) { lo = +seed[0]; hi = +seed[1]; }
+          else if (Number.isFinite(dmin) && Number.isFinite(dmax)) { lo = dmin; hi = dmax; }
+
           if (!Number.isFinite(lo)) lo = 0;
           if (!Number.isFinite(hi)) hi = lo;
           if (lo > hi) { const t = lo; lo = hi; hi = t; }
