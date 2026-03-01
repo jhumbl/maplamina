@@ -199,6 +199,7 @@ const rt = ensureRuntime(el, runtimeDeps());
 try {
   const prevProjection = (rt && rt._projectionMgr) ? normProjection(rt._projectionMgr.desired) : null;
   if (map && prevProjection && prevProjection !== desiredProjection) {
+    try { mfRuntimeMap?.clearDeferredFit?.(rt, el); } catch (_) {}
     if (overlay) {
       try { overlay.setProps({ layers: [] }); } catch (_) {}
       try { map && map.removeControl(overlay); } catch (_) {}
@@ -215,6 +216,7 @@ try {
 
 const em = ensureMap({
   el,
+  rt,
   map,
   style: x.map_options?.style,
   dragRotate: x.map_options?.dragRotate,
@@ -278,6 +280,7 @@ overlay = ensureOverlay({ el, map, overlay });
         try { MAPLAMINA?.controls?.panel?.clear?.(el); } catch (_) {}
 
         const rt = el.__mfRuntime;
+        try { mfRuntimeMap?.clearDeferredFit?.(rt, el); } catch (_) {}
         if (rt && rt.pruneTasks && rt.pruneTasks.size) {
           for (const id of rt.pruneTasks) { core.cancelIdlePrune(id); }
           rt.pruneTasks.clear();

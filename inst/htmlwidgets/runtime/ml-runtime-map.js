@@ -206,6 +206,139 @@
   };
 
   // --- Map + overlay lifecycle ---
+  function elHasSize(el) {
+    if (!el || typeof el.getBoundingClientRect !== 'function') return true;
+    const r = el.getBoundingClientRect();
+    return !!(r && r.width > 2 && r.height > 2);
+  }
+
+  // Attempt to apply fitBounds immediately.
+  //
+  // In hidden/tabbed layouts (Quarto dashboards, Shiny tabsets, etc.) the style can
+  // finish loading while the container is still 0x0. If we defer fitBounds via style
+  // events and then clear our "pending" bbox, we can get stuck at the default world
+  // view because the deferred callback never runs.
+  //
+  // Strategy: try fitBounds now; if it throws, we keep the pending bbox and retry via
+  // ResizeObserver/polling when the element is visible and the map is ready.
+  function safeFitBoundsNow(map, bbox, options) {
+    if (!map || !bbox) return false;
+    const opts = options || { padding: 24, duration: 0 };
+    try {
+      if (map && typeof map.fitBounds === 'function') {
+        map.fitBounds(bbox, opts);
+        return true;
+      }
+    } catch (_) {
+      return false;
+    }
+    return false;
+  }
+
+  function peekDeferredFitMgr(el, rt) {
+    const host = (rt && typeof rt === 'object') ? rt : el;
+    if (!host || typeof host !== 'object') return null;
+    const mgr = host._mfDeferredFitMgr;
+    return (mgr && typeof mgr === 'object') ? mgr : null;
+  }
+
+  function getDeferredFitMgr(el, rt) {
+    const host = (rt && typeof rt === 'object') ? rt : el;
+    if (!host || typeof host !== 'object') return null;
+
+    let mgr = host._mfDeferredFitMgr;
+    if (!mgr || typeof mgr !== 'object') {
+      // appliedHash records the last bbox hash that was successfully applied via
+      // deferred fitting. This prevents redundant refits on later renders.
+      mgr = { ro: null, pendingBbox: null, pendingDoFit: null, pendingHash: null, appliedHash: null, _timer: null, warnNoRO: false };
+      try { host._mfDeferredFitMgr = mgr; } catch (_) {}
+    }
+    return mgr;
+  }
+
+  function armDeferredFit(el, map, rt, bbox, doFit, hash, options) {
+    const mgr = getDeferredFitMgr(el, rt);
+    if (!mgr) return;
+
+    mgr.pendingBbox = bbox;
+    mgr.pendingDoFit = doFit;
+    mgr.pendingHash = hash;
+
+    const attempt = () => {
+      if (!mgr.pendingBbox || mgr.pendingDoFit === false) return;
+      if (!elHasSize(el)) return;
+
+      const ph = mgr.pendingHash;
+      try { map && typeof map.resize === 'function' && map.resize(); } catch (_) {}
+      const ok = safeFitBoundsNow(map, mgr.pendingBbox, options);
+
+      // Only clear the pending bbox if fitBounds was actually applied.
+      // If the call failed (threw), keep pending and allow retries.
+      if (ok) {
+        mgr.appliedHash = ph || mgr.appliedHash;
+        mgr.pendingBbox = null;
+        mgr.pendingDoFit = null;
+        mgr.pendingHash = null;
+
+        if (mgr.ro) { try { mgr.ro.disconnect(); } catch (_) {} mgr.ro = null; }
+        if (mgr._timer) { try { clearTimeout(mgr._timer); } catch (_) {} mgr._timer = null; }
+      }
+    };
+
+    // If already armed, just re-attempt (pending bbox may have changed)
+    if (mgr.ro || mgr._timer) {
+      attempt();
+      return;
+    }
+
+    if (typeof ResizeObserver === 'function') {
+      try {
+        mgr.ro = new ResizeObserver(() => { try { attempt(); } catch (_) {} });
+        mgr.ro.observe(el);
+      } catch (_) {
+        mgr.ro = null;
+      }
+      // Some tabbed-layout hosts (e.g. Quarto dashboards) may not reliably emit
+      // ResizeObserver notifications on show/hide transitions. Add a lightweight
+      // polling fallback even when ResizeObserver exists.
+      const poll = () => {
+        mgr._timer = null;
+        attempt();
+        if (mgr.pendingBbox && mgr.pendingDoFit !== false) {
+          mgr._timer = setTimeout(poll, 120);
+        }
+      };
+      if (!mgr._timer) mgr._timer = setTimeout(poll, 120);
+      attempt();
+      return;
+    }
+
+    // Fallback poll when ResizeObserver isn't available.
+    if (!mgr.warnNoRO) {
+      mgr.warnNoRO = true;
+      try { console.warn('[maplamina] ResizeObserver unavailable; using polling to apply fitBounds.'); } catch (_) {}
+    }
+
+    const poll = () => {
+      mgr._timer = null;
+      attempt();
+      if (mgr.pendingBbox && mgr.pendingDoFit !== false) {
+        mgr._timer = setTimeout(poll, 120);
+      }
+    };
+    poll();
+  }
+
+  root.runtime.map.clearDeferredFit = function clearDeferredFit(rt, el) {
+    const mgr = peekDeferredFitMgr(el, rt);
+    if (!mgr) return;
+    if (mgr.ro) { try { mgr.ro.disconnect(); } catch (_) {} mgr.ro = null; }
+    if (mgr._timer) { try { clearTimeout(mgr._timer); } catch (_) {} mgr._timer = null; }
+    mgr.pendingBbox = null;
+    mgr.pendingDoFit = null;
+    mgr.pendingHash = null;
+  };
+
   root.runtime.map.ensureMap = function ensureMap(args) {
     const a = (args && typeof args === 'object') ? args : {};
     const el = a.el;
@@ -213,33 +346,61 @@
     const dragRotate = a.dragRotate;
     const initialBbox = a.initialBbox;
     const doFit = a.doFit;
+    const rt = a.rt;
     const hashBbox = (typeof a.hashBbox === 'function') ? a.hashBbox : (() => null);
 
     let map = a.map || null;
     let lastFitHash = a.lastFitHash || null;
 
+    // If a deferred fit already ran, treat that as the effective last-fit hash.
+    try {
+      const mgr = peekDeferredFitMgr(el, rt);
+      if (mgr && mgr.appliedHash && !lastFitHash) lastFitHash = mgr.appliedHash;
+    } catch (_) {}
+
     if (map) {
       if (doFit !== false && initialBbox) {
         const h = hashBbox(initialBbox);
         if (h && h !== lastFitHash) {
-          if (map.loaded && !map.loaded()) {
-            map.once('styledata', () => map.fitBounds(initialBbox, { padding: 24, duration: 0 }));
+          if (elHasSize(el)) {
+            const ok = safeFitBoundsNow(map, initialBbox, { padding: 24, duration: 0 });
+            if (ok) lastFitHash = h;
+            else armDeferredFit(el, map, rt, initialBbox, doFit, h, { padding: 24, duration: 0 });
           } else {
-            map.fitBounds(initialBbox, { padding: 24, duration: 0 });
+            // Do NOT advance lastFitHash here: the fit has not been applied yet.
+            // This avoids a situation where future renders skip the fit and the
+            // map remains at the default world view.
+            armDeferredFit(el, map, rt, initialBbox, doFit, h, { padding: 24, duration: 0 });
           }
-          lastFitHash = h;
         }
       }
       return { map, lastFitHash };
     }
 
+
     const opts = { container: el, style, dragRotate: !!dragRotate };
+
+    const sized = elHasSize(el);
+    let initHash = null;
     if (doFit !== false && initialBbox) {
-      opts.bounds = initialBbox;
-      opts.fitBoundsOptions = { padding: 24 };
-      lastFitHash = hashBbox(initialBbox);
+      initHash = hashBbox(initialBbox);
+
+      // Applying bounds while the container is hidden (e.g. Quarto dashboard pages/tabs)
+      // can result in an incorrect initial zoom. Defer the fit until we have a real size.
+      if (sized) {
+        opts.bounds = initialBbox;
+        opts.fitBoundsOptions = { padding: 24 };
+        lastFitHash = initHash;
+      }
     }
+
     map = new maplibregl.Map(opts);
+
+    if (doFit !== false && initialBbox && !sized) {
+      // Defer the fit; do NOT advance lastFitHash yet (fit not applied).
+      armDeferredFit(el, map, rt, initialBbox, doFit, initHash, { padding: 24, duration: 0 });
+    }
+
     return { map, lastFitHash };
   };
 
