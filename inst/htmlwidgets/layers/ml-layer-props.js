@@ -187,7 +187,15 @@ function composeLayerProps(st, baseProps, ctx) {
       }
     }
     const oc = MAPLAMINA?.tooltips?.buildOnClickPopup?.(st);
-    if (oc) props.onClick = oc;
+    if (oc) {
+      // Ensure popups are widget-scoped (multi-widget safe): carry the widget container through click events
+      props.onClick = function(info, event) {
+        try {
+          if (info && !info.__mfContainer && ctx && ctx.el) info.__mfContainer = ctx.el;
+        } catch (_) {}
+        return oc(info, event);
+      };
+    }
   } catch (_) {}
 
   // GPU filtering

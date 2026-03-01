@@ -27,6 +27,24 @@ filter_range <- function(col, label = NULL, default = NULL, min = NULL, max = NU
     stop("filter_range(): `col` must be a formula like ~value.", call. = FALSE)
   }
 
+  if (!is.null(default)) {
+    if (!is.numeric(default)) {
+      stop("filter_range(): `default` must be a numeric vector of length 2 (c(min, max)).", call. = FALSE)
+    }
+    if (length(default) != 2L) {
+      stop(
+        "filter_range(): `default` must be a numeric vector of length 2 (c(min, max)); got length ",
+        length(default), ".",
+        call. = FALSE
+      )
+    }
+    if (anyNA(default) || !all(is.finite(default))) {
+      stop("filter_range(): `default` must contain two finite numbers (no NA/Inf).", call. = FALSE)
+    }
+    # Be forgiving if user supplies (max, min).
+    if (default[1] > default[2]) default <- sort(default)
+  }
+
   structure(list(
     type = "range",
     id = id,

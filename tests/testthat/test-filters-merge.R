@@ -34,3 +34,18 @@ test_that("filters merge by (bind,label,type) and union domains/dicts", {
   expect_true(is.numeric(rng$domain$min))
   expect_true(is.numeric(rng$domain$max))
 })
+
+test_that("filter_range() validates `default` for range filters", {
+  expect_error(
+    filter_range(~x, default = c(2, 4, 6, 7)),
+    "length 2"
+  )
+
+  expect_error(
+    filter_range(~x, default = c(NA_real_, 4)),
+    "finite"
+  )
+
+  fr <- filter_range(~x, default = c(4, 2))
+  expect_identical(fr$default, c(2, 4))
+})

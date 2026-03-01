@@ -12,7 +12,8 @@ tmpl <- function(template, ..., html = FALSE) {
   stopifnot(is.character(template), length(template) == 1L)
 
   m <- gregexpr("\\{([^}:]+)(?::([^}]+))?\\}", template, perl = TRUE)[[1]]
-  if (identical(m, -1L)) {
+  # gregexpr() returns -1 with attributes when no matches; use value-based check
+  if (length(m) == 1L && as.integer(m)[1] == -1L) {
     return(data.frame(
       name  = character(0),
       fmt   = character(0),
@@ -55,6 +56,7 @@ tmpl <- function(template, ..., html = FALSE) {
 # internal: collect one placeholder vector (numeric/u32, categorical codes, or dates)
 # NOTE: we keep dict (labels) inline JSON like filters do; only codes get blob-ified.
 .ml_collect_placeholder <- function(data, name, fmt, bindings, n, env = parent.frame()) {
+  if (!nzchar(name)) stop("[maplamina] empty placeholder name in tmpl()", call. = FALSE)
   # 1) resolve expression: alias in ... wins; else column by name
   expr <- bindings[[name]]
   if (is.null(expr)) {
@@ -106,9 +108,8 @@ tmpl <- function(template, ..., html = FALSE) {
 .ml_pack_template <- function(data, tmpl, n) {
   if (is.null(tmpl) || !inherits(tmpl, "maplamina_template")) return(NULL)
   ph <- .ml_parse_placeholders(tmpl$template)
-  if (!nrow(ph)) return(NULL)
-
   out <- list(type = "template", template = tmpl$template, html = isTRUE(tmpl$html), placeholders = list())
+  if (!nrow(ph)) return(out)
   # Collect all placeholders; allow duplicates of the same name by spec
   for (i in seq_len(nrow(ph))) {
     info <- ph[i, , drop = FALSE]

@@ -76,17 +76,53 @@
     return (v) => v;
   }
 
+  function __findMapWidgetContainer(el) {
+    if (!el) return null;
+
+    // Fast path: widget root stores __mfGetMap()
+    if (typeof el.__mfGetMap === 'function') return el;
+
+    // MapLibre attaches .maplibregl-map to the widget container
+    try {
+      if (typeof el.closest === 'function') {
+        const c = el.closest('.maplibregl-map');
+        if (c && typeof c.__mfGetMap === 'function') return c;
+      }
+    } catch (_) {}
+
+    // Walk up DOM as a last resort (supports atypical container nesting)
+    let p = el.parentElement;
+    while (p) {
+      if (typeof p.__mfGetMap === 'function') return p;
+      p = p.parentElement;
+    }
+    return null;
+  }
+
+  function __getMapFromContainer(container) {
+    const wc = __findMapWidgetContainer(container);
+    if (wc && typeof wc.__mfGetMap === 'function') {
+      try { return wc.__mfGetMap(); } catch (_) {}
+    }
+    return null;
+  }
+
   function stableContainer(info) {
-    // Prefer the MapLibre map container — consistent for both picked + background clicks
+    // Prefer the widget container (stable across picked + background clicks)
     if (info && info.__mfContainer) return info.__mfContainer;
 
+    const c = containerFromInfo(info);
+    const wc = __findMapWidgetContainer(c);
+    if (wc) return wc;
+
+    // Legacy fallback (older builds may expose a global getter)
     try {
       const map = (global.MAPLAMINA && global.MAPLAMINA.__getMap && global.MAPLAMINA.__getMap()) || null;
       const mc = map && map.getContainer ? map.getContainer() : null;
       if (mc) return mc;
     } catch (_) {}
-    // Fallback: overlay canvas parent or document.body
-    return containerFromInfo(info);
+
+    return c || document.body;
   }
 
   // ------------------------------------------------------------
@@ -409,9 +445,11 @@
 
       const container = stableContainer(info);
 
-      // Try to get the map instance
+      // Get the MapLibre instance (preferred: widget-scoped getter)
       const mapCanvas = container.querySelector('canvas');
-      const map = (mapCanvas && mapCanvas._map) ||
+      const legacyMap = (mapCanvas && mapCanvas._map) || null;
+      const map = __getMapFromContainer(container) ||
+                  legacyMap ||
                   (global.MAPLAMINA && global.MAPLAMINA.__getMap && global.MAPLAMINA.__getMap());
       if (!map) return;
 
