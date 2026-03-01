@@ -5,6 +5,9 @@
 .httr-oauth
 .DS_Store
 .quarto
+*.Rcheck/
+*.tar.gz
+*.zip
 
 # R package build outputs
 .Rcheck/
