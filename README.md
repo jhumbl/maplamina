@@ -30,7 +30,7 @@ n <- 2000
 d <- data.frame(
   lon   = runif(n, -60, 60),
   lat   = runif(n, -60, 60),
-  value = runif(n, 1, 6)
+  value = runif(n, 1, 10)
 )
 
 maplamina() |>
