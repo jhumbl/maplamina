@@ -22,10 +22,11 @@ Templates use placeholders like \code{{col}} or \verb{\{col:.1f\}}. Values are g
 during widget compilation for fast rendering in the browser.
 }
 \examples{
-q <- datasets::quakes
-maplamina(q) |>
-  add_circles(
-    lon = ~long, lat = ~lat,
-    tooltip = tmpl("Mag {mag:.1f}", mag = ~mag)
-  )
+d <- data.frame(
+  lon   = runif(1000, -60, 60),
+  lat   = runif(1000, -60, 60),
+  value = runif(1000, 1, 10)
+)
+maplamina() |>
+  add_circles(d, tooltip = tmpl("Value: {value:.1f}"))
 }

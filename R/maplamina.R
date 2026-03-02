@@ -21,10 +21,14 @@
 #' # Minimal widget
 #' maplamina()
 #'
-#' # With default data + a circles layer
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_circles(fill_color = color_quantile(~depth, "Inferno"))
+#' # With a Circle layer
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_circles(d, fill_color = color_quantile(~depth, "Inferno"))
 maplamina <- function(
     data = NULL,
     style = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",

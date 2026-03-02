@@ -48,7 +48,11 @@ The modified map widget.
 Convenience wrapper around \code{\link[=add_icons]{add_icons()}} using the default marker icons.
 }
 \examples{
-q <- datasets::quakes
-maplamina(q) |>
-  add_markers(size = ~mag * 3)
+d <- data.frame(
+  lon   = runif(1000, -60, 60),
+  lat   = runif(1000, -60, 60),
+  value = runif(1000, 1, 10)
+)
+maplamina() |>
+  add_markers(d, size = ~value * 3)
 }

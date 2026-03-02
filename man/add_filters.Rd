@@ -27,11 +27,15 @@ Registers one or more filters for a layer. When multiple layers share the same \
 controls merge across layers by (bind, label, type).
 }
 \examples{
-q <- datasets::quakes
-maplamina(q) |>
-  add_circles(lon = ~long, lat = ~lat) |>
+d <- data.frame(
+  lon   = runif(1000, -60, 60),
+  lat   = runif(1000, -60, 60),
+  value = runif(1000, 1, 10)
+)
+maplamina() |>
+  add_circles(d) |>
   add_filters(
-    filter_range(~mag, default = c(4, 6)),
+    filter_range(~value, default = c(4, 6)),
     bind = "filters"
   )
 }

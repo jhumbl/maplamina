@@ -37,9 +37,13 @@ The modified map widget.
 The panel mounts previously-declared controls by bind id (see \code{\link[=section]{section()}} and \code{\link[=sections]{sections()}}).
 }
 \examples{
-q <- datasets::quakes
-maplamina(q) |>
-  add_circles(lon = ~long, lat = ~lat) |>
-  add_filters(filter_range(~mag), bind = "filters") |>
+d <- data.frame(
+  lon   = runif(1000, -60, 60),
+  lat   = runif(1000, -60, 60),
+  value = runif(1000, 1, 10)
+)
+maplamina() |>
+  add_circles(d) |>
+  add_filters(filter_range(~value), bind = "filters") |>
   add_panel(sections = sections(section("filters")))
 }

@@ -23,9 +23,13 @@
 #' @export
 #'
 #' @examples
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_circles(radius = ~mag * 2, fill_color = "dodgerblue")
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_circles(d, radius = ~value, fill_color = "dodgerblue")
 add_circles <- function(
     map, data = NULL,
     lon = NULL, lat = NULL,

@@ -316,13 +316,16 @@ view_keys_for <- function(layer = NULL) {
 #' @export
 #'
 #' @examples
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_circles(lon = ~long, lat = ~lat, radius = 5) |>
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_circles(d, radius = 5) |>
 #'   add_views(
-#'     view("magnitude", radius = ~mag * 3),
-#'     view("faint", fill_opacity = 0.2),
-#'     bind = "views"
+#'     view("magnitude", radius = ~value * 3),
+#'     view("faint", fill_opacity = 0.2)
 #'   )
 add_views <- function(
     map,

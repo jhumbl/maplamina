@@ -34,10 +34,14 @@ Registers one or more summary rows that update with filtering. When multiple
 layers share the same \code{bind}, a single summaries card can be created.
 }
 \examples{
-q <- datasets::quakes
-maplamina(q) |>
-  add_circles(lon = ~long, lat = ~lat) |>
-  add_filters(filter_range(~mag), bind = "filters") |>
-  add_summaries(summary_mean(~mag, label = "Avg mag"), bind = "summaries") |>
+d <- data.frame(
+  lon   = runif(1000, -60, 60),
+  lat   = runif(1000, -60, 60),
+  value = runif(1000, 1, 10)
+)
+maplamina() |>
+  add_circles(d) |>
+  add_filters(filter_range(~value), bind = "filters") |>
+  add_summaries(summary_mean(~value, label = "Avg value"), bind = "summaries") |>
   add_panel(sections = sections(section("filters"), section("summaries")))
 }

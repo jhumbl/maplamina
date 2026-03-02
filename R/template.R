@@ -12,12 +12,13 @@
 #' @export
 #'
 #' @examples
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_circles(
-#'     lon = ~long, lat = ~lat,
-#'     tooltip = tmpl("Mag {mag:.1f}", mag = ~mag)
-#'   )
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_circles(d, tooltip = tmpl("Value: {value:.1f}"))
 tmpl <- function(template, ..., html = FALSE) {
   stopifnot(is.character(template), length(template) == 1L)
   bindings <- as.list(substitute(list(...)))[-1L]  # named expressions

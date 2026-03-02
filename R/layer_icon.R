@@ -20,9 +20,13 @@
 #' @export
 #'
 #' @examples
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_icons(icon = "marker", size = 20)
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_icons(d, icon = "star", size = 20)
 add_icons <- function(
     map, data = NULL,
     lon = NULL, lat = NULL,
@@ -87,9 +91,13 @@ add_icons <- function(
 #' @export
 #'
 #' @examples
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_markers(size = ~mag * 3)
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_markers(d, size = ~value * 3)
 add_markers <- function(
     map, data = NULL,
     lon = NULL, lat = NULL,

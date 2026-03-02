@@ -247,11 +247,15 @@ summary_mean <- function(col, label = NULL, digits = NULL, prefix = NULL, suffix
 #' @export
 #'
 #' @examples
-#' q <- datasets::quakes
-#' maplamina(q) |>
-#'   add_circles(lon = ~long, lat = ~lat) |>
-#'   add_filters(filter_range(~mag), bind = "filters") |>
-#'   add_summaries(summary_mean(~mag, label = "Avg mag"), bind = "summaries") |>
+#' d <- data.frame(
+#'   lon   = runif(1000, -60, 60),
+#'   lat   = runif(1000, -60, 60),
+#'   value = runif(1000, 1, 10)
+#' )
+#' maplamina() |>
+#'   add_circles(d) |>
+#'   add_filters(filter_range(~value), bind = "filters") |>
+#'   add_summaries(summary_mean(~value, label = "Avg value"), bind = "summaries") |>
 #'   add_panel(sections = sections(section("filters"), section("summaries")))
 add_summaries <- function(
     map,

@@ -60,7 +60,11 @@ The modified map widget.
 Adds a point icon layer. Icons are referenced by id (resolved in the frontend icon set).
 }
 \examples{
-q <- datasets::quakes
-maplamina(q) |>
-  add_icons(icon = "marker", size = 20)
+d <- data.frame(
+  lon   = runif(1000, -60, 60),
+  lat   = runif(1000, -60, 60),
+  value = runif(1000, 1, 10)
+)
+maplamina() |>
+  add_icons(d, icon = "star", size = 20)
 }
