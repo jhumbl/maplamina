@@ -1,4 +1,4 @@
-# Helper for Mapflow tests: compile widget spec WITHOUT calling .ml_prerender()
+# Helper for Maplamina tests: compile widget spec WITHOUT calling .ml_prerender()
 # (avoids any prerender side-effects like writing files).
 #
 # Returns the compiled outgoing spec list (x) containing:

@@ -1,5 +1,22 @@
-# ---- Filters capability: DSL + registration ----
-
+#' Define a select filter
+#'
+#' Creates a categorical filter specification to be registered with [add_filters()].
+#'
+#' @param col A formula selecting a column (e.g. `~region`).
+#' @param label Optional label for the UI control (defaults to the column name).
+#' @param multi Logical; allow multiple selections.
+#' @param dropdown Optional UI hint (frontend-specific).
+#' @param searchable Logical; allow searching within options.
+#' @param default Optional default selection(s).
+#' @param max_levels Optional maximum number of levels to show (frontend may truncate).
+#' @param id Optional filter id (otherwise generated).
+#'
+#' @return A filter specification object.
+#' @export
+#'
+#' @examples
+#' f <- filter_select(~Species, default = c("setosa", "versicolor"))
+#' f
 filter_select <- function(col, label = NULL, multi = TRUE, dropdown = NULL, searchable = TRUE,
                           default = NULL, max_levels = NULL, id = NULL) {
 
@@ -20,6 +37,24 @@ filter_select <- function(col, label = NULL, multi = TRUE, dropdown = NULL, sear
   ), class = "ml_filter")
 }
 
+#' Define a range filter
+#'
+#' Creates a numeric range filter specification to be registered with [add_filters()].
+#'
+#' @param col A formula selecting a numeric column (e.g. `~mag`).
+#' @param label Optional label for the UI control (defaults to the column name).
+#' @param default Optional default range `c(min, max)` (length 2).
+#' @param min,max Optional explicit min/max (otherwise computed from data).
+#' @param step Optional step size for the UI slider.
+#' @param live Logical; update the map continuously while dragging.
+#' @param id Optional filter id (otherwise generated).
+#'
+#' @return A filter specification object.
+#' @export
+#'
+#' @examples
+#' f <- filter_range(~mpg, default = c(15, 30))
+#' f
 filter_range <- function(col, label = NULL, default = NULL, min = NULL, max = NULL,
                          step = NULL, live = TRUE, id = NULL) {
 
@@ -167,8 +202,29 @@ filter_range <- function(col, label = NULL, default = NULL, min = NULL, max = NU
   list(select = sels, range = rngs)
 }
 
-# add_filters(): register per-layer filter components (no layer mutation)
-
+#' Add filters to a layer
+#'
+#' Registers one or more filters for a layer. When multiple layers share the same `bind`,
+#' controls merge across layers by (bind, label, type).
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param ... One or more [filter_range()] / [filter_select()] objects (or a single list of them).
+#' @param id Optional id used as a shorthand bind id when `bind` is omitted.
+#' @param bind Bind group id for shared UI control.
+#' @param position Optional UI position hint (applied to the control group).
+#' @param layer_id Target layer id (defaults to the most recently added layer).
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_circles(lon = ~long, lat = ~lat) |>
+#'   add_filters(
+#'     filter_range(~mag, default = c(4, 6)),
+#'     bind = "filters"
+#'   )
 add_filters <- function(
     map,
     ...,

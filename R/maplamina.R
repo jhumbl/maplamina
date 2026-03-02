@@ -1,3 +1,30 @@
+#' Create a Maplamina map widget
+#'
+#' Creates an interactive MapLibre + deck.gl map widget. You can add layers and
+#' UI components (views/filters/summaries/panel) with the `add_*()` functions.
+#'
+#' @param data Optional default dataset used by subsequent `add_*()` calls when
+#'   their `data` argument is `NULL`.
+#' @param style MapLibre style URL (or a named style from `base_tiles`).
+#' @param projection Map projection; one of `"mercator"` or `"globe"`.
+#' @param dragRotate Logical; whether drag-rotate is enabled (also affects compass).
+#' @param fit_bounds Logical; whether the map initially fits the bounds of all layers.
+#' @param show_layer_controls Logical; show built-in per-layer visibility controls.
+#' @param width,height Widget width/height (CSS units or numeric pixels). If `height`
+#'   is `NULL`, a viewer-friendly default is used.
+#' @param elementId Optional HTML element id.
+#'
+#' @return An `htmlwidget` maplamina widget.
+#' @export
+#'
+#' @examples
+#' # Minimal widget
+#' maplamina()
+#'
+#' # With default data + a circles layer
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_circles(fill_color = color_quantile(~depth, "Inferno"))
 maplamina <- function(
     data = NULL,
     style = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",

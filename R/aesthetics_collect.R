@@ -1,4 +1,4 @@
-# ---- Mapflow v3: aesthetics collectors ----
+# ---- Maplamina v3: aesthetics collectors ----
 # Refactor: split from aesthetics.R for readability.
 
 ml_collect_aesthetics <- function(type, data, dots, n) {

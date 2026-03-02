@@ -1,18 +1,25 @@
 Package: maplamina
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: High-Performance WebGL Mapping Widgets for R
+Version: 0.1.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Jack", "Humble", email = "jackhumble.dev@gmail.com", role = c("aut", "cre"))
+Description: Creates interactive maps using MapLibre GL and deck.gl via 'htmlwidgets'.
+    Provides GPU-accelerated layers for points, lines and polygons, plus linked UI
+    components such as filters, views and summary cards for exploratory analysis and
+    production dashboards.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+URL: https://github.com/jhumbl/maplamina
+BugReports: https://github.com/jhumbl/maplamina/issues
+Depends: R (>= 4.1.0)
 Imports: 
     htmlwidgets,
-    jsonlite,
-    rlang,
+    digest,
+    base64enc,
     sf
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    jsonlite
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
 Config/testthat/edition: 3

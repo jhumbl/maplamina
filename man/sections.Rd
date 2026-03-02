@@ -7,8 +7,14 @@
 sections(...)
 }
 \arguments{
-\item{...}{One or more \code{section()} objects, character ids, or lists of sections.}
+\item{...}{One or more \code{\link[=section]{section()}} objects, character ids, or lists of sections.}
+}
+\value{
+A panel sections container.
 }
 \description{
 Create a list of panel sections
+}
+\examples{
+sections(section("views"), section("filters"))
 }

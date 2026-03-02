@@ -1,3 +1,8 @@
 ^maplamina\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.Rhistory$
+^\.gitignore$
+^\.gitattributes$
+^\.github$
+^cran-comments\.md$

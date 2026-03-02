@@ -2,7 +2,7 @@
 % Please edit documentation in R/colors.R
 \name{color_factor}
 \alias{color_factor}
-\title{Categorical color scale specification (resolved during compilation).}
+\title{Categorical color scale specification}
 \usage{
 color_factor(
   expr,
@@ -12,6 +12,20 @@ color_factor(
   reverse = FALSE
 )
 }
+\arguments{
+\item{expr}{A formula selecting a categorical column (e.g. \code{~region}).}
+
+\item{palette}{\code{NULL}, a palette name, or a vector of colors.}
+
+\item{domain}{Optional character vector of levels (controls ordering and which levels are shown).}
+
+\item{na_color}{Color used for missing values.}
+
+\item{reverse}{Logical; reverse the palette.}
+}
+\value{
+A color scale specification object.
+}
 \description{
-Categorical color scale specification (resolved during compilation).
+Categorical color scale specification
 }

@@ -15,7 +15,7 @@ add_panel(
 )
 }
 \arguments{
-\item{map}{A maplamina widget.}
+\item{map}{A maplamina widget created by \code{\link[=maplamina]{maplamina()}}.}
 
 \item{title}{Panel title.}
 
@@ -25,10 +25,21 @@ add_panel(
 
 \item{dividers}{Logical; whether to render divider lines between sections.}
 
-\item{position}{Optional corner position for the panel container. One of "topleft", "topright", "bottomleft", "bottomright".}
+\item{position}{Optional corner position for the panel container: \code{"topleft"}, \code{"topright"},
+\code{"bottomleft"}, \code{"bottomright"}.}
 
 \item{sections}{Panel layout, created with \code{sections(section("id"), ...)}.}
 }
+\value{
+The modified map widget.
+}
 \description{
-The panel mounts previously-declared controls by bind id.
+The panel mounts previously-declared controls by bind id (see \code{\link[=section]{section()}} and \code{\link[=sections]{sections()}}).
+}
+\examples{
+q <- datasets::quakes
+maplamina(q) |>
+  add_circles(lon = ~long, lat = ~lat) |>
+  add_filters(filter_range(~mag), bind = "filters") |>
+  add_panel(sections = sections(section("filters")))
 }

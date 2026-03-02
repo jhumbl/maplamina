@@ -5,6 +5,11 @@
 .httr-oauth
 .DS_Store
 .quarto
+*.Rcheck/
+*.tar.gz
+*.zip
+**/[Dd]esktop.ini
+[Dd]esktop.ini
 
 # R package build outputs
 .Rcheck/

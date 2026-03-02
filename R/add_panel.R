@@ -1,9 +1,15 @@
-# ---- panel section constructors ----
-
 #' Create a panel section that mounts a control by bind id
 #'
-#' @param id Bind id (e.g. the `bind` supplied to add_views/add_filters, or the component id when bind is omitted)
+#' Panel sections refer to bind ids created by components such as [add_views()],
+#' [add_filters()], and [add_summaries()].
+#'
+#' @param id Bind id (e.g. the `bind` supplied to add_views/add_filters, or the component id when bind is omitted).
+#'
+#' @return A panel section object.
 #' @export
+#'
+#' @examples
+#' section("filters")
 section <- function(id) {
   if (is.null(id) || length(id) != 1L) {
     stop("section(): `id` must be a single string.", call. = FALSE)
@@ -17,8 +23,13 @@ section <- function(id) {
 
 #' Create a list of panel sections
 #'
-#' @param ... One or more `section()` objects, character ids, or lists of sections.
+#' @param ... One or more [section()] objects, character ids, or lists of sections.
+#'
+#' @return A panel sections container.
 #' @export
+#'
+#' @examples
+#' sections(section("views"), section("filters"))
 sections <- function(...) {
   structure(list(...), class = "maplamina_panel_sections")
 }
@@ -123,17 +134,26 @@ sections <- function(...) {
 
 #' Add a global, presentation-only panel
 #'
-#' The panel mounts previously-declared controls by bind id.
+#' The panel mounts previously-declared controls by bind id (see [section()] and [sections()]).
 #'
-#' @param map A maplamina widget.
+#' @param map A maplamina widget created by [maplamina()].
 #' @param title Panel title.
 #' @param description Optional panel description.
 #' @param icon Optional URL for a small icon shown beside the title.
 #' @param dividers Logical; whether to render divider lines between sections.
-#' @param position Optional corner position for the panel container. One of "topleft", "topright", "bottomleft", "bottomright".
+#' @param position Optional corner position for the panel container: `"topleft"`, `"topright"`,
+#'   `"bottomleft"`, `"bottomright"`.
 #' @param sections Panel layout, created with `sections(section("id"), ...)`.
 #'
+#' @return The modified map widget.
 #' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_circles(lon = ~long, lat = ~lat) |>
+#'   add_filters(filter_range(~mag), bind = "filters") |>
+#'   add_panel(sections = sections(section("filters")))
 add_panel <- function(
     map,
     title = NULL,

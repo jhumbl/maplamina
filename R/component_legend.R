@@ -1,3 +1,32 @@
+#' Add a legend component
+#'
+#' Adds a categorical or continuous legend. Legends can be conditionally displayed
+#' based on layer/view, and can be mounted via the panel by `bind`.
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param title Optional legend title.
+#' @param type Legend type: `"categorical"` or `"continuous"`.
+#' @param position Legend position hint: `"bottomleft"`, `"bottomright"`, `"topleft"`, `"topright"`.
+#' @param values,colors Categorical legend labels and colors (same length).
+#' @param shapes,sizes Optional categorical shapes/sizes (length 1 or length(values)).
+#' @param range,labels,breaks Continuous legend range/labels/breaks.
+#' @param gradient Vector of 2+ colors for the continuous legend.
+#' @param shape,size Continuous legend swatch/shape and size.
+#' @param layer,view Optional conditional display rule.
+#' @param bind Bind group id for mounting in the panel (defaults to legend id).
+#' @param id Optional component id (otherwise generated).
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' maplamina() |>
+#'   add_legend(
+#'     title = "Magnitude",
+#'     type = "continuous",
+#'     range = c(3, 7),
+#'     gradient = c("lightyellow", "red")
+#'   )
 add_legend <- function(
     map,
     title = NULL,

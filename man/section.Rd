@@ -7,8 +7,15 @@
 section(id)
 }
 \arguments{
-\item{id}{Bind id (e.g. the \code{bind} supplied to add_views/add_filters, or the component id when bind is omitted)}
+\item{id}{Bind id (e.g. the \code{bind} supplied to add_views/add_filters, or the component id when bind is omitted).}
+}
+\value{
+A panel section object.
 }
 \description{
-Create a panel section that mounts a control by bind id
+Panel sections refer to bind ids created by components such as \code{\link[=add_views]{add_views()}},
+\code{\link[=add_filters]{add_filters()}}, and \code{\link[=add_summaries]{add_summaries()}}.
+}
+\examples{
+section("filters")
 }

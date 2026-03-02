@@ -1,6 +1,28 @@
-# ---- Mapflow v3: layers (rendering-only) ----
-# Refactor: split from add_layer.R for navigability.
-
+#' Add an icon layer
+#'
+#' Adds a point icon layer. Icons are referenced by id (resolved in the frontend icon set).
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param data Data for this layer. If `NULL`, uses the default `data` supplied to [maplamina()].
+#' @param lon,lat Longitude/latitude aesthetics (formula or scalar). Required for non-`sf` data.
+#' @param icon Icon id string (e.g. `"marker"`).
+#' @param size,color,opacity Icon size and color/opacity (can be formulas).
+#' @param tooltip,popup Optional [tmpl()] objects (or `NULL`) for hover/click content.
+#' @param id,group Optional layer id and group name.
+#' @param pickable Logical; whether features can be picked (tooltip/popup).
+#' @param size_units Units for `size`; one of `"pixels"`, `"meters"`, or `"common"`.
+#' @param size_min_pixels,size_max_pixels Optional clamp in pixels when using meter/common units.
+#' @param icon_anchor Optional anchor (frontend-specific).
+#' @param mask Logical; whether to mask the icon.
+#' @param occlude Logical; whether icons occlude each other.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_icons(icon = "marker", size = 20)
 add_icons <- function(
     map, data = NULL,
     lon = NULL, lat = NULL,
@@ -47,6 +69,27 @@ add_icons <- function(
   )
 }
 
+#' Add a marker layer
+#'
+#' Convenience wrapper around [add_icons()] using the default marker icons.
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param data Data for this layer. If `NULL`, uses the default `data` supplied to [maplamina()].
+#' @param lon,lat Longitude/latitude aesthetics (formula or scalar). Required for non-`sf` data.
+#' @param size,color,opacity Marker size and color/opacity (can be formulas).
+#' @param tooltip,popup Optional [tmpl()] objects (or `NULL`) for hover/click content.
+#' @param id,group Optional layer id and group name.
+#' @param pickable Logical; whether features can be picked (tooltip/popup).
+#' @param size_units Units for `size`; one of `"pixels"`, `"meters"`, or `"common"`.
+#' @param size_min_pixels,size_max_pixels Optional clamp in pixels when using meter/common units.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_markers(size = ~mag * 3)
 add_markers <- function(
     map, data = NULL,
     lon = NULL, lat = NULL,

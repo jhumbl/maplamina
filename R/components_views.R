@@ -1,5 +1,17 @@
-# ---- Views capability: DSL + registration ----
-
+#' Define a view
+#'
+#' A view is a named set of overrides (e.g. radius/opacity) that can be switched
+#' via a shared views selector created by [add_views()].
+#'
+#' @param name View name shown in the UI.
+#' @param ... Named overrides for layer aesthetics (e.g. `radius = ~mag * 3`, `opacity = 0.3`).
+#'
+#' @return A view specification object.
+#' @export
+#'
+#' @examples
+#' v <- view("magnitude", radius = ~mag * 3)
+#' v
 view <- function(name, ...) {
   if (missing(name) || length(name) != 1L) {
     stop("view(): `name` must be a single string (e.g. view('magnitude', ...))")
@@ -286,8 +298,32 @@ view_keys_for <- function(layer = NULL) {
   out
 }
 
-# add_views(): register a per-layer "views" component (no layer mutation)
-
+#' Add views to a layer
+#'
+#' Registers a per-layer views component. When multiple layers share the same `bind`,
+#' a single selector control is created.
+#'
+#' @param map A maplamina widget created by [maplamina()].
+#' @param ... One or more [view()] objects (or a single list of them).
+#' @param id Optional component id (also used as the default bind id).
+#' @param bind Bind group id for shared UI control. If omitted, defaults to `id` (or an auto id).
+#' @param position Optional UI position hint (applied to the control group).
+#' @param layer_id Target layer id (defaults to the most recently added layer).
+#' @param duration Animation duration (ms) for switching views.
+#' @param easing Easing function name for switching views.
+#'
+#' @return The modified map widget.
+#' @export
+#'
+#' @examples
+#' q <- datasets::quakes
+#' maplamina(q) |>
+#'   add_circles(lon = ~long, lat = ~lat, radius = 5) |>
+#'   add_views(
+#'     view("magnitude", radius = ~mag * 3),
+#'     view("faint", fill_opacity = 0.2),
+#'     bind = "views"
+#'   )
 add_views <- function(
     map,
     ...,

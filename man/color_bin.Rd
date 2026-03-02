@@ -2,7 +2,7 @@
 % Please edit documentation in R/colors.R
 \name{color_bin}
 \alias{color_bin}
-\title{Binned (equal-interval or manual breaks) color scale specification (resolved during compilation).}
+\title{Binned (equal-interval or manual breaks) color scale specification}
 \usage{
 color_bin(
   expr,
@@ -14,6 +14,24 @@ color_bin(
   clamp = TRUE
 )
 }
+\arguments{
+\item{expr}{A formula selecting a numeric column (e.g. \code{~value}).}
+
+\item{palette}{\code{NULL}, a palette name, or a vector of colors.}
+
+\item{bins}{Number of bins, or a numeric vector of breakpoints.}
+
+\item{domain}{Optional numeric range \code{c(min, max)}; defaults to data range.}
+
+\item{na_color}{Color used for missing values.}
+
+\item{reverse}{Logical; reverse the palette.}
+
+\item{clamp}{Logical; if \code{TRUE}, clamp values outside \code{domain} to the ends.}
+}
+\value{
+A color scale specification object.
+}
 \description{
-Binned (equal-interval or manual breaks) color scale specification (resolved during compilation).
+Binned (equal-interval or manual breaks) color scale specification
 }

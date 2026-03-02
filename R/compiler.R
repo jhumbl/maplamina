@@ -265,8 +265,8 @@
       if (is.list(meta_freq)) meta_freq <- unlist(meta_freq, use.names = FALSE)
       meta_freq <- as.integer(meta_freq %||% integer(length(meta_dict)))
 
-      freq_named <- setNames(cur_freq, old_dict)
-      add_named  <- setNames(meta_freq, meta_dict)
+      freq_named <- stats::setNames(cur_freq, old_dict)
+      add_named  <- stats::setNames(meta_freq, meta_dict)
       for (lvl in names(add_named)) {
         curv <- freq_named[lvl]
         if (is.na(curv)) curv <- 0L
@@ -1200,15 +1200,6 @@
 
 
   ml_validate_spec(widget$x)
-
-  # NOTE: Do not write files from prerender; htmlwidgets will serialize widget$x automatically.
-  #jsonlite::write_json(
-  #  widget$x,
-  #  path = "C:/Users/jhumb/OneDrive/Documents/projects/RPackages/maplamina/spec.json",
-  #  auto_unbox = TRUE,
-  #  pretty = TRUE,
-  #  null = "null"
-  #)
 
   widget
 }
