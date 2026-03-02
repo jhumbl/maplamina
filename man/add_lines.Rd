@@ -15,7 +15,7 @@ add_lines(
   id = NULL,
   group = NULL,
   pickable = TRUE,
-  width_units = c("meters", "pixels", "common"),
+  width_units = c("pixels", "meters", "common"),
   width_min_pixels = NULL,
   width_max_pixels = NULL
 )

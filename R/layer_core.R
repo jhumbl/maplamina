@@ -210,19 +210,19 @@ add_layer <- function(
   n <- ctx$n_part %||% NA_integer_
 
   # TEMP DEBUG: report coordinate system selection (remove once globe stabilizes)
-  coord_sys <- if (!is.null(geom_part$coordinate_origin)) "LNGLAT_OFFSETS" else "LNGLAT"
-  if (identical(proj, "globe") && !is.null(geom_part$coordinate_origin)) {
-    coord_sys <- "LNGLAT_OFFSETS (UNEXPECTED in globe)"
-  } else if (identical(proj, "globe")) {
-    coord_sys <- "LNGLAT (offsets disabled)"
-  }
+  #coord_sys <- if (!is.null(geom_part$coordinate_origin)) "LNGLAT_OFFSETS" else "LNGLAT"
+  #if (identical(proj, "globe") && !is.null(geom_part$coordinate_origin)) {
+  #  coord_sys <- "LNGLAT_OFFSETS (UNEXPECTED in globe)"
+  #} else if (identical(proj, "globe")) {
+  #  coord_sys <- "LNGLAT (offsets disabled)"
+  #}
 
-  message(sprintf(
-    "[maplamina] layer=%s type=%s projection=%s coord=%s n_row=%s n_part=%s",
-    id, type, proj, coord_sys,
-    ctx$n_row %||% NA_integer_,
-    ctx$n_part %||% NA_integer_
-  ))
+  #message(sprintf(
+  #  "[maplamina] layer=%s type=%s projection=%s coord=%s n_row=%s n_part=%s",
+  #  id, type, proj, coord_sys,
+  #  ctx$n_row %||% NA_integer_,
+  #  ctx$n_part %||% NA_integer_
+  #))
 
   aes_out <- .ml_collect_layer_aesthetics(ctx, type, data, dots, env = env)
   aes <- aes_out$aes

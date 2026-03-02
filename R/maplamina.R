@@ -28,7 +28,7 @@
 #'   value = runif(1000, 1, 10)
 #' )
 #' maplamina() |>
-#'   add_circles(d, fill_color = color_quantile(~depth, "Inferno"))
+#'   add_circles(d)
 maplamina <- function(
     data = NULL,
     style = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
