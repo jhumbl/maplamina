@@ -1,4 +1,4 @@
-# ---- Mapflow v3: minimal component registry (Stage 3+) ----
+# ---- Maplamina v3: minimal component registry (Stage 3+) ----
 #
 # Goal: make it easy to add new component families (e.g., timeslider, summaries)
 # without editing compiler.R each time.

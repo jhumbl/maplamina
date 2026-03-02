@@ -1,4 +1,4 @@
-# ---- Mapflow v3: validation (layers + refs) ----
+# ---- Maplamina v3: validation (layers + refs) ----
 
 .ml_validate_top_level_invariants <- function(x) {
 

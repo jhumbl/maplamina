@@ -1,4 +1,4 @@
-# ---- Mapflow v3: layer evaluation context ----
+# ---- Maplamina v3: layer evaluation context ----
 # Provides a unified "grain" (row vs part) view for evaluating aesthetics/templates
 # when geometries are exploded into multiple render parts.
 

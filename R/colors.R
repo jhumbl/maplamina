@@ -1,4 +1,4 @@
-# ---- Mapflow v3: aesthetics collectors ----
+# ---- Maplamina v3: aesthetics collectors ----
 # Refactor: split from aesthetics.R for readability.
 
 ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {

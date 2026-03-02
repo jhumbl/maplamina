@@ -1,4 +1,4 @@
-# ---- Mapflow v3: validation (panel + controls + components) ----
+# ---- Maplamina v3: validation (panel + controls + components) ----
 
 .ml_validate_panel_mounts <- function(x) {
   controls <- x$.__controls %||% list()

@@ -1,4 +1,4 @@
-# ---- Mapflow v3: validation (map_options.controls) ----
+# ---- Maplamina v3: validation (map_options.controls) ----
 #
 # MapLibre built-in controls are encoded under:
 #   x$map_options$controls = list(list(type, position, options?))
@@ -6,7 +6,7 @@
 # MVP types supported on R side (attribution intentionally excluded for now):
 #   navigation | scale | fullscreen | geolocate
 #
-# position uses Mapflow corner strings:
+# position uses Maplamina corner strings:
 #   topleft | topright | bottomleft | bottomright
 #
 # options must be NULL/missing or a *named* list (empty list is not allowed, as it can

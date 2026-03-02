@@ -1,4 +1,4 @@
-# ---- Mapflow v3: geometry collectors ----
+# ---- Maplamina v3: geometry collectors ----
 # Refactor: split from geometry.R for readability.
 
 deg2rad <- function(x) x * pi / 180

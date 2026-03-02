@@ -1,4 +1,4 @@
-# ---- Mapflow v3: spec validation (entrypoint) ----
+# ---- Maplamina v3: spec validation (entrypoint) ----
 # Refactor: split ml_validate_spec() into domain-focused helpers.
 
 ml_validate_spec <- function(x) {

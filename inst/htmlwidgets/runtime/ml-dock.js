@@ -2,7 +2,7 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
-  // Dock: mounts Mapflow UI elements into MapLibre's corner control containers
+  // Dock: mounts Maplamina UI elements into MapLibre's corner control containers
   // so they stack with built-in controls (navigation, attribution, scale, etc.)
   // without collisions.
 
@@ -68,8 +68,8 @@
       group.dataset.mfDock = '1';
 
       // Important ordering:
-      // - Top corners: keep Mapflow UI *after* built-in controls (nav, etc.)
-      // - Bottom corners: keep Mapflow UI *before* built-in controls (attribution, scale)
+      // - Top corners: keep Maplamina UI *after* built-in controls (nav, etc.)
+      // - Bottom corners: keep Maplamina UI *before* built-in controls (attribution, scale)
       //   so it appears above them instead of below.
       const isBottom = p === 'bottomleft' || p === 'bottomright';
       if (isBottom) corner.insertBefore(group, corner.firstChild);

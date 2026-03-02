@@ -28,7 +28,7 @@ html, body {
   display: block;
 }
 
-/* Mapflow Dock (stacks with MapLibre controls; prevents collisions) */
+/* Maplamina Dock (stacks with MapLibre controls; prevents collisions) */
 
 .ml-dock-group {
   display: flex !important;
@@ -46,7 +46,7 @@ html, body {
   pointer-events: auto !important;
 }
 
-/* Mapflow Control */
+/* Maplamina Control */
 
 /* MapLibre Control Panel - Clean Navy Style */
 
@@ -921,9 +921,9 @@ html, body {
   }
 }
 
-/* ===== Mapflow Popup (click-pinned) ===== */
+/* ===== Maplamina Popup (click-pinned) ===== */
 
-/* === Mapflow custom tooltip (light, flip left/right, caret) === */
+/* === Maplamina custom tooltip (light, flip left/right, caret) === */
 .ml-tt2 {
   position: absolute;
   z-index: 30;
@@ -1005,7 +1005,7 @@ html, body {
   border-left: 7px solid #fff !important;
 }
 
-/* --- Mapflow popup: light, rounded, overlap caret (no border/shadow on caret) --- */
+/* --- Maplamina popup: light, rounded, overlap caret (no border/shadow on caret) --- */
 .ml-popup {
   position: absolute;
   z-index: 31;
