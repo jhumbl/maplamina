@@ -33,8 +33,8 @@ d <- data.frame(
   value = runif(n, 1, 6)
 )
 
-maplamina(d) |>
-  add_circles(stroke = FALSE, fill_color = "darkblue") |>
+maplamina() |>
+  add_circles(d, stroke = FALSE, fill_color = "darkblue") |>
   add_views(
     view("Value",         radius = ~value),
     view("Inverse Value", radius = ~(max(value) - value + 1))
