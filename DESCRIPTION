@@ -1,10 +1,10 @@
 Package: maplamina
-Title: High-Performance WebGL Mapping Widgets for R
+Title: High-Performance 'WebGL' Mapping Widgets for R
 Version: 0.1.0
 Authors@R: 
     person("Jack", "Humble", email = "jackhumble.dev@gmail.com", role = c("aut", "cre"))
-Description: Creates interactive maps using MapLibre GL and deck.gl via 'htmlwidgets'.
-    Provides GPU-accelerated layers for points, lines and polygons, plus linked UI
+Description: Creates interactive maps using 'MapLibre GL' and 'deck.gl' via 'htmlwidgets'.
+    Provides GPU-accelerated layers for points, lines and polygons, plus linked user interface
     components such as filters, views and summary cards for exploratory analysis and
     production dashboards.
 License: MIT + file LICENSE
