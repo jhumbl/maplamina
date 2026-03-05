@@ -22,7 +22,7 @@ devtools::install_github("jhumbl/maplamina")
 
 ## Quick start (views)
 
-A minimal example showing views switching the **radius** mapping:
+A minimal example of a layer with multiple views transitioning between different **radius** sizes, and a GPU-accelerated filter.
 
 ```r
 set.seed(1)
@@ -38,6 +38,9 @@ maplamina() |>
   add_views(
     view("Value",         radius = ~value),
     view("Inverse Value", radius = ~(max(value) - value + 1))
+  ) |>
+  add_filters(
+      filter_range(~value)
   )
 ```
 
