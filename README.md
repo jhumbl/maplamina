@@ -13,8 +13,12 @@ GPU-accelerated interactive maps for R (MapLibre GL + deck.gl via htmlwidgets).
 
 ## Installation
 
-CRAN submission is pending. Install the development version from GitHub:
+Install from CRAN:
+```r
+install.packages("maplamina")
+```
 
+Or install the development version from GitHub:
 ```r
 # install.packages("devtools")
 devtools::install_github("jhumbl/maplamina")
