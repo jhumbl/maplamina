@@ -28,3 +28,4 @@ dist/
 build/
 *.map
 docs
+inst/doc
