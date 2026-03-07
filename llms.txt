@@ -1,4 +1,4 @@
-# maplamina
+# maplamina [![maplamina logo](reference/figures/maplamina_logo.svg)](https://jhumbl.github.io/maplamina/)
 
 GPU-accelerated interactive maps for R (MapLibre GL + deck.gl via
 htmlwidgets).
@@ -17,6 +17,10 @@ Documentation: <https://jhumbl.github.io/maplamina/>
   and polygons.
 - **Quarto/R Markdown ready:** designed to drop into reports and
   dashboards.
+
+![Demo](reference/figures/recording_demo.gif)
+
+Demo
 
 ## Installation
 
@@ -93,6 +97,12 @@ maplamina() |>
   /
   [`add_markers()`](https://jhumbl.github.io/maplamina/reference/add_markers.md)
   point icons/markers
+
+## Hardware-dependent demo: filtering 10 Million points
+
+![Demo](reference/figures/performance_demo.gif)
+
+Demo
 
 ## Getting help
 

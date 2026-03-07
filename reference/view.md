@@ -38,7 +38,7 @@ v
 #> ~mag * 3
 #> 
 #> attr(,"ml_env")
-#> <environment: 0x563b5cf62eb0>
+#> <environment: 0x55fe7d167ea8>
 #> 
 #> attr(,"class")
 #> [1] "ml_view"
