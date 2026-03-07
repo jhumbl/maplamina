@@ -2,6 +2,7 @@
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/maplamina)](https://CRAN.R-project.org/package=maplamina)
+[![R-CMD-check](https://github.com/jhumbl/maplamina/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jhumbl/maplamina/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 GPU-accelerated interactive maps for R (MapLibre GL + deck.gl via htmlwidgets).
