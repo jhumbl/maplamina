@@ -1,0 +1,1103 @@
+html, body {
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* htmlwidgets container + our widget root */
+.html-widget, .ml-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* HUD overlay (click-through) */
+.ml-hud {
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font: 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* Make sure any canvases inside fill their parent */
+.ml-widget canvas {
+  display: block;
+}
+
+/* Maplamina Dock (stacks with MapLibre controls; prevents collisions) */
+
+.ml-dock-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  pointer-events: none !important;
+}
+
+.ml-dock-group--topright,
+.ml-dock-group--bottomright {
+  align-items: flex-end !important;
+}
+
+.ml-dock-item {
+  pointer-events: auto !important;
+}
+
+/* Maplamina Control */
+
+/* MapLibre Control Panel - Clean Navy Style */
+
+.ml-layer-panel-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  pointer-events: auto !important;
+}
+
+/* Legends */
+
+.ml-legend-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+/*
+.ml-legend {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: darkblue !important;
+  border: 1px solid rgba(30, 58, 138, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  max-width: 260px !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+*/
+
+.ml-legend-title {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: #1e3a8a !important;
+  margin: 0 0 8px 0 !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid rgba(30, 58, 138, 0.18) !important;
+}
+
+.ml-legend-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 3px 0 !important;
+}
+
+.ml-legend-label {
+  color: #374151 !important;
+}
+
+.ml-legend-swatch {
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+}
+
+.ml-legend-swatch--hint { opacity: 0.95 !important; }
+
+.ml-legend-gradient-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* Let the gradient fill the available legend width */
+
+.ml-legend-gradient-barwrap {
+  position: relative !important;
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  min-width: 160px !important;
+}
+
+.ml-legend-gradient {
+  width: 100% !important;
+  height: var(--ml-legend-bar-h, 12px) !important;
+  border-radius:2px !important;
+  overflow: hidden !important;
+}
+
+.ml-legend-axis {
+  position: relative !important;
+  height: 18px !important;
+  margin-top: 6px !important;
+}
+
+.ml-legend-tick {
+  position: absolute !important;
+  top: 0 !important;
+  width: 1px !important;
+  height: 6px !important;
+  background: rgba(0,0,0,0.25) !important;
+  transform: var(--ml-legend-xform, translateX(-50%)) !important;
+}
+
+.ml-legend-tick-label {
+  position: absolute !important;
+  top: 7px !important;
+  font-size: 11px !important;
+  color: #64748b !important;
+  transform: var(--ml-legend-xform, translateX(-50%)) !important;
+  white-space: nowrap !important;
+}
+
+
+/* Legends (v3 controls) — type-scoped overrides to avoid "card in card"
+   Works for any bind id because ml-control-panel applies `.ml-panel-type-legends`. */
+.ml-panel-type-legends .ml-legend-stack {
+  gap: 10px !important;
+}
+
+/* By default legends were styled as standalone cards.
+   When rendered inside a control group shell, make the inner legend blocks "flat". */
+.ml-panel-type-legends .ml-legend,
+.ml-panel-legends .ml-legend,
+.ml-control-legends-stack .ml-legend {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  backdrop-filter: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+
+/* Compact typography inside control shells */
+.ml-panel-type-legends .ml-legend-title {
+  margin: 0 0 6px 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: 0 !important;
+  font-size: 12px !important;
+}
+
+/* Spacing between legends is handled by .ml-legend-stack { gap: ... }.
+   Avoid sibling selectors here because hidden (display:none) legends still affect DOM order,
+   which can create top whitespace when view-targeting toggles visibility. */
+
+/* Panel-mounted legends: slightly tighter still */
+.ml-control-panel .ml-panel-type-legends .ml-legend-stack {
+  gap: 8px !important;
+}
+
+/* Allow gradients to adapt to narrower panel slots */
+.ml-panel-type-legends .ml-legend-gradient-barwrap {
+  min-width: 140px !important;
+}
+
+.ml-layer-panel {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(30, 58, 138, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 14px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  max-width: 260px !important;
+  min-width: 240px !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.ml-panel-title {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  color: #1e3a8a !important;
+  margin: 0 0 12px 0 !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid rgba(30, 58, 138, 0.2) !important;
+}
+
+/* Title row: allow optional icon next to title */
+.ml-panel-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.ml-panel-icon {
+  width: 35px !important;
+  height: 35px !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+}
+
+
+/* Panel title icon link (shown when .__panel.icon is provided) */
+.ml-panel-title-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+}
+
+.ml-panel-title-link:hover .ml-panel-icon {
+  opacity: 0.9 !important;
+}
+
+.ml-panel-title-link:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+.ml-panel-title-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.ml-panel-divider {
+  display: none !important;
+}
+
+.ml-panel-section-title {
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  color: #64748b !important;
+  margin: 0 0 6px 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.ml-panel-section-title:first-of-type {
+  margin-top: 0 !important;
+}
+
+/* Description under the title */
+.ml-panel-description {
+  margin: 8px 0 12px 0 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  color: #475569 !important; /* slate-ish */
+}
+
+/* Slot wrapper: each component (views/filters/...) lives in its own slot */
+.ml-panel-slot {
+  display: block !important;
+}
+
+/* Generic separators between slots (works for any future component) */
+.ml-panel-slot + .ml-panel-slot {
+  position: relative !important;
+  margin-top: 16px !important;
+  padding-top: 14px !important;
+}
+
+.ml-panel-slot + .ml-panel-slot::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -14px !important;
+  right: -14px !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(30, 58, 138, 0.15), transparent) !important;
+}
+
+/* Subtle separation BETWEEN sections:
+   put the divider ABOVE the *next* section title (filters, summaries, etc.) */
+.ml-layer-panel .ml-panel-views + .ml-panel-section-title,
+.ml-layer-panel .ml-panel-filters + .ml-panel-section-title,
+.ml-layer-panel .ml-panel-summaries + .ml-panel-section-title {
+  position: relative !important;
+  margin-top: 16px !important;
+  padding-top: 14px !important;
+}
+
+.ml-layer-panel .ml-panel-views + .ml-panel-section-title::before,
+.ml-layer-panel .ml-panel-filters + .ml-panel-section-title::before,
+.ml-layer-panel .ml-panel-summaries + .ml-panel-section-title::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -14px !important;
+  right: -14px !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(30, 58, 138, 0.15), transparent) !important;
+}
+
+/* Divider between header (title/description) and the first slot */
+.ml-layer-panel > .ml-panel-title + .ml-panel-slot,
+.ml-layer-panel > .ml-panel-description + .ml-panel-slot {
+  position: relative !important;
+  margin-top: 16px !important;
+  padding-top: 14px !important;
+}
+
+.ml-layer-panel > .ml-panel-title + .ml-panel-slot::before,
+.ml-layer-panel > .ml-panel-description + .ml-panel-slot::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -14px !important;
+  right: -14px !important;
+  height: 1px !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(30, 58, 138, 0.15),
+    transparent
+  ) !important;
+}
+
+/* Filters content shouldn't add its own "section start" spacing anymore */
+.ml-panel-filters {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  position: static !important;
+}
+
+/* Summaries (v3 controls) */
+.ml-summaries {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.ml-summary-row {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.ml-summary-label {
+  font-size: 13px !important;
+  color: #374151 !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.ml-summary-value {
+  font-size: 13px !important;
+  color: #111827 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 500 !important;
+  flex: 0 0 auto !important;
+  text-align: right !important;
+}
+
+/* Radio buttons */
+.ml-panel-views form {
+  margin: 0 !important;
+}
+
+.ml-panel-views label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 4px 0 !important;
+  padding: 6px 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  position: relative !important;
+}
+
+.ml-panel-views label:hover {
+  color: #1e3a8a !important;
+}
+
+.ml-panel-views label:has(input:checked) {
+  color: #1e3a8a !important;
+}
+
+.ml-panel-views label:has(input:checked)::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -14px !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 3px !important;
+  background: #1e3a8a !important;
+  border-radius: 0 2px 2px 0 !important;
+}
+
+.ml-panel-views input[type="radio"] {
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #9ca3af !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+
+.ml-panel-views input[type="radio"]:hover {
+  border-color: #1e3a8a !important;
+}
+
+.ml-panel-views input[type="radio"]:checked {
+  border-color: #1e3a8a !important;
+  background: #1e3a8a !important;
+}
+
+.ml-panel-views input[type="radio"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: white !important;
+  border-radius: 50% !important;
+}
+
+.ml-panel-views label span {
+  font-size: 13px !important;
+  color: #374151 !important;
+  font-weight: 400 !important;
+}
+
+.ml-panel-views label:has(input:checked) span {
+  font-weight: 500 !important;
+}
+
+/* Filters */
+.ml-filter {
+  margin: 12px 0 0 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+}
+
+.ml-filter:first-child {
+  margin-top: 0 !important;
+}
+
+.ml-filter-title {
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  color: #64748b !important;
+  margin: 0 0 6px 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.ml-filter-options {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.ml-filter-more {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: none !important;
+  color: #1e3a8a !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+.ml-filter-more:hover {
+  text-decoration: underline !important;
+}
+
+.ml-filter-more:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+  border-radius: 3px !important;
+}
+
+.ml-filter-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  position: relative !important;
+}
+
+.ml-filter-option:hover {
+  color: #1e3a8a !important;
+}
+
+.ml-filter-option:has(input:checked) {
+  color: #1e3a8a !important;
+}
+
+.ml-filter-option:has(input:checked)::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -14px !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 3px !important;
+  background: #1e3a8a !important;
+  border-radius: 0 2px 2px 0 !important;
+}
+
+.ml-filter-option input[type="checkbox"] {
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #9ca3af !important;
+  border-radius: 3px !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+
+.ml-filter-option input[type="checkbox"]:hover {
+  border-color: #1e3a8a !important;
+}
+
+.ml-filter-option input[type="checkbox"]:checked {
+  border-color: #1e3a8a !important;
+  background: #1e3a8a !important;
+}
+
+.ml-filter-option input[type="checkbox"]:checked::after {
+  content: '✓' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 10px !important;
+  font-weight: bold !important;
+  line-height: 1 !important;
+}
+
+.ml-filter-option span {
+  font-size: 13px !important;
+  color: #374151 !important;
+  font-weight: 400 !important;
+}
+
+.ml-filter-option:has(input:checked) span {
+  font-weight: 500 !important;
+}
+
+/* Focus states for accessibility */
+.ml-panel-views input[type="radio"]:focus,
+.ml-filter-option input[type="checkbox"]:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+}
+
+/* Range Slider Styling - Minimal Navy Design */
+.ml-rngs {
+  position: relative !important;
+  width: calc(100% - 16px) !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  margin: 8px 8px 4px 8px !important;
+}
+
+.ml-rngs-track {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+  background: #d1d5db !important;
+  border-radius: 1px !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.ml-rngs-fill {
+  position: absolute !important;
+  height: 2px !important;
+  background: #1e3a8a !important;
+  border-radius: 1px !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+.ml-rngs-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 2px !important;
+  background: #1e3a8a !important;
+  border: none !important;
+  z-index: 3 !important;
+  cursor: pointer !important;
+  touch-action: none !important;
+}
+
+.ml-rngs-thumb:hover {
+  background: #1e40af !important;
+}
+
+.ml-rngs-thumb:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+}
+
+.ml-rngs--dragging {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Range value labels */
+.ml-rng-labels {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 11px !important;
+  color: #64748b !important;
+  margin: 0 8px 4px 8px !important;
+  font-weight: 400 !important;
+}
+
+/* Dropdown Styling - Minimal Navy Design */
+.ml-dd {
+  position: relative !important;
+  margin: 6px 0 0 0 !important;
+  z-index: 100000 !important; /* keep dropdown above other docked UI */
+}
+
+.ml-dd-toggle {
+  width: 100% !important;
+  text-align: left !important;
+  padding: 6px 32px 6px 8px !important;
+  border: 1px solid #9ca3af !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  color: #374151 !important;
+  transition: all 0.15s ease !important;
+  position: relative !important;
+}
+
+.ml-dd-toggle:hover {
+  border-color: #1e3a8a !important;
+}
+
+.ml-dd-toggle:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+  border-color: #1e3a8a !important;
+}
+
+.ml-dd-toggle span {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+}
+
+.ml-dd-clear {
+  position: absolute !important;
+  right: 24px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 14px !important;
+  text-align: center !important;
+  border: 0px solid #9ca3af !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+  transition: all 0.15s ease !important;
+}
+
+.ml-dd-clear:hover {
+  border-color: #1e3a8a !important;
+  color: #1e3a8a !important;
+}
+
+.ml-dd-menu {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: calc(100% + 4px) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(30, 58, 138, 0.2) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  z-index: 100002 !important; /* above legends/panels */
+  max-height: 220px !important;
+  overflow-y: auto !important;
+  padding: 6px !important;
+}
+
+.ml-dd-search {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 6px 8px !important;
+  margin: 0 0 6px 0 !important;
+  border: 1px solid #9ca3af !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  color: #374151 !important;
+  background: #ffffff !important;
+}
+
+.ml-dd-search:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+  border-color: #1e3a8a !important;
+}
+
+
+/* Ensure open dropdown menus overlay other docked UI blocks (legends/panels/etc.) */
+.ml-layer-panel:focus-within,
+.ml-panel-slot-body:focus-within {
+  position: relative !important;
+  z-index: 99999 !important;
+}
+
+/* Stronger (CSS-only): keep the panel lifted while a dropdown menu is open.
+   This avoids relying on :focus-within, which can drop during clicks/rerenders.
+   Requires modern browsers that support :has(). */
+.ml-layer-panel:has(.ml-dd-menu[style*="display: block"]),
+.ml-panel-slot-body:has(.ml-dd-menu[style*="display: block"]),
+.ml-layer-panel:has(.ml-dd-menu[style*="display:block"]),
+.ml-panel-slot-body:has(.ml-dd-menu[style*="display:block"]) {
+  position: relative !important;
+  z-index: 100000 !important;
+}
+
+.ml-dd:has(.ml-dd-menu[style*="display: block"]),
+.ml-dd:has(.ml-dd-menu[style*="display:block"]) {
+  position: relative !important;
+  z-index: 100001 !important;
+}
+
+.ml-dd-options {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.ml-dd-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  padding: 4px 6px !important;
+  border-radius: 3px !important;
+  transition: all 0.15s ease !important;
+  position: relative !important;
+}
+
+.ml-dd-option:hover {
+  background: rgba(30, 58, 138, 0.04) !important;
+  color: #1e3a8a !important;
+}
+
+.ml-dd-option:has(input:checked) {
+  color: #1e3a8a !important;
+}
+
+.ml-dd-option:has(input:checked)::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 3px !important;
+  background: #1e3a8a !important;
+  border-radius: 0 2px 2px 0 !important;
+}
+
+/* Dropdown radio buttons */
+.ml-dd-option input[type="radio"] {
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #9ca3af !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+
+.ml-dd-option input[type="radio"]:hover {
+  border-color: #1e3a8a !important;
+}
+
+.ml-dd-option input[type="radio"]:checked {
+  border-color: #1e3a8a !important;
+  background: #1e3a8a !important;
+}
+
+.ml-dd-option input[type="radio"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: white !important;
+  border-radius: 50% !important;
+}
+
+/* Dropdown checkboxes */
+.ml-dd-option input[type="checkbox"] {
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #9ca3af !important;
+  border-radius: 3px !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+
+.ml-dd-option input[type="checkbox"]:hover {
+  border-color: #1e3a8a !important;
+}
+
+.ml-dd-option input[type="checkbox"]:checked {
+  border-color: #1e3a8a !important;
+  background: #1e3a8a !important;
+}
+
+.ml-dd-option input[type="checkbox"]:checked::after {
+  content: '✓' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 10px !important;
+  font-weight: bold !important;
+  line-height: 1 !important;
+}
+
+.ml-dd-option span {
+  font-size: 13px !important;
+  color: #374151 !important;
+  font-weight: 400 !important;
+}
+
+.ml-dd-option:has(input:checked) span {
+  font-weight: 500 !important;
+}
+
+/* Focus states */
+.ml-dd-option input[type="radio"]:focus,
+.ml-dd-option input[type="checkbox"]:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 1px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .ml-layer-panel {
+    max-width: calc(100vw - 24px) !important;
+    min-width: auto !important;
+  }
+}
+
+/* ===== Maplamina Popup (click-pinned) ===== */
+
+/* === Maplamina custom tooltip (light, flip left/right, caret) === */
+.ml-tt2 {
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+
+  background: #fff;
+  color: #222;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: 12px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  white-space: nowrap;
+}
+
+.ml-tt2__caret {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  pointer-events: none;
+}
+
+/* Tooltip shown to the RIGHT of the cursor → caret on LEFT edge */
+.ml-tt2.ml-tt2--right .ml-tt2__caret {
+  left: -6px; /* overlap the box by ~1px to avoid any seam */
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 7px solid #fff; /* same as tooltip background */
+}
+
+/* Tooltip shown to the LEFT of the cursor → caret on RIGHT edge */
+.ml-tt2.ml-tt2--left .ml-tt2__caret {
+  right: -6px;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 7px solid #fff;
+}
+
+/* Keep light even in dark mode */
+@media (prefers-color-scheme: dark) {
+  .ml-tt2, .ml-tt2 * {
+    background: #fff; color: #222;
+  }
+  .ml-tt2 { border-color: #e5e7eb; }
+}
+
+/* --- Fix: force caret to be a border triangle (not a square) --- */
+.ml-tt2 .ml-tt2__caret {
+  display: block !important;
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+
+  /* hard reset so globals can't make it a square */
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+/* Tooltip on the RIGHT of the cursor → caret on LEFT edge */
+.ml-tt2.ml-tt2--right .ml-tt2__caret {
+  left: -6px !important;                 /* overlap ~1px to avoid seam */
+  border-top: 6px solid transparent !important;
+  border-bottom: 6px solid transparent !important;
+  border-right: 7px solid #fff !important;
+}
+
+/* Tooltip on the LEFT of the cursor → caret on RIGHT edge */
+.ml-tt2.ml-tt2--left .ml-tt2__caret {
+  right: -6px !important;
+  border-top: 6px solid transparent !important;
+  border-bottom: 6px solid transparent !important;
+  border-left: 7px solid #fff !important;
+}
+
+/* --- Maplamina popup: light, rounded, overlap caret (no border/shadow on caret) --- */
+.ml-popup {
+  position: absolute;
+  z-index: 31;
+  pointer-events: auto;
+
+  background: #fff;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  max-width: 320px;
+
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  /* JS sets: transform: translate(-50%, calc(-100% - 10px)) */
+}
+
+/* single white triangle that overlaps the box bottom by ~1px */
+.ml-popup::before { content: none !important; }  /* ensure no underlay */
+.ml-popup::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /* triangle size: 10px tall (border-top), base 16px; overlap = 1px */
+  bottom: -9px; /* = -(height - overlap) = -(10 - 1) → overlaps box by 1px */
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #fff;  /* pure fill; no border, no shadow */
+  pointer-events: none;
+}
+
+/* tidy content */
+.ml-popup h1, .ml-popup h2, .ml-popup h3, .ml-popup h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.ml-popup p { margin: 6px 0; }
+.ml-popup a { color: #1f2937; text-decoration: underline; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ml-summaries {
+  /* no border/card */
+  padding: 4px 0;
+
+  /* rule above and below the whole block */
+  border-top: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.ml-summary-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 12px;
+  align-items: baseline;
+
+  padding: 6px 0;
+
+  /* rule above each row */
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+/* optional: make the first row not “double-lined” against the container top */
+.ml-summary-row:first-child {
+  border-top: none;
+}
+
+.ml-summary-label {
+  opacity: 0.75;
+  font-size: 12px;
+}
+
+.ml-summary-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
