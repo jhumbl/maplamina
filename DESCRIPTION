@@ -8,7 +8,7 @@ Description: Creates interactive maps using 'MapLibre GL' and 'deck.gl' via 'htm
     components such as filters, views and summary cards for exploratory analysis and
     production dashboards.
 License: MIT + file LICENSE
-URL: https://github.com/jhumbl/maplamina
+URL: https://github.com/jhumbl/maplamina, https://jhumbl.github.io/maplamina/
 BugReports: https://github.com/jhumbl/maplamina/issues
 Depends: R (>= 4.1.0)
 Imports: 
