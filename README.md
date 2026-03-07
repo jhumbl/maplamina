@@ -6,6 +6,8 @@
 
 GPU-accelerated interactive maps for R (MapLibre GL + deck.gl via htmlwidgets).
 
+Documentation: https://jhumbl.github.io/maplamina/
+
 - **Fast:** WebGL rendering with binary (typed-array) attributes for smooth interaction with millions of features.
 - **R-native syntax:** pipe-friendly `add_*()` verbs plus formula mappings like `radius = ~value`.
 - **First-class components:** views, filters, and summaries are built in - no more layer-control workarounds.
