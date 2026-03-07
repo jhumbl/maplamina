@@ -1,4 +1,4 @@
-# maplamina <a href="https://jhumbl.github.io/maplamina/"><img src="man/figures/maplamina_logo.svg" align="right" height="160" alt="maplamina logo" /></a>
+# maplamina <a href="https://jhumbl.github.io/maplamina/"><img src="man/figures/maplamina_logo.svg" align="right" style="height:160px;" alt="maplamina logo" /></a>
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/maplamina)](https://CRAN.R-project.org/package=maplamina)
