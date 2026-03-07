@@ -75,6 +75,13 @@ maplamina() |>
 
 ## Hardware-dependent demo: filtering 10 Million points
 
+```r
+maplamina() |>
+  add_circles(big_dataset, radius=~value) |>
+  add_filters(
+    filter_range(~value)
+  )
+```
 ![Demo](man/figures/performance_demo.gif)
 
 ## Getting help
