@@ -1,4 +1,4 @@
-# maplamina
+# maplamina <a href="https://jhumbl.github.io/maplamina/"><img src="man/figures/maplamina_logo.svg" align="right" height="240" alt="maplamina logo" /></a>
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/maplamina)](https://CRAN.R-project.org/package=maplamina)
@@ -15,6 +15,8 @@ Documentation: https://jhumbl.github.io/maplamina/
 - **Composable UI:** bind components into shared controls, and mount them in an optional panel UI.
 - **sf-friendly:** works naturally with `sf` objects for points, lines, and polygons.
 - **Quarto/R Markdown ready:** designed to drop into reports and dashboards.
+
+![Demo](man/figures/recording_demo.gif)
 
 ## Installation
 
@@ -70,6 +72,10 @@ maplamina() |>
 - `add_lines()` paths/lines
 - `add_polygons()` filled polygons (+ stroke)
 - `add_icons()` / `add_markers()` point icons/markers
+
+## Hardware-dependent demo: filtering 10 Million points
+
+![Demo](man/figures/performance_demo.gif)
 
 ## Getting help
 
