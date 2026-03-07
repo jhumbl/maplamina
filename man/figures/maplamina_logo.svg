@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 462" width="400" height="462">
+  <defs>
+    <linearGradient id="bg1f2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a365d"/>
+      <stop offset="100%" stop-color="#0f2440"/>
+    </linearGradient>
+    <linearGradient id="s1f2a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#63b3ed"/>
+      <stop offset="100%" stop-color="#4299e1"/>
+    </linearGradient>
+    <linearGradient id="s1f2b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4fd1c5"/>
+      <stop offset="100%" stop-color="#38b2ac"/>
+    </linearGradient>
+    <linearGradient id="s1f2c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#68d391"/>
+      <stop offset="100%" stop-color="#48bb78"/>
+    </linearGradient>
+    <clipPath id="hex1f2">
+      <polygon points="200,16 384,122 384,340 200,446 16,340 16,122"/>
+    </clipPath>
+  </defs>
+
+  <polygon points="200,16 384,122 384,340 200,446 16,340 16,122" fill="url(#bg1f2)" stroke="#2d5a8e" stroke-width="3"/>
+
+  <g clip-path="url(#hex1f2)">
+
+    <!-- Layer 3 (bottom) - POLYGONS -->
+    <g transform="translate(200,300) rotate(-8)">
+      <rect x="-115" y="-11" width="230" height="22" rx="4" fill="url(#s1f2c)" opacity="0.75"/>
+      <path d="M-80,-3 L-52,-6 L-35,0 L-58,4 Z" fill="#fff" opacity="0.25"/>
+      <path d="M-12,-5 L20,-6 L28,1 L-5,4 Z" fill="#fff" opacity="0.2"/>
+      <path d="M48,-4 L80,-5 L85,2 L52,5 Z" fill="#fff" opacity="0.22"/>
+    </g>
+
+    <!-- Layer 2 (middle) - LINES -->
+    <g transform="translate(200,248) rotate(-5)">
+      <rect x="-125" y="-13" width="250" height="26" rx="4" fill="url(#s1f2b)" opacity="0.82"/>
+      <path d="M-90,0 Q-55,-7 -15,3 Q25,10 60,0 Q80,-5 95,3" fill="none" stroke="#fff" stroke-width="1.8" opacity="0.4" stroke-linecap="round"/>
+      <path d="M-80,6 Q-35,-3 15,7 Q50,4 90,-3" fill="none" stroke="#fff" stroke-width="1" opacity="0.25" stroke-linecap="round"/>
+    </g>
+
+    <!-- Layer 1 (top) - POINTS -->
+    <g transform="translate(200,190) rotate(-2)">
+      <rect x="-135" y="-15" width="270" height="30" rx="5" fill="url(#s1f2a)" opacity="0.9"/>
+      <circle cx="-95" cy="-3" r="3.5" fill="#fff" opacity="0.65"/>
+      <circle cx="-58" cy="5" r="4.5" fill="#fff" opacity="0.75"/>
+      <circle cx="-22" cy="-5" r="3" fill="#fff" opacity="0.55"/>
+      <circle cx="12" cy="3" r="4" fill="#fff" opacity="0.7"/>
+      <circle cx="45" cy="-3" r="5" fill="#fff" opacity="0.8"/>
+      <circle cx="75" cy="5" r="3.5" fill="#fff" opacity="0.65"/>
+      <circle cx="100" cy="-4" r="3" fill="#fff" opacity="0.55"/>
+      <circle cx="118" cy="2" r="2.5" fill="#fff" opacity="0.5"/>
+    </g>
+  </g>
+
+  <text x="200" y="370" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="36" font-weight="700" fill="#e2e8f0" letter-spacing="3">maplamina</text>
+</svg>
