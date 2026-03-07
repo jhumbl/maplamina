@@ -1,0 +1,13 @@
+# Changelog
+
+## maplamina 0.1.0
+
+CRAN release: 2026-03-06
+
+- Initial CRAN release.
+- GPU-accelerated layers for points, lines, polygons, icons, and
+  markers.
+- View, filter and summary components with bindable controls and panel
+  mounting.
+- Views support animated switching with configurable transition
+  `duration` and `easing`.
