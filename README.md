@@ -1,5 +1,9 @@
 # maplamina
 
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/maplamina)](https://CRAN.R-project.org/package=maplamina)
+<!-- badges: end -->
+
 GPU-accelerated interactive maps for R (MapLibre GL + deck.gl via htmlwidgets).
 
 - **Fast:** WebGL rendering with binary (typed-array) attributes for smooth interaction with millions of features.
