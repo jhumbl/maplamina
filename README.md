@@ -79,7 +79,7 @@ maplamina() |>
 maplamina() |>
   add_circles(big_dataset, radius=~value) |>
   add_filters(
-    filter_range(~value)
+    filter_range(~value, live=F)
   )
 ```
 ![Demo](man/figures/performance_demo.gif)
