@@ -21,6 +21,7 @@
     const s = (s0 && typeof s0 === 'object') ? s0 : {};
     if (!(s.layers instanceof Set)) s.layers = new Set();
     if (!(s.rehydrate instanceof Set)) s.rehydrate = new Set();
+    if (!(s.reasons instanceof Set)) s.reasons = new Set();
     s.legends = !!s.legends;
     s.controls = !!s.controls;
     s.tooltip = !!s.tooltip;
@@ -32,6 +33,51 @@
     s.__mfAttached = true;
     rt._sched = s;
     return s;
+  }
+
+  function normalizeReason(reason) {
+    return normText(reason) || null;
+  }
+
+  function pickPrimaryReason(reasons, fallback) {
+    const set = Array.isArray(reasons) ? reasons.filter(Boolean) : [];
+    if (set.includes('views')) return 'views';
+    if (set.includes('filters')) return 'filters';
+    if (set.includes('filters-clear')) return 'filters-clear';
+    if (set.includes('rebuild')) return 'rebuild';
+    return normalizeReason(fallback) || (set.length ? set[set.length - 1] : null);
+  }
+
+  function deriveInvalidation(job, reasons) {
+    const list = Array.isArray(reasons) ? reasons.filter(Boolean) : [];
+    const has = (x) => list.includes(x);
+    const rehydrate = !!(job && Array.isArray(job.rehydrate) && job.rehydrate.length);
+    const layers = !!(job && Array.isArray(job.layers) && job.layers.length);
+    const filters = has('filters') || has('filters-clear');
+    const views = has('views');
+    const encodings = views || rehydrate;
+    const manual = has('rebuild');
+    const controls = !!(job && job.controls);
+    const legends = !!(job && job.legends);
+    const tooltip = !!(job && job.tooltip);
+    const visibility = filters || layers;
+    const render = encodings || visibility || manual;
+    const motionEligible = !!(job && job.allowMotionViews && encodings && !filters && !layers && !manual);
+
+    return {
+      reasons: list,
+      render,
+      encodings,
+      filters,
+      visibility,
+      layers,
+      rehydrate,
+      controls,
+      legends,
+      tooltip,
+      manual,
+      motionEligible
+    };
   }
 
   function schedAdd(set, ids, rt) {
@@ -74,7 +120,9 @@
       if (o.controls) s.controls = true;
       if (o.tooltip) s.tooltip = true;
 
-      if (normText(o.reason) === 'views') s.allowMotionViews = true;
+      const reason = normalizeReason(o.reason);
+      if (reason) s.reasons.add(reason);
+      if (reason === 'views') s.allowMotionViews = true;
 
       if (!s.next) {
         s.next = {};
@@ -86,6 +134,7 @@
       s.raf = requestAnimationFrame(() => {
         s.raf = null;
 
+        const reasons = Array.from(s.reasons);
         const job = {
           layers: Array.from(s.layers),
           rehydrate: Array.from(s.rehydrate),
@@ -96,11 +145,19 @@
           renderEpoch: this._renderEpoch,
           specRef: this.specRef,
           allowMotionViews: !!s.allowMotionViews,
-          reason: o.reason || null
+          reason: pickPrimaryReason(reasons, o.reason),
+          reasons
+        };
+        job.invalidation = deriveInvalidation(job, reasons);
+        job.motionPolicy = {
+          reason: job.reason,
+          allowTransitions: !!job.invalidation.motionEligible,
+          motionEligible: !!job.invalidation.motionEligible
         };
 
         s.layers.clear();
         s.rehydrate.clear();
+        s.reasons.clear();
         s.legends = false;
         s.controls = false;
         s.tooltip = false;

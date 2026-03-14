@@ -35,6 +35,7 @@ dependencies:
   - runtime/ml-dock.js
   - runtime/ml-runtime-map.js
   - runtime/ml-hud.js
+  - runtime/ml-runtime-assembly.js
   - controls/ml-controls-host.js
   - controls/ml-controls-registry.js
   - controls/ml-control-panel.js

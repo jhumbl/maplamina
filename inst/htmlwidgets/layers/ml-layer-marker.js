@@ -2,11 +2,11 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
-  function buildMarkerLayer(st) {
+  function buildMarkerLayer(st, ctx) {
     const cols = st.data_columns || {};
     // Require packed binary positions (same guard as buildIconLayer)
     if (!cols.position || !root.utils.assertTA(st, cols.position.array, 'position.array', 'skip')) {
-      return new deck.IconLayer(root.layerProps.composeLayerProps(st, { data: { length: 0 } }));
+      return new deck.IconLayer(root.layerProps.composeLayerProps(st, { data: { length: 0 } }, ctx));
     }
 
     const posSize = cols.position.size || 2;     // [lon,lat] or [lon,lat,z]
@@ -48,10 +48,11 @@
     };
 
     // ---- stable shared binary geometry identity (cached) --------------------
-    let sharedData = cols.__data_bin_marker;
+    const bucket = root.layerUtils?.getLayerBuildCache ? root.layerUtils.getLayerBuildCache(ctx, st, 'marker') : {};
+    let sharedData = bucket.sharedData;
     if (!sharedData || sharedData.length !== n) {
       sharedData = { length: n, attributes: { getPosition: { value: posArr, size: posSize } } };
-      cols.__data_bin_marker = sharedData;
+      bucket.sharedData = sharedData;
     } else {
       sharedData.length = n;
       const attrs = sharedData.attributes || (sharedData.attributes = {});
@@ -125,7 +126,7 @@
       sizeMaxPixels: Number.isFinite(st.cfg?.sizeMaxPixels) ? st.cfg.sizeMaxPixels : 80
     });
 
-    const propsStroke = root.layerProps.composeLayerProps(stStroke, basePropsStroke);
+    const propsStroke = root.layerProps.composeLayerProps(stStroke, basePropsStroke, ctx);
 
     // ---- FILL (over) --------------------------------------------------------
     const stFill = Object.assign({}, st, { filterKey });
@@ -138,7 +139,7 @@
       sizeMaxPixels: Number.isFinite(st.cfg?.sizeMaxPixels) ? st.cfg.sizeMaxPixels * 0.91 : 80 * 0.91
     });
 
-    const propsFill = root.layerProps.composeLayerProps(stFill, basePropsFill);
+    const propsFill = root.layerProps.composeLayerProps(stFill, basePropsFill, ctx);
 
     // Order: stroke first (under), fill second (over)
     return [ new deck.IconLayer(propsStroke), new deck.IconLayer(propsFill) ];

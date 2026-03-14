@@ -310,32 +310,23 @@
     return (Array.isArray(arr) && arr.length === 1) ? arr[0] : arr;
   }
 
-  async function applyGPUFilteringFromControls(st, layerId, x, rt) {
+  async function getGPUFilterContribution(st, layerId, x, rt) {
+    void x;
+    const lid = normText(layerId);
     const idx = rt && rt._filterIndex;
-    if (!idx || !idx.byLayer || !idx.byLayer.has(layerId)) {
-      // clear any previous gpu filters
-      if (st && st.__gpuFiltering) try { delete st.__gpuFiltering; } catch (_) {}
-      if (st && st.__gpuMeta)      try { delete st.__gpuMeta; } catch (_) {}
-      // clear any previous force-hidden flag (we recompute it per update)
-      if (st && st.__forceHidden)  try { delete st.__forceHidden; } catch (_) {}
-      return st;
+    if (!lid || !idx || !idx.byLayer || !idx.byLayer.has(lid)) {
+      return null;
     }
 
-    const entry = idx.byLayer.get(layerId);
+    const entry = idx.byLayer.get(lid);
     const selDims = (entry && Array.isArray(entry.select)) ? entry.select.slice(0, 4) : [];
     const rngDims = (entry && Array.isArray(entry.range))  ? entry.range.slice(0, 4)  : [];
-
     const stateAll = (rt && rt.state && rt.state.filters && typeof rt.state.filters === 'object') ? rt.state.filters : {};
 
-    // Canonical indexing helpers (part->row + per-part/per-row array indexing).
-    // IMPORTANT: do NOT re-implement feature_index or base detection here; it must be consistent
-    // across filters, encodings, tooltips, etc. (see ml-data.js).
     const { pickPartIndex: pickIndex, indexForArray } = dataMod.getIndexers(st);
-
     const assets = assetsMod;
 
     const gpu = {};
-    // force-hide layers when a non-empty selection has zero overlap with this member's dict
     let forceHidden = false;
 
     const catArrays = [];
@@ -343,17 +334,15 @@
     const catNoMatch = [];
     const catDisabled = [];
     const rngArrays = [];
-    const rngPairs  = [];
+    const rngPairs = [];
 
-    // --- Select (categorical) dims ---
     for (const dim of selDims) {
       const label = dim.label;
       const def = dim.def || null;
       const comp = dim.comp || {};
-      // mergedDict kept for future (debug/UI), even if unused by current runtime
       const mergedDict = (def && Array.isArray(def.dict)) ? def.dict : (Array.isArray(comp.dict) ? comp.dict : []);
       void mergedDict;
-      const compDict   = Array.isArray(comp.dict) ? comp.dict : [];
+      const compDict = Array.isArray(comp.dict) ? comp.dict : [];
 
       let res = null;
       try {
@@ -362,7 +351,6 @@
         }
       } catch (_) { res = null; }
       const codes = res && res.array;
-
       if (!codes || !ArrayBuffer.isView(codes)) continue;
 
       const gid = dim.groupId;
@@ -370,7 +358,6 @@
       const sel = groupState[label];
       let allowed = null;
       let noMatch = false;
-
       let disabled = false;
 
       let selected = null;
@@ -383,17 +370,11 @@
           if (selected.has(String(compDict[i]))) allowed.push(i);
         }
         if (allowed.length === 0) {
-          // Non-empty selection but this member has no overlapping values.
-          // Mark layer as force-hidden (deterministic 'match nothing'), but keep GPU filter props
-          // stable to avoid deck state churn (filterSize/categorySize changes can corrupt attributes).
           forceHidden = true;
-
-          // Avoid deck.gl crash on empty filterCategories; keep a safe categorical dimension.
           allowed = [0];
           noMatch = true;
         }
       } else {
-        // empty selection => dimension disabled (avoid building large allow-lists)
         disabled = true;
         allowed = [0];
       }
@@ -404,7 +385,6 @@
       catDisabled.push(!!disabled);
     }
 
-    // --- Range (numeric) dims ---
     for (const dim of rngDims) {
       const label = dim.label;
       const comp = dim.comp || {};
@@ -437,20 +417,12 @@
 
     const categoryDims = catArrays.length;
     const rangeDims = rngArrays.length;
-    if (categoryDims === 0 && rangeDims === 0) {
-      if (st && st.__gpuFiltering) try { delete st.__gpuFiltering; } catch (_) {}
-      if (st && st.__gpuMeta)      try { delete st.__gpuMeta; } catch (_) {}
-      return st;
-    }
+    if (categoryDims === 0 && rangeDims === 0) return null;
 
-    // Validate dims for filterAdapter (prevents costly introspection on every update)
-    st.__gpuMeta = { categoryDims, rangeDims };
+    const gpuMeta = { categoryDims, rangeDims };
 
     if (categoryDims) {
       gpu.filterCategories = retOneOrMany(catAllowed);
-      // Distinguish "disabled (empty selection)" from "enabled, first option".
-      // Both states can have filterCategories === [0], but deck.gl only invalidates attributes
-      // when updateTriggers change. This key is included in updateTriggers via ml-filters-adapter.
       gpu.__catDisabledKey = retOneOrMany(catDisabled.map(d => d ? 1 : 0));
       const scratchCategory = (categoryDims > 1) ? new Array(categoryDims) : null;
       gpu.getFilterCategory = (d, info) => {
@@ -458,7 +430,6 @@
         const p = (partIdx == null ? 0 : partIdx);
 
         if (categoryDims === 1) {
-          // >>> 0 prevents undefined bubbling into deck.gl (it would crash inside _getCategoryKey)
           if (catNoMatch[0]) return 1;
           if (catDisabled[0]) return 0;
           const arr = catArrays[0];
@@ -503,20 +474,12 @@
       };
     }
 
-    // force-hidden flag (consumed by ml-layer-props to set visible=false)
-    if (forceHidden) {
-      st.__forceHidden = true;
-    } else {
-      if (st && st.__forceHidden) try { delete st.__forceHidden; } catch (_) {}
-    }
-
-    st.__gpuFiltering = gpu;
-    return st;
+    return { gpuFiltering: gpu, gpuMeta, forceHidden };
   }
 
   root.filtersRuntime = Object.assign(root.filtersRuntime || {}, {
     initFiltersState,
     buildFilterIndex,
-    applyGPUFilteringFromControls
+    getGPUFilterContribution
   });
 })(window);
