@@ -17,6 +17,8 @@
     ? core.require('data', 'ml-controls-summaries.js')
     : root.data;
 
+  const runtimeAssembly = root.runtime && root.runtime.assembly;
+
   const normText = utils && utils.normText ? utils.normText : (x => (x == null ? '' : String(x).trim()));
   const formatNumber = utils && typeof utils.formatNumber === 'function'
     ? utils.formatNumber
@@ -45,8 +47,8 @@
     if (p && p.path_starts_array && ArrayBuffer.isView(p.path_starts_array)) {
       return (p.path_starts_array.length >>> 0);
     }
-    if (p && p.__data_bin && typeof p.__data_bin.length === 'number') {
-      return (p.__data_bin.length >>> 0);
+    if (p && p.start_indices && ArrayBuffer.isView(p.start_indices)) {
+      return (p.start_indices.length >>> 0);
     }
 
     // polygons
@@ -54,16 +56,11 @@
     if (poly && poly.poly_starts_array && ArrayBuffer.isView(poly.poly_starts_array)) {
       return (poly.poly_starts_array.length >>> 0);
     }
-    if (poly && poly.__data_i && typeof poly.__data_i.length === 'number') {
-      return (poly.__data_i.length >>> 0);
+    if (poly && poly.start_indices && ArrayBuffer.isView(poly.start_indices)) {
+      return (poly.start_indices.length >>> 0);
     }
     if (poly && typeof poly.length === 'number') {
       return (poly.length >>> 0);
-    }
-
-    // cached binary data object (circles)
-    if (cols && cols.__data_bin && typeof cols.__data_bin.length === 'number') {
-      return (cols.__data_bin.length >>> 0);
     }
 
     // fallback: feature_index length (when present)
@@ -200,7 +197,19 @@
 
   async function computeLayerMask(rt, x, layerId) {
     const entry = rt && rt.layers && typeof rt.layers.get === 'function' ? rt.layers.get(layerId) : null;
-    const st = entry && entry.stHydrated ? entry.stHydrated : (x && x['.__layers'] ? x['.__layers'][layerId] : null);
+    const getRenderState = runtimeAssembly && typeof runtimeAssembly.getRenderState === 'function'
+      ? runtimeAssembly.getRenderState
+      : null;
+    const getLogicalLayer = runtimeAssembly && typeof runtimeAssembly.getLogicalLayer === 'function'
+      ? runtimeAssembly.getLogicalLayer
+      : null;
+    const readRenderField = runtimeAssembly && typeof runtimeAssembly.readRenderField === 'function'
+      ? runtimeAssembly.readRenderField
+      : null;
+
+    const st = (getRenderState && entry ? getRenderState(entry) : null)
+      || (getLogicalLayer && entry ? getLogicalLayer(entry) : null)
+      || (x && x['.__layers'] ? x['.__layers'][layerId] : null);
     if (!st || typeof st !== 'object') {
       return { st: null, n: 0, passCount: 0, mask: null, indexers: null };
     }
@@ -214,7 +223,8 @@
       : ((arr, p) => (Number.isFinite(p) ? (p >>> 0) : 0));
 
     // If layer is force-hidden (e.g. select dim has no overlapping values), nothing passes.
-    if (st.__forceHidden) {
+    const forceHidden = readRenderField ? !!readRenderField(st, 'forceHidden') : !!st.__forceHidden;
+    if (forceHidden) {
       const z = new Uint8Array(n);
       return { st, n, passCount: 0, mask: z, indexers };
     }

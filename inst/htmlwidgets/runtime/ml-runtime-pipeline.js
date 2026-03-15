@@ -11,186 +11,161 @@
   if (!utils0 || typeof utils0.normText !== 'function') {
     throw new Error("[maplamina] Missing function utils.normText required by ml-runtime-pipeline.js");
   }
-
-  // IMPORTANT: preserve canonical utils.normText semantics (trim only, no lowercasing).
-  // Many ids (layer ids, view ids, component ids) are case-sensitive in the authored spec.
   const normText = utils0.normText;
 
   const views0 = core0.require('views', 'ml-runtime-pipeline.js');
-  if (!views0 || typeof views0.unionEncodingKeys !== 'function') {
-    throw new Error("[maplamina] Missing function views.unionEncodingKeys required by ml-runtime-pipeline.js");
+  const applyOrderedViewOps = views0 && views0.applyOrderedViewOps;
+
+  function setEntryRuntimeMeta(entry, motionPolicy, invalidation, reason) {
+    if (!entry || typeof entry !== 'object') return entry;
+    if (!entry.runtime || typeof entry.runtime !== 'object') entry.runtime = {};
+    entry.runtime.lastReason = reason || (motionPolicy && motionPolicy.reason) || null;
+    entry.runtime.lastMotionPolicy = motionPolicy || null;
+    entry.runtime.lastInvalidation = invalidation || null;
+    return entry;
   }
-  const unionEncodingKeysV3 = views0.unionEncodingKeys;
 
   function attach(rt, deps) {
     if (!rt || typeof rt !== 'object') return;
 
-    // Always refresh deps (hot reload / re-render safety)
     rt._mfPipelineDeps = (deps && typeof deps === 'object') ? deps : (rt._mfPipelineDeps || {});
-
     if (rt.__mfPipelineAttached) return;
     rt.__mfPipelineAttached = true;
 
     rt._flushSnapshot = async function(job) {
       const deps = (this && this._mfPipelineDeps && typeof this._mfPipelineDeps === 'object') ? this._mfPipelineDeps : {};
-
-      // Resolve dependencies (captured from the widget closure)
       const el = deps.el;
       const overlay = (typeof deps.getOverlay === 'function') ? deps.getOverlay() : null;
-
       const core = deps.core || root.core;
-      if (!core) return;
+      if (!core || !overlay) return;
 
-      const applyOverlayReplacements = (typeof deps.applyOverlayReplacements === 'function') ? deps.applyOverlayReplacements : (() => null);
-      const pickActiveViews = (typeof deps.pickActiveViews === 'function') ? deps.pickActiveViews : (() => ({}));
-      const computeViewOpsByLayerV3 = (typeof deps.computeViewOpsByLayerV3 === 'function') ? deps.computeViewOpsByLayerV3 : (() => ({ controlledByGroup: new Map(), opsByLayer: new Map(), activeByLayer: new Map() }));
-
+      const applyOverlayReplacements = deps.applyOverlayReplacements;
+      const pickActiveViews = deps.pickActiveViews;
+      const computeViewOpsByLayerV3 = deps.computeViewOpsByLayerV3;
       const mergeEncodings = deps.mergeEncodings || (root.layerUtils && root.layerUtils.mergeEncodings);
       const flattenLayers = deps.flattenLayers || (root.layerUtils && root.layerUtils.flattenLayers);
+      const runtimeAssembly = deps.runtimeAssembly || (root.runtime && root.runtime.assembly);
+      const getGPUFilterContribution = deps.getGPUFilterContribution || (root.filtersRuntime && root.filtersRuntime.getGPUFilterContribution);
+      const injectMotionTransitions = deps.injectMotionTransitions;
+      const syncJobTransitions = deps.syncJobTransitions;
+      const transitionsForBuild = deps.transitionsForBuild;
 
-      const applyGPUFilteringFromControls = (typeof deps.applyGPUFilteringFromControls === 'function') ? deps.applyGPUFilteringFromControls : (async (st) => st);
+      if (!runtimeAssembly || typeof runtimeAssembly.buildRenderArtifacts !== 'function' || typeof runtimeAssembly.getLogicalLayer !== 'function') {
+        throw new Error('[maplamina] Missing runtime assembly helpers required by ml-runtime-pipeline.js');
+      }
+      if (typeof applyOverlayReplacements !== 'function' || typeof pickActiveViews !== 'function' || typeof computeViewOpsByLayerV3 !== 'function') {
+        throw new Error('[maplamina] Missing runtime pipeline dependencies required by ml-runtime-pipeline.js');
+      }
+      if (typeof syncJobTransitions !== 'function' || typeof transitionsForBuild !== 'function') {
+        throw new Error('[maplamina] Missing runtime motion helpers required by ml-runtime-pipeline.js');
+      }
 
-      const disableRuntimeTransitions = (typeof deps.disableRuntimeTransitions === 'function') ? deps.disableRuntimeTransitions : (() => null);
-      const injectMotionTransitions = (typeof deps.injectMotionTransitions === 'function') ? deps.injectMotionTransitions : (() => null);
+      const buildRenderArtifacts = runtimeAssembly.buildRenderArtifacts;
+      const getLogicalLayer = runtimeAssembly.getLogicalLayer;
 
-        const x = this.specRef;
-        const epoch = job && job.renderEpoch;
-        const spec0 = job && job.specRef;
-        if (!x || !overlay) return;
-        // Pass 1: skip stale flushes after a re-render / spec swap
-        if (this._renderEpoch !== epoch || this.specRef !== spec0) return;
-        const dirtyRehydrate = new Set((job && job.rehydrate) ? job.rehydrate.map(normText).filter(Boolean) : []);
-        const dirtyLayers    = new Set((job && job.layers) ? job.layers.map(normText).filter(Boolean) : []);
-        // Dominance: rehydrate > layers
-        for (const lid of dirtyRehydrate) { dirtyLayers.delete(lid); }
-        const doLegends = !!(job && job.legends);
-        const doControls = !!(job && job.controls);
-        const allowViewsMotion = !!(job && (job.allowMotionViews || normText(job.reason) === 'views'));
-        // Stage 2: only 'views' updates may arm/retain motion transitions.
-        // Any other update path (filters, clearTransitions, resize/spec rebuilds, etc.)
-        // must rebuild with transitions disabled to avoid accidental animations.
-        if (dirtyLayers.size) disableRuntimeTransitions(this, Array.from(dirtyLayers));
-        if (!allowViewsMotion && dirtyRehydrate.size) disableRuntimeTransitions(this, Array.from(dirtyRehydrate));
-        if (!dirtyRehydrate.size && !dirtyLayers.size && !doLegends && !doControls) return;
-        const replacements = new Map();
+      const x = this.specRef;
+      const epoch = job && job.renderEpoch;
+      const spec0 = job && job.specRef;
+      if (!x) return;
+      if (this._renderEpoch !== epoch || this.specRef !== spec0) return;
 
-        // --- Rehydrate layers (views/spec-driven) ---
-        if (dirtyRehydrate.size) {
-          // Ensure defaults for all view groups
-          const activeViews = pickActiveViews(this, x);
-          const viewOps = computeViewOpsByLayerV3(x, activeViews);
-          const opsByLayer = viewOps && viewOps.opsByLayer ? viewOps.opsByLayer : new Map();
+      const dirtyRehydrate = new Set((job && job.rehydrate) ? job.rehydrate.map(normText).filter(Boolean) : []);
+      const dirtyLayers = new Set((job && job.layers) ? job.layers.map(normText).filter(Boolean) : []);
+      for (const lid of dirtyRehydrate) dirtyLayers.delete(lid);
 
-          for (const layerId of dirtyRehydrate) {
-            if (this._renderEpoch !== epoch || this.specRef !== spec0) return;
-            const st0 = x && x['.__layers'] ? x['.__layers'][layerId] : null;
-            if (!st0) continue;
-            let st = Object.assign({}, st0);
-            st.id = st.id || layerId;
-                        // Stage 2 (no animation): apply views per-component ops in deterministic order.
-            // Do NOT merge patches ahead of time; last op wins for overlapping encodings.
-            // IMPORTANT: a view may omit a property to fall back to the layer's base value.
-            // Those "revert-to-base" changes must still count as touched for transitions, otherwise they will snap.
-            let __enc = mergeEncodings(st.base_encodings, null);
-            const __ops = (opsByLayer && typeof opsByLayer.get === 'function') ? (opsByLayer.get(layerId) || []) : [];
-            const __compsViews = (x && x['.__components'] && x['.__components'].views) || {};
-            const __prevByGroup = (this && this._viewsPrev && typeof this._viewsPrev === 'object') ? this._viewsPrev : {};
-            if (Array.isArray(__ops) && __ops.length) {
-              for (const op of __ops) {
-                const patch = op && op.encPatch;                // Determine touched keys as union(prevViewKeys, nextViewKeys) so omitted keys still animate back to base.
-                let touch = null;
-                try {
-                  const comp = (__compsViews && op && op.cid) ? __compsViews[op.cid] : null;
-                  const views = (comp && comp.views && typeof comp.views === 'object') ? comp.views : null;
+      const doLegends = !!(job && job.legends);
+      const doControls = !!(job && job.controls);
+      if (!dirtyRehydrate.size && !dirtyLayers.size && !doLegends && !doControls) return;
 
-                  const prevName = (op && op.groupId) ? normText(__prevByGroup[op.groupId]) : null;
-                  const prevEnc = (views && prevName && views[prevName] && views[prevName].encodings) || null;
+      const transitionTargets = Array.from(new Set([].concat(Array.from(dirtyLayers), Array.from(dirtyRehydrate))));
+      const motionPolicy = syncJobTransitions(this, transitionTargets, job || { reason: null });
+      const replacements = new Map();
 
-                  const nextEnc = (patch && typeof patch === 'object')
-                    ? patch
-                    : (views && op && op.activeView && views[op.activeView] && views[op.activeView].encodings) || null;
+      let activeViews = null;
+      let viewOpsByLayer = new Map();
+      if (dirtyRehydrate.size || dirtyLayers.size) {
+        activeViews = pickActiveViews(this, x);
+        const viewOps = computeViewOpsByLayerV3(x, activeViews);
+        viewOpsByLayer = (viewOps && viewOps.opsByLayer) ? viewOps.opsByLayer : new Map();
+      }
 
-                  touch = unionEncodingKeysV3(prevEnc, nextEnc);
-                } catch (_) {}
+      const rebuildLayer = async ({ layerId, sourceState, logical, withViews }) => {
+        // NOTE: if re-adding diagnostic logging here, beware that prevEntry and
+        // result.entry are the same object — buildRenderArtifacts overwrites
+        // entry.cache.lastRenderState in place. Snapshot any previous render state
+        // *before* calling buildRenderArtifacts, not after.
+        const layerViewOps = (viewOpsByLayer && typeof viewOpsByLayer.get === 'function' && Array.isArray(viewOpsByLayer.get(layerId)))
+          ? viewOpsByLayer.get(layerId)
+          : [];
+        const layerType = (sourceState && sourceState.type) || (logical && logical.type) || null;
+        const result = await buildRenderArtifacts({
+          entry: this.layers.get(layerId),
+          sourceState: sourceState || null,
+          logical: logical || null,
+          layerId,
+          spec: x,
+          rt: this,
+          x,
+          core,
+          mergeEncodings,
+          opsByLayer: withViews ? viewOpsByLayer : null,
+          applyOrderedViewOps: withViews ? applyOrderedViewOps : null,
+          prevByGroup: withViews ? ((this && this._viewsPrev && typeof this._viewsPrev === 'object') ? this._viewsPrev : {}) : null,
+          onViewOp: withViews ? ((op, meta) => {
+            if (!motionPolicy.allowTransitions || typeof injectMotionTransitions !== 'function') return;
+            const touch = meta && meta.touch;
+            const patch = meta && meta.patch;
+            if (touch) injectMotionTransitions(this, layerId, layerType, touch, op.motion);
+            else if (patch && typeof patch === 'object') injectMotionTransitions(this, layerId, layerType, patch, op.motion);
+          }) : null,
+          getGPUFilterContribution,
+          transitions: transitionsForBuild(this, layerId, motionPolicy),
+          buildLayer: this.buildLayer
+        });
 
-                if (allowViewsMotion) {
-                  if (touch) {
-                    injectMotionTransitions(this, layerId, st.type, touch, op.motion);
-                  } else if (patch && typeof patch === 'object') {
-                    // Fallback: original behavior
-                    injectMotionTransitions(this, layerId, st.type, patch, op.motion);
-                  }
-                }
+        if (!result) return;
+        setEntryRuntimeMeta(result.entry, motionPolicy, (job && job.invalidation) || null, motionPolicy.reason || (job && job.reason) || null);
+        replacements.set(layerId, flattenLayers(result.layer));
+        this.layers.set(layerId, result.entry);
+      };
 
-                if (patch && typeof patch === 'object') {
-                  __enc = mergeEncodings(__enc, patch);
-                }
-              }
-            }
-            st.base_encodings = __enc;
-            await core.resolveActiveOnly(st);
-            st = await applyGPUFilteringFromControls(st, st.id, x, this);
-            const pruneId = core.pruneEmbeddedBlobsIdle(st);
-            if (this.pruneTasks) this.pruneTasks.add(pruneId);
-            // Stage 3: attach runtime-injected transitions (if any) to this layer build.
-            // IMPORTANT: this is runtime-only (st.__transitions) and does NOT violate the v3 spec invariant.
-            st.__transitions = (this._layerTransitions && this._layerTransitions.get(layerId)) || null;
-            const L = this.buildLayer(st);
-            const arr = flattenLayers(L);
-            replacements.set(layerId, arr);
-            const entry = this.layers.get(st.id) || {};
-            entry.stHydrated = st;
-            entry.layer = L;
-            this.layers.set(st.id, entry);
-            core.resolveRemainingViewsIdle(st);
-          }
-        }
-
-        // --- Rebuild layers from hydrated spec (filters-driven) ---
-        for (const layerId of dirtyLayers) {
+      if (dirtyRehydrate.size) {
+        for (const layerId of dirtyRehydrate) {
           if (this._renderEpoch !== epoch || this.specRef !== spec0) return;
-          const E = this.layers.get(layerId);
-          if (!E || !E.stHydrated) continue;
-          let st = Object.assign({}, E.stHydrated);
-          st.id = st.id || layerId;
-          st = await applyGPUFilteringFromControls(st, layerId, x, this);
-          // Stage 3: persist any runtime transitions across filter rebuilds (sticky in Stage 3).
-          st.__transitions = (this._layerTransitions && this._layerTransitions.get(layerId)) || null;
-          const L = this.buildLayer(st);
-          const arr = flattenLayers(L);
-          replacements.set(layerId, arr);
-          E.stHydrated = st;
-          E.layer = L;
-          this.layers.set(layerId, E);
+          const st0 = x && x['.__layers'] ? x['.__layers'][layerId] : null;
+          if (!st0) continue;
+          await rebuildLayer({ layerId, sourceState: st0, withViews: true });
         }
+      }
 
-        if (replacements.size) {
-          // Pass 1: guard against stale async updates after a re-render
-          if (this._renderEpoch !== epoch || this.specRef !== spec0 || !overlay) return;
-          applyOverlayReplacements(replacements);
-        }
+      for (const layerId of dirtyLayers) {
+        if (this._renderEpoch !== epoch || this.specRef !== spec0) return;
+        const entry = this.layers.get(layerId);
+        const logical = getLogicalLayer(entry);
+        if (!logical) continue;
+        const withViews = !!(viewOpsByLayer && typeof viewOpsByLayer.get === 'function' && Array.isArray(viewOpsByLayer.get(layerId)) && viewOpsByLayer.get(layerId).length);
+        await rebuildLayer({ layerId, logical, withViews });
+      }
 
+      if (replacements.size) {
+        if (this._renderEpoch !== epoch || this.specRef !== spec0 || !overlay) return;
+        applyOverlayReplacements(replacements);
+      }
 
-// Clear one-shot previous views captured for this batch of view updates
-try {
-  if (dirtyRehydrate && dirtyRehydrate.size && this._viewsPrev && typeof this._viewsPrev === 'object') {
-    this._viewsPrev = {};
-  }
-} catch (_) {}
+      try {
+        if (dirtyRehydrate.size && this._viewsPrev && typeof this._viewsPrev === 'object') this._viewsPrev = {};
+      } catch (_) {}
 
-if (doLegends) {
-          try { root.legends && typeof root.legends.applyVisibility === 'function' && root.legends.applyVisibility(el, x); } catch (_) {}
-        }
+      if (doLegends) {
+        try { root.legends && typeof root.legends.applyVisibility === 'function' && root.legends.applyVisibility(el, x); } catch (_) {}
+      }
 
-        // Stage 2: control updates (e.g. summaries) can run without re-mounting.
-        if (doControls) {
-          try {
-            root.controls && root.controls.panel && typeof root.controls.panel.update === 'function'
-              && root.controls.panel.update(el, x, this, job);
-          } catch (_) {}
-        }
-
-        // Future: job.tooltip hooks can be handled here without adding new schedulers.
+      if (doControls) {
+        try {
+          root.controls && root.controls.panel && typeof root.controls.panel.update === 'function'
+            && root.controls.panel.update(el, x, this, job);
+        } catch (_) {}
+      }
     };
   }
 

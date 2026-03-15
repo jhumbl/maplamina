@@ -2,17 +2,18 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
-  function buildScatterplotLayer(st) {
+  function buildScatterplotLayer(st, ctx) {
     const cols = st.data_columns || {};
     if (!cols.position || !root.utils.assertTA(st, cols.position.array, 'position.array', 'skip')) {
-      return new deck.ScatterplotLayer(root.layerProps.composeLayerProps(st, { data: { length: 0 } }));
+      return new deck.ScatterplotLayer(root.layerProps.composeLayerProps(st, { data: { length: 0 } }, ctx));
     }
 
     const size = cols.position.size || 2;
     const pos  = cols.position.array;
     const n    = Math.floor(pos.length / size);
 
-    let dataObj = cols.__data_bin;
+    const bucket = root.layerUtils?.getLayerBuildCache ? root.layerUtils.getLayerBuildCache(ctx, st, 'scatterplot') : {};
+    let dataObj = bucket.dataObj;
     if (!dataObj || dataObj.length !== n) {
       dataObj = {
         length: n,
@@ -20,7 +21,7 @@
           getPosition: { value: pos, size }
         }
       };
-      cols.__data_bin = dataObj;
+      bucket.dataObj = dataObj;
     } else {
       const attr = dataObj.attributes || (dataObj.attributes = {});
       const gp   = attr.getPosition || (attr.getPosition = {});
@@ -56,7 +57,7 @@
       lineWidthMaxPixels: Number.isFinite(st.cfg?.lineWidthMaxPixels) ? st.cfg.lineWidthMaxPixels : Number.MAX_SAFE_INTEGER
     };
 
-    const layerProps = root.layerProps.composeLayerProps(st, baseProps);
+    const layerProps = root.layerProps.composeLayerProps(st, baseProps, ctx);
     return new deck.ScatterplotLayer(layerProps);
   }
 

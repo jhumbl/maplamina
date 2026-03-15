@@ -13,8 +13,6 @@
     throw new Error("[maplamina] Missing function utils.normText required by ml-runtime-motion.js");
   }
 
-  // IMPORTANT: preserve canonical utils.normText semantics (trim only, no lowercasing).
-  // Layer ids are case-sensitive and must match the ids used elsewhere (e.g., layerProps lookup).
   const normText = utils.normText;
 
   function deckPropsTouchedByEncodingPatch(layerType, encPatch) {
@@ -25,6 +23,50 @@
       }
     } catch (_) {}
     return [];
+  }
+
+  function normalizeReason(reason) {
+    return normText(reason) || null;
+  }
+
+  function deriveMotionPolicy(job) {
+    const j = (job && typeof job === 'object') ? job : {};
+    const reason = normalizeReason(j.reason || (j.motionPolicy && j.motionPolicy.reason));
+    const invalidation = (j.invalidation && typeof j.invalidation === 'object') ? j.invalidation : null;
+    const allowTransitions = !!(
+      (j.motionPolicy && j.motionPolicy.allowTransitions) ||
+      j.allowMotionViews ||
+      (invalidation && invalidation.motionEligible) ||
+      reason === 'views'
+    );
+    const policy = {
+      reason,
+      allowTransitions,
+      motionEligible: allowTransitions,
+      invalidation
+    };
+    return policy;
+  }
+
+  function transitionsForBuild(rt, layerId, jobOrPolicy) {
+    const policy = (jobOrPolicy && typeof jobOrPolicy === 'object' && Object.prototype.hasOwnProperty.call(jobOrPolicy, 'allowTransitions'))
+      ? jobOrPolicy
+      : deriveMotionPolicy(jobOrPolicy);
+    const lid = normText(layerId);
+    if (!lid) return null;
+    const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
+      ? rt._layerTransitions.get(lid)
+      : null;
+    const transitionKeys = (t && typeof t === 'object') ? Object.keys(t) : [];
+    return transitionKeys.length ? t : null;
+  }
+
+  function syncJobTransitions(rt, layerIds, jobOrPolicy) {
+    const policy = (jobOrPolicy && typeof jobOrPolicy === 'object' && Object.prototype.hasOwnProperty.call(jobOrPolicy, 'allowTransitions'))
+      ? jobOrPolicy
+      : deriveMotionPolicy(jobOrPolicy);
+    if (!policy.allowTransitions) disableRuntimeTransitions(rt, layerIds);
+    return policy;
   }
 
   function ensureLayerTransitions(rt, layerId) {
@@ -67,9 +109,8 @@
       if (!lid || !p) return;
 
       const tok = (rt._transitionTokens && rt._transitionTokens.get) ? rt._transitionTokens.get(lid) : null;
-      if (!tok || tok[p] !== token) return; // stale callback; do nothing
+      if (!tok || tok[p] !== token) return;
 
-      // Clear token entry
       try { delete tok[p]; } catch (_) {}
       if (!Object.keys(tok).length) {
         try { rt._transitionTokens.delete(lid); } catch (_) {}
@@ -85,7 +126,6 @@
       const prevHadCb = !!(prev && typeof prev === 'object' && (typeof prev.onEnd === 'function' || typeof prev.onInterrupt === 'function'));
       const alreadyDisabled = (prevDur <= 0) && !prevHadCb;
 
-      // Stage 4: keep a primed-but-disabled entry (duration=0, no callbacks) to avoid cold-start snaps.
       if (!alreadyDisabled) {
         let disabled = null;
         try {
@@ -110,7 +150,6 @@
         const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
         if (!t || typeof t !== 'object') continue;
 
-        // Invalidate tokens so any in-flight callbacks become stale/no-ops.
         try { rt._transitionTokens && rt._transitionTokens.delete && rt._transitionTokens.delete(lid); } catch (_) {}
 
         try {
@@ -132,23 +171,45 @@
     const t = ensureLayerTransitions(rt, layerId);
     if (!t) return;
 
+    try {
+      const tr = root.transitions;
+      if (tr && typeof tr.primeTransitionsForProps === 'function') {
+        tr.primeTransitionsForProps(t, touched, null);
+        return;
+      }
+    } catch (_) {}
+
     for (const p of touched) {
       const prev = t[p];
       const prevDur = (prev && typeof prev === 'object' && Number.isFinite(+prev.duration)) ? +prev.duration
                     : (Number.isFinite(prev) ? +prev : 0);
-      if (prevDur > 0) continue; // already warm
-      // Warm: tiny duration entry, no callbacks
-      t[p] = { duration: 1 };
+      if (prevDur > 0) continue;
+      if (prev && typeof prev === 'object') {
+        let disabled = null;
+        try {
+          const tr = root.transitions;
+          if (tr && typeof tr.disableTransitionEntry === 'function') {
+            disabled = tr.disableTransitionEntry(prev);
+          }
+        } catch (_) {}
+        t[p] = disabled || { duration: 0 };
+        continue;
+      }
+      t[p] = { duration: 0 };
     }
   }
 
   function injectMotionTransitions(rt, layerId, layerType, encPatch, motion) {
     const touched = deckPropsTouchedByEncodingPatch(layerType, encPatch);
-    if (!touched.length) return;
+    if (!touched.length) {
+      return;
+    }
 
     const m = (motion && typeof motion === 'object') ? motion : {};
     const duration = Number.isFinite(+m.duration) ? +m.duration : 750;
-    if (duration <= 0) return; // explicit disable (also prevents stickiness)
+    if (duration <= 0) {
+      return;
+    }
 
     const easingKey = (m.easing != null) ? m.easing : 'smoothstep';
 
@@ -172,7 +233,6 @@
       } catch (_) {}
 
       if (!entry) {
-        // Fallback: still honor easing keys via transitions.parseEasingKey when available.
         let easing = null;
         try { const tr = root.transitions; if (tr && typeof tr.parseEasingKey === 'function') easing = tr.parseEasingKey(easingKey); } catch (_) {}
         entry = Object.assign({ duration, onEnd, onInterrupt }, (typeof easing === 'function') ? { easing } : null);
@@ -184,7 +244,6 @@
 
   function attach(rt) {
     if (!rt || typeof rt !== 'object') return rt;
-    // Ensure state exists for motion storage
     if (!rt._layerTransitions || typeof rt._layerTransitions.get !== 'function') rt._layerTransitions = new Map();
     if (!rt._transitionTokens || typeof rt._transitionTokens.get !== 'function') rt._transitionTokens = new Map();
     if (!Number.isFinite(rt._transitionTokenSeq)) rt._transitionTokenSeq = 0;
@@ -192,6 +251,10 @@
   }
 
   root.runtime.motion.attach = attach;
+  root.runtime.motion.normalizeReason = normalizeReason;
+  root.runtime.motion.deriveMotionPolicy = deriveMotionPolicy;
+  root.runtime.motion.transitionsForBuild = transitionsForBuild;
+  root.runtime.motion.syncJobTransitions = syncJobTransitions;
   root.runtime.motion.ensureLayerTransitions = ensureLayerTransitions;
   root.runtime.motion.disableRuntimeTransitions = disableRuntimeTransitions;
   root.runtime.motion.primeRuntimeTransitions = primeRuntimeTransitions;
