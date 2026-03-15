@@ -328,6 +328,8 @@
 
     const gpu = {};
     let forceHidden = false;
+    const selectSummary = [];
+    const rangeSummary = [];
 
     const catArrays = [];
     const catAllowed = [];
@@ -379,6 +381,17 @@
         allowed = [0];
       }
 
+      selectSummary.push({
+        groupId: gid,
+        label,
+        selected: selected ? Array.from(selected) : [],
+        allowedCount: Array.isArray(allowed) ? allowed.length : 0,
+        disabled: !!disabled,
+        noMatch: !!noMatch,
+        dictLength: compDict.length,
+        codesLength: codes.length || 0
+      });
+
       catArrays.push(codes);
       catAllowed.push(allowed);
       catNoMatch.push(!!noMatch);
@@ -410,6 +423,13 @@
       if (!Number.isFinite(lo)) lo = 0;
       if (!Number.isFinite(hi)) hi = lo;
       if (lo > hi) { const t = lo; lo = hi; hi = t; }
+
+      rangeSummary.push({
+        groupId: gid,
+        label,
+        range: [lo, hi],
+        valuesLength: vals.length || 0
+      });
 
       rngArrays.push(vals);
       rngPairs.push([lo, hi]);

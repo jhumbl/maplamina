@@ -80,6 +80,12 @@
     };
   }
 
+  function idsToArray(ids) {
+    if (ids == null) return [];
+    if (ids === true) return ['*'];
+    return (Array.isArray(ids) ? ids : [ids]).map(v => normText(v)).filter(Boolean);
+  }
+
   function schedAdd(set, ids, rt) {
     if (!set || ids == null) return;
 

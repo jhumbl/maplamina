@@ -79,6 +79,7 @@
     const prevByGroup = (opts && opts.prevByGroup && typeof opts.prevByGroup === 'object') ? opts.prevByGroup : {};
     const onOp = (opts && typeof opts.onOp === 'function') ? opts.onOp : null;
 
+
     if (Array.isArray(ops) && ops.length) {
       for (const op of ops) {
         const patch = op && op.encPatch;
@@ -93,6 +94,8 @@
             : (views && op && op.activeView && views[op.activeView] && views[op.activeView].encodings) || null;
           touch = unionEncodingKeys(prevEnc, nextEnc);
         } catch (_) {}
+
+
 
         if (onOp) {
           try { onOp(op, { patch, touch, layerId, state: out }); } catch (_) {}

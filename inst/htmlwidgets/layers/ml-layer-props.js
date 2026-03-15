@@ -240,7 +240,21 @@
 
     const runtimeTransitions = getRuntimeField(st, 'transitions');
     if (runtimeTransitions && typeof runtimeTransitions === 'object') {
-      props.transitions = Object.assign({}, props.transitions || {}, runtimeTransitions);
+      const warmed = {};
+      for (const k of Object.keys(runtimeTransitions)) {
+        const entry = runtimeTransitions[k];
+        const dur = (entry && typeof entry === 'object' && Number.isFinite(entry.duration))
+          ? entry.duration
+          : (Number.isFinite(entry) ? entry : -1);
+        if (dur > 0) {
+          warmed[k] = entry;
+        } else if (dur === 0) {
+          warmed[k] = { duration: 1 };
+        }
+      }
+      if (Object.keys(warmed).length) {
+        props.transitions = Object.assign({}, props.transitions || {}, warmed);
+      }
     }
 
     ensurePolygonSubLayerProps(st, props);

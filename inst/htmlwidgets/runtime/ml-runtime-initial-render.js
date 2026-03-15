@@ -23,6 +23,29 @@
     };
   }
 
+  function readInitialTransitions(rt, layerId, transitionsForBuild) {
+    try {
+      if (typeof transitionsForBuild === 'function') {
+        return transitionsForBuild(rt, layerId, {
+          reason: 'initial',
+          allowTransitions: false,
+          motionEligible: false,
+          invalidation: { initial: true, render: true, encodings: true, motionEligible: false }
+        });
+      }
+    } catch (_) {}
+
+    try {
+      const lid = String(layerId || '');
+      const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
+        ? rt._layerTransitions.get(lid)
+        : null;
+      return (t && typeof t === 'object' && Object.keys(t).length) ? t : null;
+    } catch (_) {}
+
+    return null;
+  }
+
   mod.renderInitial = async function renderInitial(opts) {
     if (!opts || typeof opts !== 'object') return { currentLayers: [] };
 
@@ -39,7 +62,10 @@
     const getGPUFilterContribution = opts.getGPUFilterContribution || (root.filtersRuntime && root.filtersRuntime.getGPUFilterContribution);
     const mergeEncodings = opts.mergeEncodings;
     const runtimeAssembly = opts.runtimeAssembly || (root.runtime && root.runtime.assembly);
-    const primeRuntimeTransitions = opts.primeRuntimeTransitions;
+    const motionMod = root.runtime && root.runtime.motion;
+    const primeRuntimeTransitions = opts.primeRuntimeTransitions || (motionMod && motionMod.primeRuntimeTransitions);
+    const disableRuntimeTransitions = opts.disableRuntimeTransitions || (motionMod && motionMod.disableRuntimeTransitions);
+    const transitionsForBuild = opts.transitionsForBuild || (motionMod && motionMod.transitionsForBuild);
     const ensureHudParts = opts.ensureHudParts;
 
     if (!el || !x || !rt || !overlay) return { currentLayers: opts.currentLayers || [] };
@@ -110,6 +136,10 @@
       if (primeKeys && typeof primeRuntimeTransitions === 'function') {
         primeRuntimeTransitions(rt, id, st0 && st0.type, primeKeys);
       }
+      if (typeof disableRuntimeTransitions === 'function') {
+        disableRuntimeTransitions(rt, id);
+      }
+      const buildTransitions = readInitialTransitions(rt, id, transitionsForBuild);
 
       const result = await buildRenderArtifacts({
         entry: rt.layers.get(id),
@@ -123,7 +153,7 @@
         opsByLayer: viewOpsByLayer,
         applyOrderedViewOps,
         getGPUFilterContribution,
-        transitions: null,
+        transitions: buildTransitions,
         buildLayer: rt.buildLayer
       });
 

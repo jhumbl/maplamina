@@ -39,25 +39,26 @@
       (invalidation && invalidation.motionEligible) ||
       reason === 'views'
     );
-    return {
+    const policy = {
       reason,
       allowTransitions,
       motionEligible: allowTransitions,
       invalidation
     };
+    return policy;
   }
 
   function transitionsForBuild(rt, layerId, jobOrPolicy) {
     const policy = (jobOrPolicy && typeof jobOrPolicy === 'object' && Object.prototype.hasOwnProperty.call(jobOrPolicy, 'allowTransitions'))
       ? jobOrPolicy
       : deriveMotionPolicy(jobOrPolicy);
-    if (!policy.allowTransitions) return null;
     const lid = normText(layerId);
     if (!lid) return null;
     const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
       ? rt._layerTransitions.get(lid)
       : null;
-    return (t && typeof t === 'object') ? t : null;
+    const transitionKeys = (t && typeof t === 'object') ? Object.keys(t) : [];
+    return transitionKeys.length ? t : null;
   }
 
   function syncJobTransitions(rt, layerIds, jobOrPolicy) {
@@ -170,22 +171,45 @@
     const t = ensureLayerTransitions(rt, layerId);
     if (!t) return;
 
+    try {
+      const tr = root.transitions;
+      if (tr && typeof tr.primeTransitionsForProps === 'function') {
+        tr.primeTransitionsForProps(t, touched, null);
+        return;
+      }
+    } catch (_) {}
+
     for (const p of touched) {
       const prev = t[p];
       const prevDur = (prev && typeof prev === 'object' && Number.isFinite(+prev.duration)) ? +prev.duration
                     : (Number.isFinite(prev) ? +prev : 0);
       if (prevDur > 0) continue;
-      t[p] = { duration: 1 };
+      if (prev && typeof prev === 'object') {
+        let disabled = null;
+        try {
+          const tr = root.transitions;
+          if (tr && typeof tr.disableTransitionEntry === 'function') {
+            disabled = tr.disableTransitionEntry(prev);
+          }
+        } catch (_) {}
+        t[p] = disabled || { duration: 0 };
+        continue;
+      }
+      t[p] = { duration: 0 };
     }
   }
 
   function injectMotionTransitions(rt, layerId, layerType, encPatch, motion) {
     const touched = deckPropsTouchedByEncodingPatch(layerType, encPatch);
-    if (!touched.length) return;
+    if (!touched.length) {
+      return;
+    }
 
     const m = (motion && typeof motion === 'object') ? motion : {};
     const duration = Number.isFinite(+m.duration) ? +m.duration : 750;
-    if (duration <= 0) return;
+    if (duration <= 0) {
+      return;
+    }
 
     const easingKey = (m.easing != null) ? m.easing : 'smoothstep';
 

@@ -2,11 +2,27 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
+  function cloneEncodingValue(value) {
+    if (value == null || typeof value !== 'object') return value;
+    if (Array.isArray(value)) return value.slice();
+    if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView && ArrayBuffer.isView(value)) return value;
+    return Object.assign({}, value);
+  }
+
+  function cloneEncodingMap(enc) {
+    const src = (enc && typeof enc === 'object') ? enc : null;
+    if (!src) return {};
+    const out = {};
+    for (const key of Object.keys(src)) out[key] = cloneEncodingValue(src[key]);
+    return out;
+  }
+
   function mergeEncodings(baseEnc, patchEnc) {
-    const base = (baseEnc && typeof baseEnc === 'object') ? baseEnc : {};
+    const out = cloneEncodingMap(baseEnc);
     const patch = (patchEnc && typeof patchEnc === 'object') ? patchEnc : null;
-    if (!patch) return Object.assign({}, base);
-    return Object.assign({}, base, patch);
+    if (!patch) return out;
+    for (const key of Object.keys(patch)) out[key] = cloneEncodingValue(patch[key]);
+    return out;
   }
 
   function layerCacheKey(st) {

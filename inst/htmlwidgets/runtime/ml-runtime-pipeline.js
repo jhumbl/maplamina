@@ -81,19 +81,27 @@
       const motionPolicy = syncJobTransitions(this, transitionTargets, job || { reason: null });
       const replacements = new Map();
 
+      let activeViews = null;
       let viewOpsByLayer = new Map();
-      if (dirtyRehydrate.size) {
-        const activeViews = pickActiveViews(this, x);
+      if (dirtyRehydrate.size || dirtyLayers.size) {
+        activeViews = pickActiveViews(this, x);
         const viewOps = computeViewOpsByLayerV3(x, activeViews);
         viewOpsByLayer = (viewOps && viewOps.opsByLayer) ? viewOps.opsByLayer : new Map();
       }
 
       const rebuildLayer = async ({ layerId, sourceState, logical, withViews }) => {
+        // NOTE: if re-adding diagnostic logging here, beware that prevEntry and
+        // result.entry are the same object — buildRenderArtifacts overwrites
+        // entry.cache.lastRenderState in place. Snapshot any previous render state
+        // *before* calling buildRenderArtifacts, not after.
+        const layerViewOps = (viewOpsByLayer && typeof viewOpsByLayer.get === 'function' && Array.isArray(viewOpsByLayer.get(layerId)))
+          ? viewOpsByLayer.get(layerId)
+          : [];
         const layerType = (sourceState && sourceState.type) || (logical && logical.type) || null;
         const result = await buildRenderArtifacts({
           entry: this.layers.get(layerId),
-          sourceState: withViews ? sourceState : null,
-          logical: withViews ? null : logical,
+          sourceState: sourceState || null,
+          logical: logical || null,
           layerId,
           spec: x,
           rt: this,
@@ -135,7 +143,8 @@
         const entry = this.layers.get(layerId);
         const logical = getLogicalLayer(entry);
         if (!logical) continue;
-        await rebuildLayer({ layerId, logical, withViews: false });
+        const withViews = !!(viewOpsByLayer && typeof viewOpsByLayer.get === 'function' && Array.isArray(viewOpsByLayer.get(layerId)) && viewOpsByLayer.get(layerId).length);
+        await rebuildLayer({ layerId, logical, withViews });
       }
 
       if (replacements.size) {
