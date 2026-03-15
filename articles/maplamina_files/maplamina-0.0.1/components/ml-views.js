@@ -32,7 +32,6 @@
     throw new Error('[maplamina] applyActiveView() is removed in v3-only mode. Use v3 view components + controls.');
   }
 
-
   // v3 helpers ---------------------------------------------------------------
   // Return a plain object whose keys are the union of keys in a and b (objects), or null if none.
   function unionEncodingKeys(a, b) {
@@ -48,6 +47,69 @@
     return out;
   }
 
+  function collectPrimeViewEncodingKeys(spec, ops) {
+    let out = null;
+    if (!Array.isArray(ops) || !ops.length) return out;
+    const comps = (spec && spec['.__components'] && spec['.__components'].views) || {};
+    for (const op of ops) {
+      try {
+        const comp = (op && op.cid) ? comps[op.cid] : null;
+        const views = (comp && comp.views && typeof comp.views === 'object') ? comp.views : null;
+        if (!views) continue;
+        for (const vn of Object.keys(views)) {
+          const enc = views[vn] && views[vn].encodings;
+          out = unionEncodingKeys(out, enc);
+        }
+      } catch (_) {}
+    }
+    return out;
+  }
+
+  function applyOrderedViewOps(spec, st, layerId, opsByLayer, mergeEncodings, opts) {
+    const out = Object.assign({}, st || {});
+    out.id = out.id || layerId || null;
+
+    const merge = (typeof mergeEncodings === 'function')
+      ? mergeEncodings
+      : ((a, b) => Object.assign({}, a || {}, b || {}));
+
+    let enc = merge(out.base_encodings, null);
+    const ops = (opsByLayer && typeof opsByLayer.get === 'function') ? (opsByLayer.get(layerId) || []) : [];
+    const comps = (spec && spec['.__components'] && spec['.__components'].views) || {};
+    const prevByGroup = (opts && opts.prevByGroup && typeof opts.prevByGroup === 'object') ? opts.prevByGroup : {};
+    const onOp = (opts && typeof opts.onOp === 'function') ? opts.onOp : null;
+
+
+    if (Array.isArray(ops) && ops.length) {
+      for (const op of ops) {
+        const patch = op && op.encPatch;
+        let touch = null;
+        try {
+          const comp = (op && op.cid) ? comps[op.cid] : null;
+          const views = (comp && comp.views && typeof comp.views === 'object') ? comp.views : null;
+          const prevName = (op && op.groupId) ? normText(prevByGroup[op.groupId]) : null;
+          const prevEnc = (views && prevName && views[prevName] && views[prevName].encodings) || null;
+          const nextEnc = (patch && typeof patch === 'object')
+            ? patch
+            : (views && op && op.activeView && views[op.activeView] && views[op.activeView].encodings) || null;
+          touch = unionEncodingKeys(prevEnc, nextEnc);
+        } catch (_) {}
+
+
+
+        if (onOp) {
+          try { onOp(op, { patch, touch, layerId, state: out }); } catch (_) {}
+        }
+
+        if (patch && typeof patch === 'object') {
+          enc = merge(enc, patch);
+        }
+      }
+    }
+
+    out.base_encodings = enc;
+    return { state: out, ops };
+  }
 
   // v3: compute per-layer, per-component view ops from .__controls.views + .__components.views.
   // Returns:
@@ -113,6 +175,13 @@
     return out;
   }
 
-  root.views = { applyActiveView, inheritAlpha, unionEncodingKeys, computeViewOpsByLayer };
+  root.views = {
+    applyActiveView,
+    inheritAlpha,
+    unionEncodingKeys,
+    collectPrimeViewEncodingKeys,
+    applyOrderedViewOps,
+    computeViewOpsByLayer
+  };
 
 })(window);

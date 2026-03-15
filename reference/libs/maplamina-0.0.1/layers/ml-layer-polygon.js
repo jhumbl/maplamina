@@ -6,7 +6,7 @@
   // Bump this if the precompute format/logic changes.
   const HOLES_VERSION = 2;
 
-  function buildPolygonLayer(st) {
+  function buildPolygonLayer(st, ctx) {
     const P = st?.data_columns?.polygon || {};
 
     const positions    = P.positions_array || (P.positions && P.positions.array);
@@ -23,14 +23,15 @@
     // -----------------------------
     // Precompute + cache (versioned)
     // -----------------------------
+    const bucket = root.layerUtils?.getLayerBuildCache ? root.layerUtils.getLayerBuildCache(ctx, st, 'polygon') : {};
     const cacheOK =
-      P.__holes_version === HOLES_VERSION &&
-      P.__cache_positions === positions &&
-      P.__cache_ringStarts === ringStarts &&
-      P.__cache_polyStarts === polyStarts &&
-      P.__cache_posSize === positionSize &&
-      P.__poly_object_per_poly &&
-      P.length != null;
+      bucket.holesVersion === HOLES_VERSION &&
+      bucket.positions === positions &&
+      bucket.ringStarts === ringStarts &&
+      bucket.polyStarts === polyStarts &&
+      bucket.positionSize === positionSize &&
+      Array.isArray(bucket.polyObjs) &&
+      Number.isFinite(bucket.nPolys);
 
     if (!cacheOK) {
       const posSize = positionSize;
@@ -43,20 +44,12 @@
       const polyHasSentinel =
         polyStarts.length > 0 && (polyStarts[polyStarts.length - 1] >>> 0) === nRings;
 
-      const nPolys = (P.length != null)
-        ? (P.length >>> 0)
-        : (polyHasSentinel ? ((polyStarts.length - 1) >>> 0) : (polyStarts.length >>> 0));
+      const nPolys = polyHasSentinel ? ((polyStarts.length - 1) >>> 0) : (polyStarts.length >>> 0);
 
       const ringStartAt = (r) => (r < ringStarts.length ? (ringStarts[r] >>> 0) : (nVerts >>> 0));
 
-      // Per-polygon vertex span (vertex indices, not flat)
       const polyVStart = new Uint32Array(nPolys);
       const polyVEnd   = new Uint32Array(nPolys);
-
-      // Precompute holes in a single flat table for performance:
-      // - holesAll: concatenated hole starts (flat indices into positionsView)
-      // - holesStartIdx: per polygon offset into holesAll
-      // - holesCount: per polygon hole count
       const holesStartsJS = [];
       const holesStartIdx = new Uint32Array(nPolys);
       const holesCount    = new Uint32Array(nPolys);
@@ -72,7 +65,6 @@
 
         polyVStart[i] = vStart;
         polyVEnd[i]   = vEnd;
-
         holesStartIdx[i] = acc;
 
         let count = 0;
@@ -81,9 +73,6 @@
             const holeV = ringStartAt(r);
             const holeE = (r + 1 <= nRings) ? ringStartAt(r + 1) : (nVerts >>> 0);
             if ((holeE - holeV) >= 3) {
-              // IMPORTANT:
-              // deck.gl expects holeIndices as offsets into the *flat positions array*
-              // (not vertex offsets). So multiply by positionSize.
               holesStartsJS.push(((holeV - vStart) * posSize) >>> 0);
               count++;
               acc++;
@@ -94,8 +83,6 @@
       }
 
       const holesAll = new Uint32Array(holesStartsJS);
-
-      // Prebuild stable polygon objects per poly (avoids per-accessor allocations)
       const polyObjs = new Array(nPolys);
       for (let i = 0; i < nPolys; i++) {
         const vStart = polyVStart[i] >>> 0;
@@ -107,15 +94,13 @@
         }
 
         const positionsView = positions.subarray(vStart * posSize, vEnd * posSize);
-
         const count = holesCount[i] >>> 0;
         if (count) {
           const h0 = holesStartIdx[i] >>> 0;
-          const holeIndicesView = holesAll.subarray(h0, h0 + count);
           polyObjs[i] = {
             positions: positionsView,
             positionSize: posSize,
-            holeIndices: holeIndicesView
+            holeIndices: holesAll.subarray(h0, h0 + count)
           };
         } else {
           polyObjs[i] = {
@@ -125,32 +110,25 @@
         }
       }
 
-      // Persist caches (single source of truth)
-      P.__poly_object_per_poly = polyObjs;
-
-      P.length = nPolys;
-
-      // Cache identity + version
-      P.__holes_version = HOLES_VERSION;
-      P.__cache_positions = positions;
-      P.__cache_ringStarts = ringStarts;
-      P.__cache_polyStarts = polyStarts;
-      P.__cache_posSize = positionSize;
-
-      // If data identity array depends on nPolys, reset it too
-      P.__data_i = null;
+      bucket.holesVersion = HOLES_VERSION;
+      bucket.positions = positions;
+      bucket.ringStarts = ringStarts;
+      bucket.polyStarts = polyStarts;
+      bucket.positionSize = positionSize;
+      bucket.nPolys = nPolys;
+      bucket.polyObjs = polyObjs;
+      bucket.dataObj = null;
     }
 
-    const nPolys = (P.length >>> 0);
+    const nPolys = bucket.nPolys >>> 0;
 
-    // Stable data identity (one object per polygon)
-    let dataObj = P.__data_i;
+    let dataObj = bucket.dataObj;
     if (!dataObj || dataObj.length !== nPolys) {
       dataObj = Array.from({ length: nPolys }, (_, i) => ({ i }));
-      P.__data_i = dataObj;
+      bucket.dataObj = dataObj;
     }
 
-    const polyObjs = P.__poly_object_per_poly;
+    const polyObjs = bucket.polyObjs || [];
 
     // Canonical indexing helpers (multipart-safe)
     const data = root.data;
@@ -204,7 +182,7 @@
         : Number.MAX_SAFE_INTEGER
     };
 
-    const layerProps = root.layerProps.composeLayerProps(st, baseProps);
+    const layerProps = root.layerProps.composeLayerProps(st, baseProps, ctx);
     return new deck.PolygonLayer(layerProps);
   }
 

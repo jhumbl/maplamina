@@ -2,7 +2,7 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
-  function buildPathLayer(st) {
+  function buildPathLayer(st, ctx) {
     const p = st.data_columns && st.data_columns.path;
     const positions    = p && p.positions_array;
     const startsNoEnd  = p && p.path_starts_array;  // N entries (no sentinel)
@@ -25,21 +25,23 @@
         getWidth,
         widthUnits: st.cfg?.widthUnits || 'meters',
         parameters: { depthTest: false }
-      }));
+      }, ctx));
     }
 
     const nPaths = startsNoEnd.length >>> 0;
     const nVerts = (positions.length / positionSize) >>> 0;
 
-    let startIndices = p.__start_indices_with_end;
+    const bucket = root.layerUtils?.getLayerBuildCache ? root.layerUtils.getLayerBuildCache(ctx, st, 'path') : {};
+
+    let startIndices = bucket.startIndices;
     if (!startIndices || startIndices.length !== nPaths + 1) {
       startIndices = new Uint32Array(nPaths + 1);
-      startIndices.set(startsNoEnd, 0);
-      startIndices[nPaths] = nVerts;
-      if (p) p.__start_indices_with_end = startIndices;
+      bucket.startIndices = startIndices;
     }
+    startIndices.set(startsNoEnd, 0);
+    startIndices[nPaths] = nVerts;
 
-    let dataObj = p.__data_bin;
+    let dataObj = bucket.dataObj;
     if (!dataObj || dataObj.length !== nPaths) {
       dataObj = {
         length: nPaths,
@@ -48,7 +50,7 @@
           getPath: { value: positions, size: positionSize }
         }
       };
-      p.__data_bin = dataObj;
+      bucket.dataObj = dataObj;
     } else {
       dataObj.length = nPaths;
       dataObj.startIndices = startIndices;
@@ -73,7 +75,7 @@
 
     delete baseProps.getPath;
 
-    const layerProps = root.layerProps.composeLayerProps(st, baseProps);
+    const layerProps = root.layerProps.composeLayerProps(st, baseProps, ctx);
     return new deck.PathLayer(layerProps);
   }
 

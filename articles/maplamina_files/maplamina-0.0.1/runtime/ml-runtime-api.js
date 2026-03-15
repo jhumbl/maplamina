@@ -9,7 +9,7 @@
   root.runtime = root.runtime || {};
   root.runtime.api = root.runtime.api || {};
   const utils = core.require('utils', 'ml-runtime-api.js');
-  const asArray  = utils.asArray;
+  const asArray = utils.asArray;
   const normText = utils.normText;
 
   const spec = core.require('spec', 'ml-runtime-api.js');
@@ -25,25 +25,17 @@
     return rt.state;
   }
 
-  
-
-
-function pickActiveViews(rt, x) {
+  function pickActiveViews(rt, x) {
     const state = ensureGroupedState(rt);
     const groups = getControlGroupsByType(x, 'views');
 
-    // No views controls: reset and return empty map
     if (!groups.length) {
       state.views = {};
       return {};
     }
 
-    // Order is authored order: panel sections first (if present), then insertion order in .__controls.
-    // (See spec.controls.getControlGroupsByType).
-    const list = groups;
-
     const out = {};
-    for (const g of list) {
+    for (const g of groups) {
       const gid = normText(g.groupId);
       const ctl = g && g.spec;
       if (!gid || !ctl || typeof ctl !== 'object') continue;
@@ -53,7 +45,11 @@ function pickActiveViews(rt, x) {
       if (cur && viewNames.includes(cur)) { out[gid] = cur; continue; }
 
       const def = normText(ctl.default);
-      if (def && viewNames.includes(def)) { state.views[gid] = def; out[gid] = def; continue; }
+      if (def && viewNames.includes(def)) {
+        state.views[gid] = def;
+        out[gid] = def;
+        continue;
+      }
 
       const first = viewNames.length ? viewNames[0] : 'base';
       state.views[gid] = first;
@@ -67,12 +63,38 @@ function pickActiveViews(rt, x) {
     if (rt.__mfApiMethodsAttached) return;
     rt.__mfApiMethodsAttached = true;
 
-    // Milestone 4: views binding (schedule-based; supports multiple bind groups)
-    // Signature:
-    //   rt.setActiveView(groupId, viewName)
-    // Back-compat:
-    //   rt.setActiveView(viewName) -> uses the first views group (prefers id 'views')
-    rt.setActiveView = function (groupId, newView) {
+    const assembly = root.runtime && root.runtime.assembly;
+    if (!assembly || typeof assembly.getLogicalLayer !== 'function' || typeof assembly.getRenderState !== 'function') {
+      throw new Error('[maplamina] Missing MAPLAMINA.runtime.assembly helpers required by ml-runtime-api.js');
+    }
+    const getLogicalLayer = assembly.getLogicalLayer;
+    const getRenderState = assembly.getRenderState;
+
+    rt.getLayerEntry = function(layerId) {
+      if (!this || !this.layers || typeof this.layers.get !== 'function') return null;
+      const lid = normText(layerId);
+      return lid ? (this.layers.get(lid) || null) : null;
+    };
+
+    rt.getLogicalLayerState = function(layerId) {
+      return getLogicalLayer(this.getLayerEntry(layerId));
+    };
+
+    rt.getLastRenderState = function(layerId) {
+      return getRenderState(this.getLayerEntry(layerId));
+    };
+
+    rt.getLastMotionPolicy = function(layerId) {
+      const entry = this.getLayerEntry(layerId);
+      return entry && entry.runtime && entry.runtime.lastMotionPolicy ? entry.runtime.lastMotionPolicy : null;
+    };
+
+    rt.invalidate = function(opts) {
+      if (typeof this.schedule !== 'function') return Promise.resolve();
+      return this.schedule((opts && typeof opts === 'object') ? opts : {});
+    };
+
+    rt.setActiveView = function(groupId, newView) {
       const x = this.specRef;
       if (!x) return;
 
@@ -101,11 +123,9 @@ function pickActiveViews(rt, x) {
       const v = normText(vIn);
       if (!v || (viewNames.length && !viewNames.includes(v))) return;
 
-      // Ensure defaults for all groups, then set this group
       pickActiveViews(this, x);
       const state = ensureGroupedState(this);
 
-      // Capture previous active view for this group (used to detect props that revert to base when omitted in the next view).
       if (!this._viewsPrev || typeof this._viewsPrev !== 'object') this._viewsPrev = {};
       if (this._viewsPrev[gid] == null) this._viewsPrev[gid] = normText(state.views[gid]) || null;
 
@@ -118,23 +138,22 @@ function pickActiveViews(rt, x) {
       const baseIds = controlled ? Array.from(controlled) : [];
       if (!baseIds.length) return;
 
-      if (typeof this.schedule === 'function') this.schedule({ rehydrate: baseIds, legends: true, reason: 'views' });
+      if (typeof this.invalidate === 'function') this.invalidate({ rehydrate: baseIds, legends: true, reason: 'views' });
     };
 
-    // Milestone 5: filters binding (schedule-based; runtime coalesces updates)
-    rt.rebuildLayers = function (layerIds) {
-      if (typeof this.schedule === 'function') return this.schedule({ layers: layerIds, reason: 'rebuild' });
+    rt.rebuildLayers = function(layerIds) {
+      if (typeof this.invalidate === 'function') return this.invalidate({ layers: layerIds, reason: 'rebuild' });
     };
 
-    rt.setFilter = function (groupId, label, value) {
+    rt.setFilter = function(groupId, label, value) {
       const x = this.specRef;
       if (!x) return;
 
-      const deps = (this._mfApiDeps && typeof this._mfApiDeps === 'object') ? this._mfApiDeps : {};
       const motion = root.runtime && root.runtime.motion ? root.runtime.motion : null;
-      const disableRuntimeTransitions = motion && typeof motion.disableRuntimeTransitions === 'function' ? motion.disableRuntimeTransitions : (() => null);
+      const disableRuntimeTransitions = motion && typeof motion.disableRuntimeTransitions === 'function'
+        ? motion.disableRuntimeTransitions
+        : (() => null);
 
-      // Back-compat: rt.setFilter(label, value) uses the default filters group (prefers id 'filters')
       let gid = null, lab = null, val = null;
       if (arguments.length === 2) {
         gid = this._defaultFiltersGroupId || 'filters';
@@ -150,7 +169,6 @@ function pickActiveViews(rt, x) {
       lab = normText(lab);
       if (!lab) return;
 
-      // Normalize by declared control type (select vs range) when possible.
       let ctlType = null;
       let ctlDef = null;
       try {
@@ -170,29 +188,21 @@ function pickActiveViews(rt, x) {
       } catch (_) {}
 
       let storeVal = val;
-
       if (ctlType === 'select') {
-        if (storeVal == null || storeVal === '') {
-          storeVal = new Set();
-        } else if (storeVal instanceof Set) {
-          storeVal = new Set(Array.from(storeVal, v => String(v)).filter(v => v.length));
-        } else if (Array.isArray(storeVal)) {
-          storeVal = new Set(storeVal.map(v => String(v)).filter(v => v.length));
-        } else {
-          storeVal = new Set([String(storeVal)]);
-        }
+        if (storeVal == null || storeVal === '') storeVal = new Set();
+        else if (storeVal instanceof Set) storeVal = new Set(Array.from(storeVal, v => String(v)).filter(v => v.length));
+        else if (Array.isArray(storeVal)) storeVal = new Set(storeVal.map(v => String(v)).filter(v => v.length));
+        else storeVal = new Set([String(storeVal)]);
       } else if (ctlType === 'range') {
         let lo = null, hi = null;
         if (Array.isArray(storeVal) && storeVal.length >= 2) {
-          lo = +storeVal[0];
-          hi = +storeVal[1];
+          lo = +storeVal[0]; hi = +storeVal[1];
         } else if (storeVal && typeof storeVal === 'object') {
           if ('min' in storeVal && 'max' in storeVal) { lo = +storeVal.min; hi = +storeVal.max; }
           else if ('lo' in storeVal && 'hi' in storeVal) { lo = +storeVal.lo; hi = +storeVal.hi; }
           else if ('from' in storeVal && 'to' in storeVal) { lo = +storeVal.from; hi = +storeVal.to; }
         } else if (storeVal != null && storeVal !== '') {
-          lo = +storeVal;
-          hi = +storeVal;
+          lo = +storeVal; hi = +storeVal;
         }
 
         if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
@@ -207,7 +217,6 @@ function pickActiveViews(rt, x) {
         if (lo > hi) { const t = lo; lo = hi; hi = t; }
         storeVal = [lo, hi];
       } else {
-        // Fallback (unknown type): keep legacy behavior for safety.
         if (storeVal instanceof Set) storeVal = new Set(storeVal);
         else if (Array.isArray(storeVal)) storeVal = storeVal.slice(0, 2);
       }
@@ -225,10 +234,10 @@ function pickActiveViews(rt, x) {
         : Array.from(this.layers.keys());
 
       disableRuntimeTransitions(this, affected);
-      if (typeof this.schedule === 'function') this.schedule({ layers: affected, controls: true, reason: 'filters' });
+      if (typeof this.invalidate === 'function') this.invalidate({ layers: affected, controls: true, reason: 'filters' });
     };
 
-    rt.clearFilters = function (groupId) {
+    rt.clearFilters = function(groupId) {
       const x = this.specRef;
       if (!x) return;
 
@@ -238,15 +247,16 @@ function pickActiveViews(rt, x) {
         : (rt0) => { ensureGroupedState(rt0); return (rt0.state && rt0.state.filters) ? rt0.state.filters : {}; };
 
       const motion = root.runtime && root.runtime.motion ? root.runtime.motion : null;
-      const disableRuntimeTransitions = motion && typeof motion.disableRuntimeTransitions === 'function' ? motion.disableRuntimeTransitions : (() => null);
+      const disableRuntimeTransitions = motion && typeof motion.disableRuntimeTransitions === 'function'
+        ? motion.disableRuntimeTransitions
+        : (() => null);
 
-      // If no group id provided, clear all groups
       if (groupId == null) {
         initFiltersState(this, x);
         const idx = this._filterIndex;
         const allIds = (idx && idx.byLayer) ? Array.from(idx.byLayer.keys()) : Array.from(this.layers.keys());
         disableRuntimeTransitions(this, allIds);
-        if (typeof this.schedule === 'function') this.schedule({ layers: allIds, controls: true, reason: 'filters-clear' });
+        if (typeof this.invalidate === 'function') this.invalidate({ layers: allIds, controls: true, reason: 'filters-clear' });
         return;
       }
 
@@ -259,7 +269,7 @@ function pickActiveViews(rt, x) {
         : Array.from(this.layers.keys());
 
       disableRuntimeTransitions(this, affected);
-      if (typeof this.schedule === 'function') this.schedule({ layers: affected, controls: true, reason: 'filters-clear' });
+      if (typeof this.invalidate === 'function') this.invalidate({ layers: affected, controls: true, reason: 'filters-clear' });
     };
   }
 
@@ -279,22 +289,15 @@ function pickActiveViews(rt, x) {
     let rt = el.__mfRuntime;
 
     if (rt) {
-      // Refresh deps used by runtime methods (hot reload / re-render safety)
       rt._mfApiDeps = depObj;
-
-      // Refresh buildLayer (widget-scoped; may close over updated map/overlay refs)
       if (typeof depObj.buildLayer === 'function') rt.buildLayer = depObj.buildLayer;
 
-      // Ensure motion stores exist
       try {
         const motion = root.runtime && root.runtime.motion;
         if (motion && typeof motion.attach === 'function') motion.attach(rt);
       } catch (_) {}
 
-      // Ensure pipeline + scheduler are attached (idempotent; pipeline refreshes deps)
       attachPipelineAndScheduler(rt, depObj.pipelineDeps || depObj);
-
-      // Ensure methods exist
       attachRuntimeMethods(rt);
       return rt;
     }
@@ -308,19 +311,14 @@ function pickActiveViews(rt, x) {
       _mfApiDeps: depObj
     };
 
-    // Ensure motion stores exist
     try {
       const motion = root.runtime && root.runtime.motion;
       if (motion && typeof motion.attach === 'function') motion.attach(rt);
     } catch (_) {}
 
-    // Attach buildLayer implementation (provided by widget via deps.buildLayer)
     if (typeof depObj.buildLayer === 'function') rt.buildLayer = depObj.buildLayer;
 
-    // Attach pipeline + scheduler
     attachPipelineAndScheduler(rt, depObj.pipelineDeps || depObj);
-
-    // Attach methods
     attachRuntimeMethods(rt);
 
     el.__mfRuntime = rt;

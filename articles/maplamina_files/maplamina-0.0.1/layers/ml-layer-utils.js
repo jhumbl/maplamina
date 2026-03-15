@@ -2,13 +2,66 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
-  function mergeEncodings(baseEnc, patchEnc) {
-    const base = (baseEnc && typeof baseEnc === 'object') ? baseEnc : {};
-    const patch = (patchEnc && typeof patchEnc === 'object') ? patchEnc : null;
-    if (!patch) return Object.assign({}, base);
-    return Object.assign({}, base, patch);
+  function cloneEncodingValue(value) {
+    if (value == null || typeof value !== 'object') return value;
+    if (Array.isArray(value)) return value.slice();
+    if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView && ArrayBuffer.isView(value)) return value;
+    return Object.assign({}, value);
   }
 
+  function cloneEncodingMap(enc) {
+    const src = (enc && typeof enc === 'object') ? enc : null;
+    if (!src) return {};
+    const out = {};
+    for (const key of Object.keys(src)) out[key] = cloneEncodingValue(src[key]);
+    return out;
+  }
+
+  function mergeEncodings(baseEnc, patchEnc) {
+    const out = cloneEncodingMap(baseEnc);
+    const patch = (patchEnc && typeof patchEnc === 'object') ? patchEnc : null;
+    if (!patch) return out;
+    for (const key of Object.keys(patch)) out[key] = cloneEncodingValue(patch[key]);
+    return out;
+  }
+
+  function layerCacheKey(st) {
+    if (!st || typeof st !== 'object') return '__layer__';
+    return st.filterKey || st.id || '__layer__';
+  }
+
+  function getLayerBuildCache(ctx, st, namespace) {
+    const cacheRoot = ctx && ctx.cache && typeof ctx.cache === 'object' ? ctx.cache : null;
+    if (!cacheRoot) return {};
+
+    const byLayer = cacheRoot.layerBuildCache || (cacheRoot.layerBuildCache = new Map());
+    const key = layerCacheKey(st);
+    let layerCache = byLayer.get(key);
+    if (!layerCache || typeof layerCache !== 'object') {
+      layerCache = {};
+      byLayer.set(key, layerCache);
+    }
+
+    if (!namespace) return layerCache;
+
+    let bucket = layerCache[namespace];
+    if (!bucket || typeof bucket !== 'object') {
+      bucket = {};
+      layerCache[namespace] = bucket;
+    }
+    return bucket;
+  }
+
+  function clearLayerBuildCache(ctx, st) {
+    const byLayer = ctx && ctx.cache && ctx.cache.layerBuildCache;
+    if (!(byLayer instanceof Map)) return;
+    byLayer.delete(layerCacheKey(st));
+  }
+
+  function clearAllLayerBuildCaches(ctx) {
+    const byLayer = ctx && ctx.cache && ctx.cache.layerBuildCache;
+    if (byLayer instanceof Map) byLayer.clear();
+  }
 
   function flattenLayers(L) {
     // Deck.gl expects a flat layer array. Some builders may return nested arrays.
@@ -64,5 +117,13 @@
     return swapped;
   }
 
-  root.layerUtils = { mergeEncodings, flattenLayers, swapOverlayLayers };
+  root.layerUtils = {
+    mergeEncodings,
+    layerCacheKey,
+    getLayerBuildCache,
+    clearLayerBuildCache,
+    clearAllLayerBuildCaches,
+    flattenLayers,
+    swapOverlayLayers
+  };
 })(window);

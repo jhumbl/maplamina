@@ -2,10 +2,10 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
 
-  function buildIconLayer(st) {
+  function buildIconLayer(st, ctx) {
     const cols = st.data_columns || {};
     if (!cols.position || !root.utils.assertTA(st, cols.position.array, 'position.array', 'skip')) {
-      return new deck.IconLayer(root.layerProps.composeLayerProps(st, { data: { length: 0 } }));
+      return new deck.IconLayer(root.layerProps.composeLayerProps(st, { data: { length: 0 } }, ctx));
     }
 
     const size = cols.position.size || 2;
@@ -29,10 +29,11 @@
     const getSize = _num ? _num(st, 'size', 18) : (() => 18);
 
     // ---- stable data identity (cached, including attributes) ----
-    let dataObj = cols.__data_bin_icon;
+    const bucket = root.layerUtils?.getLayerBuildCache ? root.layerUtils.getLayerBuildCache(ctx, st, 'icon') : {};
+    let dataObj = bucket.dataObj;
     if (!dataObj || dataObj.length !== n) {
       dataObj = { length: n, attributes: { getPosition: { value: pos, size } } };
-      cols.__data_bin_icon = dataObj;
+      bucket.dataObj = dataObj;
     } else {
       const attrs = dataObj.attributes || (dataObj.attributes = {});
       const gp = attrs.getPosition || (attrs.getPosition = {});
@@ -60,7 +61,7 @@
       }
     };
 
-    const layerProps = root.layerProps.composeLayerProps(st, baseProps);
+    const layerProps = root.layerProps.composeLayerProps(st, baseProps, ctx);
     return new deck.IconLayer(layerProps);
   }
 
