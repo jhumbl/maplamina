@@ -33,38 +33,8 @@
     };
   }
 
-  // utils
-  if (typeof core.now !== 'function') core.now = wrap('utils', 'now');
-  if (typeof core.isTA !== 'function') core.isTA = wrap('utils', 'isTA');
-  if (typeof core.pushWarn !== 'function') core.pushWarn = wrap('utils', 'pushWarn');
-  if (typeof core.assertTA !== 'function') core.assertTA = wrap('utils', 'assertTA');
-  if (typeof core.stablePairTA !== 'function') core.stablePairTA = wrap('utils', 'stablePairTA');
-
-  // assets
-  if (typeof core.depUrl !== 'function') core.depUrl = wrap('assets', 'depUrl');
-  if (typeof core.fetchArray !== 'function') core.fetchArray = wrap('assets', 'fetchArray');
-  if (typeof core.resolveRefOrHref !== 'function') core.resolveRefOrHref = wrap('assets', 'resolveRefOrHref');
-  if (typeof core.pruneEmbeddedBlobs !== 'function') core.pruneEmbeddedBlobs = wrap('assets', 'pruneEmbeddedBlobs');
-  if (typeof core.pruneEmbeddedBlobsIdle !== 'function') core.pruneEmbeddedBlobsIdle = wrap('assets', 'pruneEmbeddedBlobsIdle');
-  if (typeof core.cancelIdlePrune !== 'function') core.cancelIdlePrune = wrap('assets', 'cancelIdlePrune');
-
-  // data
-  if (typeof core.resolveColumnsAndViews !== 'function') core.resolveColumnsAndViews = wrap('data', 'resolveColumnsAndViews');
-  if (typeof core.resolveActiveOnly !== 'function') core.resolveActiveOnly = wrap('data', 'resolveActiveOnly');
-  if (typeof core.resolveRemainingViewsIdle !== 'function') core.resolveRemainingViewsIdle = wrap('data', 'resolveRemainingViewsIdle');
-
-  // encodings
-  if (typeof core.colorAccessorFrom !== 'function') core.colorAccessorFrom = wrap('encodings', 'colorAccessorFrom');
-  if (typeof core.numericAccessorFrom !== 'function') core.numericAccessorFrom = wrap('encodings', 'numericAccessorFrom');
-
-  // layer props
-  if (typeof core.buildUpdateTriggersFromEncodings !== 'function') core.buildUpdateTriggersFromEncodings = wrap('layerProps', 'buildUpdateTriggersFromEncodings');
-  if (typeof core.composeLayerProps !== 'function') core.composeLayerProps = wrap('layerProps', 'composeLayerProps');
-
-  // builders (optional direct access)
-  if (typeof core.buildScatterplotLayer !== 'function') core.buildScatterplotLayer = wrap('layerBuilders', 'buildScatterplotLayer');
-  if (typeof core.buildPathLayer !== 'function') core.buildPathLayer = wrap('layerBuilders', 'buildPathLayer');
-  if (typeof core.buildPolygonLayer !== 'function') core.buildPolygonLayer = wrap('layerBuilders', 'buildPolygonLayer');
-  if (typeof core.buildIconLayer !== 'function') core.buildIconLayer = wrap('layerBuilders', 'buildIconLayer');
-  if (typeof core.buildMarkerLayer !== 'function') core.buildMarkerLayer = wrap('layerBuilders', 'buildMarkerLayer');
+  core.now = wrap('utils', 'now');
+  core.cancelIdlePrune = wrap('assets', 'cancelIdlePrune');
+  core.resolveActiveOnly = wrap('data', 'resolveActiveOnly');
+  core.resolveRemainingViewsIdle = wrap('data', 'resolveRemainingViewsIdle');
 })(window);
