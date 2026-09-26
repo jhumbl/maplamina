@@ -24,7 +24,7 @@
     let host = el.querySelector(`:scope > [data-ml-dock-fallback="${key}"]`);
     if (!host) {
       host = document.createElement('div');
-      host.dataset.mfDockFallback = key;
+      host.dataset.mlDockFallback = key;
       if (className) host.className = className;
       el.appendChild(host);
     } else if (className) {
