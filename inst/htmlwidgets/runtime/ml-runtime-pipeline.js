@@ -119,7 +119,7 @@
             else if (patch && typeof patch === 'object') injectMotionTransitions(this, layerId, layerType, patch, op.motion);
           }) : null,
           getGPUFilterContribution,
-          transitions: transitionsForBuild(this, layerId, motionPolicy),
+          transitions: transitionsForBuild(this, layerId),
           buildLayer: this.buildLayer
         });
 

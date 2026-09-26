@@ -25,14 +25,7 @@
 
   function readInitialTransitions(rt, layerId, transitionsForBuild) {
     try {
-      if (typeof transitionsForBuild === 'function') {
-        return transitionsForBuild(rt, layerId, {
-          reason: 'initial',
-          allowTransitions: false,
-          motionEligible: false,
-          invalidation: { initial: true, render: true, encodings: true, motionEligible: false }
-        });
-      }
+      if (typeof transitionsForBuild === 'function') return transitionsForBuild(rt, layerId);
     } catch (_) {}
 
     try {

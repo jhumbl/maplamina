@@ -48,10 +48,7 @@
     return policy;
   }
 
-  function transitionsForBuild(rt, layerId, jobOrPolicy) {
-    const policy = (jobOrPolicy && typeof jobOrPolicy === 'object' && Object.prototype.hasOwnProperty.call(jobOrPolicy, 'allowTransitions'))
-      ? jobOrPolicy
-      : deriveMotionPolicy(jobOrPolicy);
+  function transitionsForBuild(rt, layerId) {
     const lid = normText(layerId);
     if (!lid) return null;
     const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
