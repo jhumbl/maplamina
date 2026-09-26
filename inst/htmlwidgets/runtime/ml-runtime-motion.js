@@ -5,7 +5,7 @@
   root.runtime.motion = root.runtime.motion || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-runtime-motion.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-motion.js");
   }
 
   const utils = core.require('utils', 'ml-runtime-motion.js');

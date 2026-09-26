@@ -114,8 +114,7 @@
           getGPUFilterContribution,
           injectMotionTransitions,
           syncJobTransitions,
-          transitionsForBuild,
-          core
+          transitionsForBuild
         }
       };
     }
@@ -153,7 +152,7 @@
         }
         mfSpec.assertV3Spec(x, 'runtime.widget.renderValue');
 
-        const t0 = core.now();
+        const t0 = root.utils.now();
         const unionBbox = (x.map_options?.fit_bounds === false) ? null : unionBboxFromSpec(x);
         const desiredProjection = normProjection(x.map_options?.projection);
         const rt = ensureRuntime(el, runtimeDeps());
@@ -217,7 +216,6 @@
         const out = await renderInitial({
           el,
           x,
-          core,
           rt,
           map,
           overlay,
@@ -251,7 +249,7 @@
         const rt = el.__mfRuntime;
         try { mfRuntimeMap?.clearDeferredFit?.(rt, el); } catch (_) {}
         if (rt && rt.pruneTasks && rt.pruneTasks.size) {
-          for (const id of rt.pruneTasks) core.cancelIdlePrune(id);
+          for (const id of rt.pruneTasks) root.assets.cancelIdlePrune(id);
           rt.pruneTasks.clear();
         }
 

@@ -4,7 +4,7 @@
   root.runtime = root.runtime || {};
   const core0 = root.core;
   if (!core0 || typeof core0.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-runtime-pipeline.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-pipeline.js");
   }
 
   const utils0 = core0.require('utils', 'ml-runtime-pipeline.js');
@@ -36,8 +36,7 @@
       const deps = (this && this._mfPipelineDeps && typeof this._mfPipelineDeps === 'object') ? this._mfPipelineDeps : {};
       const el = deps.el;
       const overlay = (typeof deps.getOverlay === 'function') ? deps.getOverlay() : null;
-      const core = deps.core || root.core;
-      if (!core || !overlay) return;
+      if (!overlay) return;
 
       const applyOverlayReplacements = deps.applyOverlayReplacements;
       const pickActiveViews = deps.pickActiveViews;
@@ -106,7 +105,6 @@
           spec: x,
           rt: this,
           x,
-          core,
           mergeEncodings,
           opsByLayer: withViews ? viewOpsByLayer : null,
           applyOrderedViewOps: withViews ? applyOrderedViewOps : null,

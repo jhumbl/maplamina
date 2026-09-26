@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-assets.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-assets.js");
   }
 
   const utils = core.require('utils', 'ml-assets.js');
@@ -14,8 +14,7 @@
     const scripts = document.getElementsByTagName('script');
     for (let i = scripts.length - 1; i >= 0; --i) {
       const s = scripts[i].src || '';
-      // Prefer the module name if present; fall back to ml-core.js for legacy builds.
-      const m = s.match(/(.*\/)(?:ml-assets|ml-core)\.js(?:\?.*)?$/);
+      const m = s.match(/(.*\/)ml-assets\.js(?:\?.*)?$/);
       if (m) { __DEP_BASE = m[1]; break; }
     }
   } catch (_) {}

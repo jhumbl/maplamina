@@ -4,7 +4,7 @@
   root.runtime = root.runtime || {};
   const core0 = root.core;
   if (!core0 || typeof core0.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-runtime-scheduler.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-scheduler.js");
   }
 
   const utils0 = core0.require('utils', 'ml-runtime-scheduler.js');

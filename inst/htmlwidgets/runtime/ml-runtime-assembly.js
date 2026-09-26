@@ -67,12 +67,10 @@
     return st;
   }
 
-  async function prepareLogicalLayer(st0, layerId, core) {
+  async function prepareLogicalLayer(st0, layerId) {
     const st = cloneLogicalLayer(st0, layerId);
     if (!st) return null;
-    if (core && typeof core.resolveActiveOnly === 'function') {
-      await core.resolveActiveOnly(st);
-    }
+    await root.data.resolveActiveOnly(st);
     return st;
   }
 
@@ -125,7 +123,6 @@
 
   async function assembleRenderState(opts) {
     const layerId = opts && opts.layerId;
-    const core = opts && opts.core;
     const spec = opts && opts.spec;
     const rt = opts && opts.rt;
     const sourceState = opts && opts.sourceState;
@@ -138,7 +135,7 @@
 
     if (!logical) {
       logical = (typeof prepareLogical === 'function')
-        ? await prepareLogical(sourceState, layerId, core)
+        ? await prepareLogical(sourceState, layerId)
         : (cloneLayer(sourceState, layerId) || Object.assign({}, sourceState || {}));
       logicalChanged = true;
     }
@@ -158,8 +155,8 @@
       viewOps = (res && Array.isArray(res.ops)) ? res.ops : [];
     }
 
-    if (viewOps.length && core && typeof core.resolveActiveOnly === 'function') {
-      await core.resolveActiveOnly(renderState);
+    if (viewOps.length) {
+      await root.data.resolveActiveOnly(renderState);
     }
 
     const filterContribution = await collectFilterContribution({
@@ -194,8 +191,8 @@
     if (out.logicalChanged && typeof pruneEmbeddedBlobs === 'function') {
       try { pruneEmbeddedBlobs(out.logical); } catch (_) {}
     }
-    if (opts && opts.core && typeof opts.core.resolveRemainingViewsIdle === 'function' && out.renderState) {
-      opts.core.resolveRemainingViewsIdle(out.renderState);
+    if (out.renderState) {
+      root.data.resolveRemainingViewsIdle(out.renderState);
     }
 
     return {
