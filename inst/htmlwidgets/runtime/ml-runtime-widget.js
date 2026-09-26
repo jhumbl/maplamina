@@ -279,6 +279,7 @@
         }
 
         if (el.__mfRuntime) { el.__mfRuntime.layers?.clear?.(); el.__mfRuntime = null; }
+        MAPLAMINA.assets.clearMemo();
         try { el.__mfCtxCache?.layerBuildCache?.clear?.(); } catch (_) {}
         try { delete el.__mfCtxCache; } catch (_) {}
         currentLayers = [];
