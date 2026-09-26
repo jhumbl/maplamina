@@ -64,7 +64,19 @@
       }
     }
 
-    // Column dict color
+    // Base constant color
+    if (base[key] && base[key].value != null) {
+      const v = base[key].value;
+      if (Array.isArray(v) && v.length === 4) {
+        return (d, info) => {
+          const p = pickPartIndex(d, info);
+          return safeRGBA(v[0], v[1], v[2], Math.round(v[3] * getOpacity(p)));
+        };
+      }
+      return () => v;
+    }
+
+    // Layer scale stored as a column dict
     if (cols[key] && cols[key].dict_array && cols[key].codes_array) {
       const dict = cols[key].dict_array, codes = cols[key].codes_array;
       if (!isTA(dict) || !isTA(codes) || (dict.length % 4 !== 0)) {
@@ -79,18 +91,6 @@
           return safeRGBA(dict[off], dict[off + 1], dict[off + 2], a);
         };
       }
-    }
-
-    // Scalar colors
-    if (base[key] && base[key].value != null) {
-      const v = base[key].value;
-      if (Array.isArray(v) && v.length === 4) {
-        return (d, info) => {
-          const p = pickPartIndex(d, info);
-          return safeRGBA(v[0], v[1], v[2], Math.round(v[3] * getOpacity(p)));
-        };
-      }
-      return () => v;
     }
 
     if (fallbackRGBA && fallbackRGBA.length === 4) {

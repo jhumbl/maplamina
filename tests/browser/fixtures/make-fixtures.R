@@ -238,6 +238,15 @@ maplamina(sf::st_sf(name = "one", geometry = sf::st_sfc(sq(-0.01, 51.49, 0.02), 
   add_views(view("blue", fill_color = "darkblue"), view("red", fill_color = "red"), duration = 1500) |>
   save("polygons-views-fill")
 
+# V16: a layer whose base fill is a colour scale; a view sets a constant fill.
+sc <- sf::st_sf(name = c("a", "b"), v = c(1, 9),
+                geometry = sf::st_sfc(sq(-0.01, 51.49, 0.02), sq(0.03, 51.49, 0.02), crs = 4326))
+maplamina(sc) |>
+  add_polygons(stroke = FALSE, fill_color = color_bin(~v, palette = c("darkblue", "navy"), bins = 2), fill_opacity = 1) |>
+  add_views(view("scale", fill_color = color_bin(~v, palette = c("darkblue", "navy"), bins = 2)),
+            view("flat", fill_color = "red"), duration = 1500) |>
+  save("polygons-scale-views-constant")
+
 # T3, T4: a template with no placeholders, and a constant string column.
 const <- data.frame(lon = c(-0.02, 0.02), lat = 51.5, label = c("constant text", "constant text"))
 maplamina(const) |>
