@@ -143,6 +143,11 @@ maplamina(dateline) |>
   add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
   save("circles-dateline")
 
+# Same points plus one far to the north, so the extent is too wide for the offsets mode.
+maplamina(rbind(dateline, data.frame(lon = 181, lat = 20))) |>
+  add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
+  save("circles-dateline-wide")
+
 # T1: popups on a circle layer; two features so a second click can open a second popup.
 two <- data.frame(lon = c(-0.02, 0.02), lat = c(51.5, 51.5), name = c("alpha", "beta"), v = c(1.5, 2.5))
 maplamina(two) |>

@@ -3,6 +3,13 @@
 
 deg2rad <- function(x) x * pi / 180
 
+# deck.gl works in [-180, 180). Absolute positions are sent with their first vertex in that
+# range: points wrap individually, a path or polygon part shifts whole so it stays continuous.
+# In offsets mode only the origin is wrapped; the runtime moves it to the world copy nearest
+# the viewport (layerProps.originNearView).
+wrap_lon <- function(x) ((x + 180) %% 360) - 180
+shift_lon <- function(x) x + (wrap_lon(x[1]) - x[1])
+
 use_offsets_from_bbox <- function(bb, tol = 0.01) {
   # Clamp to Web Mercator valid lat range
   clamp_lat <- function(lat) pmax(pmin(lat, 85.05113), -85.05113)

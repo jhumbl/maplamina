@@ -197,6 +197,21 @@
 
         overlay = ensureOverlay({ el, map, overlay });
         el.__mfGetMap = () => map;
+        if (!map.__mfOriginHook) {
+          map.__mfOriginHook = true;
+          map.on('move', () => {
+            let moved = false;
+            const next = (currentLayers || []).map((l) => {
+              const o = l && l.props && l.props.coordinateOrigin;
+              if (!Array.isArray(o)) return l;
+              const near = MAPLAMINA.layerProps.originNearView(o, map);
+              if (near === o) return l;
+              moved = true;
+              return l.clone({ coordinateOrigin: near });
+            });
+            if (moved && overlay) { currentLayers = next; overlay.setProps({ layers: next }); }
+          });
+        }
         MAPLAMINA?.tooltips?.init?.(el);
 
         const out = await renderInitial({

@@ -49,6 +49,8 @@ ml_collect_geometry_lines <- function(data, use_offsets = NULL) {
     if (use_offsets) {
       xv <- xv - origin[1]
       yv <- yv - origin[2]
+    } else {
+      xv <- shift_lon(xv)
     }
 
     p_off <<- p_off + 1L
@@ -88,6 +90,6 @@ ml_collect_geometry_lines <- function(data, use_offsets = NULL) {
     feature_index = list(values = as.integer(feature_idx)),
     bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
   )
-  if (use_offsets) out$coordinate_origin <- origin
+  if (use_offsets) out$coordinate_origin <- c(wrap_lon(origin[1]), origin[2])
   out
 }

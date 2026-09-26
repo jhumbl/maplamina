@@ -231,3 +231,17 @@ test_that("lines: GEOMETRYCOLLECTION either errors or produces finite numeric bu
     }
   }
 })
+
+test_that("longitudes beyond 180 are wrapped for deck.gl; the bbox keeps the raw extent", {
+  local_extent <- data.frame(lon = c(178.5, 181, 183.5), lat = -18)
+  g <- maplamina:::ml_collect_geometry_points(local_extent)
+  expect_equal(g$coordinate_origin, c(-179, -18))
+  expect_equal(g$position$values[c(1, 3, 5)], c(-2.5, 0, 2.5))
+  expect_equal(g$bbox, c(178.5, -18, 183.5, -18))
+
+  wide_extent <- rbind(local_extent, data.frame(lon = 181, lat = 20))
+  g <- maplamina:::ml_collect_geometry_points(wide_extent)
+  expect_null(g$coordinate_origin)
+  expect_equal(g$position$values[c(1, 3, 5, 7)], c(178.5, -179, -176.5, -179))
+  expect_equal(g$bbox, c(178.5, -18, 183.5, 20))
+})

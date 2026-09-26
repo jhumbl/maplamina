@@ -224,6 +224,15 @@
     }
   }
 
+  // deck normalises the viewport longitude into [-180, 180); an offsets origin near the
+  // dateline is moved to the world copy nearest the viewport so its deltas stay in view.
+  function originNearView(origin, map) {
+    const lng = map && typeof map.getCenter === 'function' ? map.getCenter().lng : 0;
+    const view = ((lng + 540) % 360) - 180;
+    const lon = origin[0] + 360 * Math.round((view - origin[0]) / 360);
+    return lon === origin[0] ? origin : [lon, origin[1]];
+  }
+
   function composeLayerProps(st, baseProps, ctx) {
     const useOffsets = Array.isArray(st.coordinate_origin) && st.coordinate_origin.length === 2;
     const coreUpdateTriggers = buildUpdateTriggersFromEncodings(st);
@@ -231,7 +240,7 @@
     const props = Object.assign({
       id: st.id,
       coordinateSystem: useOffsets ? deck.COORDINATE_SYSTEM.LNGLAT_OFFSETS : deck.COORDINATE_SYSTEM.LNGLAT,
-      ...(useOffsets ? { coordinateOrigin: st.coordinate_origin } : null),
+      ...(useOffsets ? { coordinateOrigin: originNearView(st.coordinate_origin, ctx && ctx.map) } : null),
       pickable: st.cfg?.pickable !== false,
       parameters: { depthTest: true }
     }, baseProps || {});
@@ -288,6 +297,7 @@
 
   root.layerProps = {
     composeLayerProps,
+    originNearView,
     buildUpdateTriggersFromEncodings,
     deckPropsTouchedByEncodingPatch,
     getRuntimeField,

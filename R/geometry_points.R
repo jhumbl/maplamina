@@ -42,7 +42,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
         pos[2L * idx + 1L] <- coords[, 1] - origin[1]
         pos[2L * idx + 2L] <- coords[, 2] - origin[2]
       } else {
-        pos[2L * idx + 1L] <- coords[, 1]
+        pos[2L * idx + 1L] <- wrap_lon(coords[, 1])
         pos[2L * idx + 2L] <- coords[, 2]
       }
     }
@@ -52,7 +52,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
       position = list(values = pos, size = 2L),
       bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
     )
-    if (use_offsets) out$coordinate_origin <- origin
+    if (use_offsets) out$coordinate_origin <- c(wrap_lon(origin[1]), origin[2])
     return(out)
   }
 
@@ -107,7 +107,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
       pos[2L * idx + 1L] <- xy$x - origin[1]
       pos[2L * idx + 2L] <- xy$y - origin[2]
     } else {
-      pos[2L * idx + 1L] <- xy$x
+      pos[2L * idx + 1L] <- wrap_lon(xy$x)
       pos[2L * idx + 2L] <- xy$y
     }
   }
@@ -117,6 +117,6 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
     position = list(values = pos, size = 2L),
     bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
   )
-  if (use_offsets) out$coordinate_origin <- unname(origin)
+  if (use_offsets) out$coordinate_origin <- unname(c(wrap_lon(origin[1]), origin[2]))
   out
 }

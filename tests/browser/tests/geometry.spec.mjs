@@ -22,21 +22,23 @@ test('G3: a layer with exactly one polygon renders', async ({ page }) => {
   expect(isDrawnAt(await screenshot(page), c.x, c.y)).toBe(true);
 });
 
-test('G4: circles with longitudes beyond 180 stay visible while zooming in', async ({ page }) => {
-  // Known failure on 0.1.0: the circle layer has no wrapLongitude, so the point at 181E is
-  // drawn one world away and leaves the viewport from zoom 10 (P-21-07). Remove test.fail()
-  // once the layer builders handle world copies.
-  test.fail();
-  await openWidget(page, 'circles-dateline');
-  const seen = {};
-  for (const zoom of [4, 6, 8, 10, 12, 14]) {
-    await page.evaluate((z) => {
-      const map = document.querySelector('.maplamina').__mfGetMap();
-      map.jumpTo({ center: [181.0, -18], zoom: z });
-    }, zoom);
-    await page.waitForTimeout(600);
-    const c = await project(page, 181.0, -18);
-    seen[zoom] = isDrawnAt(await screenshot(page), c.x, c.y);
-  }
-  expect(seen, 'visible at each zoom').toEqual({ 4: true, 6: true, 8: true, 10: true, 12: true, 14: true });
-});
+// The local extent uses deck's offsets mode, the wide one plain lng/lat; both once vanished.
+for (const fixture of ['circles-dateline', 'circles-dateline-wide']) {
+  test(`G4: circles with longitudes beyond 180 stay visible while zooming in (${fixture})`, async ({ page }) => {
+    await openWidget(page, fixture);
+    const seen = {};
+    for (const lon of [178.5, 181.0, 183.5]) {
+      for (const zoom of [4, 8, 10, 14]) {
+        await page.evaluate(([lon, z]) => {
+          const map = document.querySelector('.maplamina').__mfGetMap();
+          map.jumpTo({ center: [lon, -18], zoom: z });
+        }, [lon, zoom]);
+        await page.waitForTimeout(600);
+        const c = await project(page, lon, -18);
+        seen[`${lon}@${zoom}`] = isDrawnAt(await screenshot(page), c.x, c.y);
+      }
+    }
+    const expected = Object.fromEntries(Object.keys(seen).map((k) => [k, true]));
+    expect(seen, 'each point visible centred at each zoom').toEqual(expected);
+  });
+}
