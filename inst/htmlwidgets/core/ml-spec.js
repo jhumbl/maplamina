@@ -140,27 +140,6 @@
     return out;
   }
 
-  function pickControlGroupByType(x, type, preferId) {
-    const list = getControlGroupsByType(x, type);
-    if (!list.length) return null;
-    const pref = normText(preferId);
-    if (pref) {
-      const hit = list.find(g => normText(g.groupId) === pref);
-      if (hit) return hit;
-    }
-    return list[0];
-  }
-
-  function getViewsControlSpec(x) {
-    const g = pickControlGroupByType(x, 'views', 'views');
-    return g ? g.spec : null;
-  }
-
-  function getFiltersControlGroup(x) {
-    return pickControlGroupByType(x, 'filters', 'filters');
-  }
-
-
   // --- v3 spec assertions (no legacy support) ---
   // Throws if the incoming spec is not in the expected v3 shape.
   function assertV3Spec(x, where) {
@@ -265,13 +244,9 @@
     controls: {
       getControlGroups,
       getPanelSpec,
-      getPanelSections,
       getControlGroupIdsOrdered,
       getControlSpec,
-      getControlGroupsByType,
-      pickControlGroupByType,
-      getViewsControlSpec,
-      getFiltersControlGroup
+      getControlGroupsByType
     }
   };
 })(window);

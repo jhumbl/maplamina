@@ -19,19 +19,6 @@
   // Many ids (layer ids, view ids, component ids) are case-sensitive in the authored spec.
   const normText = utils.normText;
 
-  function inheritAlpha(baseRGBA, newRGBA) {
-    if (!Array.isArray(baseRGBA) || baseRGBA.length !== 4) return newRGBA;
-    if (!Array.isArray(newRGBA)  || newRGBA.length  !== 4)  return newRGBA;
-    const out = newRGBA.slice(); out[3] = baseRGBA[3]; return out;
-  }
-
-  // NOTE (v3-only):
-  // Legacy per-layer views (st.views / st.active_view) are no longer supported.
-  // View patches must arrive via .__components.views + .__controls.views and be applied by the runtime.
-  function applyActiveView() {
-    throw new Error('[maplamina] applyActiveView() is removed in v3-only mode. Use v3 view components + controls.');
-  }
-
   // v3 helpers ---------------------------------------------------------------
   // Return a plain object whose keys are the union of keys in a and b (objects), or null if none.
   function unionEncodingKeys(a, b) {
@@ -176,9 +163,6 @@
   }
 
   root.views = {
-    applyActiveView,
-    inheritAlpha,
-    unionEncodingKeys,
     collectPrimeViewEncodingKeys,
     applyOrderedViewOps,
     computeViewOpsByLayer

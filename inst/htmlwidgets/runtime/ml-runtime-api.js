@@ -325,7 +325,6 @@
     return rt;
   }
 
-  root.runtime.api.ensureGroupedState = ensureGroupedState;
   root.runtime.api.pickActiveViews = pickActiveViews;
   root.runtime.api.ensureRuntime = ensureRuntime;
 })(window);

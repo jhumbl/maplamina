@@ -84,10 +84,6 @@
     return out;
   }
 
-  function createLayerEntry(logical) {
-    return ensureLayerEntry({}, logical || null);
-  }
-
   function getLogicalLayer(entry) {
     return (entry && typeof entry === 'object') ? (entry.logical || null) : null;
   }
@@ -206,17 +202,8 @@
     };
   }
 
-  root.runtime.assembly.ensureRenderBucket = ensureRenderBucket;
   root.runtime.assembly.readRenderField = readRenderField;
-  root.runtime.assembly.applyRenderPatch = applyRenderPatch;
-  root.runtime.assembly.cloneLogicalLayer = cloneLogicalLayer;
-  root.runtime.assembly.prepareLogicalLayer = prepareLogicalLayer;
-  root.runtime.assembly.ensureLayerEntry = ensureLayerEntry;
-  root.runtime.assembly.createLayerEntry = createLayerEntry;
   root.runtime.assembly.getLogicalLayer = getLogicalLayer;
   root.runtime.assembly.getRenderState = getRenderState;
-  root.runtime.assembly.attachFilterContribution = attachFilterContribution;
-  root.runtime.assembly.collectFilterContribution = collectFilterContribution;
-  root.runtime.assembly.assembleRenderState = assembleRenderState;
   root.runtime.assembly.buildRenderArtifacts = buildRenderArtifacts;
 })(window);

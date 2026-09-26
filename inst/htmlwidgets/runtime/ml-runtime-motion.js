@@ -249,10 +249,8 @@
 
   root.runtime.motion.attach = attach;
   root.runtime.motion.normalizeReason = normalizeReason;
-  root.runtime.motion.deriveMotionPolicy = deriveMotionPolicy;
   root.runtime.motion.transitionsForBuild = transitionsForBuild;
   root.runtime.motion.syncJobTransitions = syncJobTransitions;
-  root.runtime.motion.ensureLayerTransitions = ensureLayerTransitions;
   root.runtime.motion.disableRuntimeTransitions = disableRuntimeTransitions;
   root.runtime.motion.primeRuntimeTransitions = primeRuntimeTransitions;
   root.runtime.motion.injectMotionTransitions = injectMotionTransitions;

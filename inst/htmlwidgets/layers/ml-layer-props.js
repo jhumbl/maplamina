@@ -294,11 +294,7 @@
   root.layerProps = {
     composeLayerProps,
     originNearView,
-    buildUpdateTriggersFromEncodings,
     deckPropsTouchedByEncodingPatch,
-    getRuntimeField,
-    gpuMeta,
-    validateGPUProps,
-    attachGPUFiltering
+    gpuMeta
   };
 })(window);

@@ -63,16 +63,6 @@ function disableTransitionEntry(entry) {
   return e;
 }
 
-// Public: disable an entire transitions map (per-prop) by forcing duration=0 entries.
-// Returns a new object (does not mutate the input).
-function disableTransitionsMap(transitionsMap) {
-  const t = (transitionsMap && typeof transitionsMap === 'object') ? transitionsMap : null;
-  if (!t) return null;
-  const out = {};
-  for (const k of Object.keys(t)) out[k] = disableTransitionEntry(t[k]);
-  return out;
-}
-
 // Public: create a "primed" transition entry from motion metadata (duration=0, no callbacks).
 function primeTransitionEntryFromMotion(motion) {
   const m = (motion && typeof motion === 'object') ? motion : {};
@@ -136,5 +126,5 @@ function disableTransitionsForProps(transitionsMap, props) {
   }
   
 
-  root.transitions = { parseEasingKey, buildTransitionEntry, disableTransitionEntry, disableTransitionsMap, primeTransitionEntryFromMotion, primeTransitionsForProps, disableTransitionsForProps };
+  root.transitions = { parseEasingKey, buildTransitionEntry, disableTransitionEntry, primeTransitionsForProps, disableTransitionsForProps };
 })(window);
