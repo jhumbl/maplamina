@@ -11,15 +11,8 @@
   x
 }
 
-.ml_compiler_layer_data <- function(widget, layers, layer_id) {
-  # Prefer explicit registry (Stage 2+ design), else fall back to legacy per-layer metadata.
-  d <- widget$x$.__data_registry[[layer_id]] %||% NULL
-  if (!is.null(d)) return(d)
-
-  st <- layers[[layer_id]] %||% NULL
-  if (!is.null(st) && !is.null(st$.__data)) return(st$.__data)
-
-  NULL
+.ml_compiler_layer_data <- function(widget, layer_id) {
+  widget$x$.__data_registry[[layer_id]] %||% NULL
 }
 
 # Stage 3: layers may be multipart (e.g., MULTIPOLYGON / MULTILINESTRING).
@@ -67,12 +60,8 @@
   x
 }
 
-.ml_compiler_view_base <- function(widget, layers, layer_id) {
-  meta <- widget$x$.__layer_meta[[layer_id]] %||% NULL
-  if (!is.null(meta) && !is.null(meta$view_base)) return(meta$view_base)
-
-  st <- layers[[layer_id]] %||% NULL
-  st$.__view_base %||% list()
+.ml_compiler_view_base <- function(widget, layer_id) {
+  widget$x$.__layer_meta[[layer_id]]$view_base %||% list()
 }
 
 .ml_compiler_controls_add_member <- function(controls, bind, type, member_id) {
@@ -656,7 +645,7 @@
     stop("views component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
   }
 
-  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  data <- .ml_compiler_layer_data(widget, layer_id)
   if (is.null(data)) {
     stop("Missing data for layer '", layer_id, "' while compiling views component '", cid, "'.", call. = FALSE)
   }
@@ -664,7 +653,7 @@
   meta2 <- .ml_compiler_layer_meta2(widget, layers, layer_id, data)
   n_row <- meta2$n_row
   st <- layers[[layer_id]]
-  base <- .ml_compiler_view_base(widget, layers, layer_id)
+  base <- .ml_compiler_view_base(widget, layer_id)
 
   v_in <- c$views %||% c$spec %||% NULL
   if (is.null(v_in) && is.list(c) && length(c) && inherits(c[[1L]], "ml_view")) v_in <- c
@@ -773,7 +762,7 @@
     stop("filter component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
   }
 
-  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  data <- .ml_compiler_layer_data(widget, layer_id)
   if (is.null(data)) {
     stop("Missing data for layer '", layer_id, "' while compiling filter component '", cid, "'.", call. = FALSE)
   }
@@ -819,7 +808,7 @@
     stop("summaries component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
   }
 
-  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  data <- .ml_compiler_layer_data(widget, layer_id)
   if (is.null(data)) {
     stop("Missing data for layer '", layer_id, "' while compiling summaries component '", cid, "'.", call. = FALSE)
   }
