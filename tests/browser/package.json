@@ -1,0 +1,13 @@
+{
+  "name": "maplamina-browser-tests",
+  "private": true,
+  "description": "Browser regression harness for the maplamina htmlwidget runtime",
+  "scripts": {
+    "fixtures": "cd ../.. && Rscript tests/browser/fixtures/make-fixtures.R",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "pngjs": "^7.0.0"
+  }
+}

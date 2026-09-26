@@ -29,3 +29,6 @@ build/
 *.map
 docs
 inst/doc
+tests/browser/fixtures/out/
+tests/browser/test-results/
+tests/browser/playwright-report/
