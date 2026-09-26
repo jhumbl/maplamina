@@ -1,4 +1,4 @@
-// Priority B filter and template scenarios F6, F9, F10, F12, T3, T4.
+// Priority B filter and template scenarios F6, F9, F10, F12, F14, T3, T4.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, screenshot, isDrawnAt, measureDrawnRadius, setFilter, toggleSelectOption,
@@ -85,5 +85,23 @@ test('F12: filter labels with "/" and spaces render and work', async ({ page }) 
   expect(isDrawnAt(png, x5.x, x5.y), 'x=5 green in range').toBe(true);
   expect(isDrawnAt(png, x1.x, x1.y), 'x=1 out of range').toBe(false);
   expect(isDrawnAt(png, x4.x, x4.y), 'x=4 red').toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('F14: an NA row stays hidden from a range filter whose range includes 0', async ({ page }) => {
+  const { errors } = await openWidget(page, 'circles-range-na');
+  const count = async () => (await page.locator('.ml-summary-value').first().innerText()).trim();
+  const check = async (when) => {
+    const png = await screenshot(page);
+    const at = async (lon) => { const p = await project(page, lon, 51.5); return isDrawnAt(png, p.x, p.y); };
+    expect(await at(-0.02), `${when}: v = -1 drawn`).toBe(true);
+    expect(await at(0.02), `${when}: v = 1 drawn`).toBe(true);
+    expect(await at(0), `${when}: NA row drawn`).toBe(false);
+    expect(await count(), `${when}: count`).toBe('2');
+  };
+  await check('initial');
+  await setFilter(page, 'v', [-1, 1]);
+  await page.waitForTimeout(500);
+  await check('after set');
   expect(errors).toEqual([]);
 });

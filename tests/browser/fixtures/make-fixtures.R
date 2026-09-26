@@ -304,3 +304,11 @@ maplamina(sm) |>
   add_summaries(summary_count(label = "n"), summary_sum(~v, label = "sum"), summary_mean(~v, label = "mean", digits = 1),
                 summary_min(~v, label = "min"), bind = "summaries") |>
   save("polygons-multipart-summaries")
+
+# F14: a range filter whose domain includes 0 never shows the NA row.
+na <- data.frame(lon = c(-0.02, 0, 0.02), lat = 51.5, v = c(-1, NA, 1))
+maplamina(na) |>
+  add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(summary_count(label = "n"), bind = "summaries") |>
+  save("circles-range-na")

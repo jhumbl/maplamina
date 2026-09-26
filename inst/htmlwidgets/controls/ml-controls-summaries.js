@@ -331,10 +331,8 @@
       for (let p = 0; p < n; p++) {
         if (mask[p] === 0) continue;
         const ii = indexForArray(vals, p);
-        let v = vals ? vals[ii] : 0;
-        // Mirror GPU accessor behavior (non-finite -> 0).
-        if (!Number.isFinite(v)) v = 0;
-        if (v < lo || v > hi) mask[p] = 0;
+        const v = vals ? vals[ii] : NaN;
+        if (!Number.isFinite(v) || v < lo || v > hi) mask[p] = 0;
       }
     }
 
