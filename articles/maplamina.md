@@ -19,6 +19,7 @@ views.
 The contrast looks like this.
 
 ``` r
+
 # Repeating the layer for each year
 rmap() |>
   add_circles(data, radius = ~value_2020, group = "2020") |>
@@ -30,6 +31,7 @@ rmap() |>
 In `maplamina`, the same idea becomes:
 
 ``` r
+
 maplamina() |>
   add_circles(data) |>
   add_views(
@@ -49,6 +51,7 @@ We’ll make a small point dataset with coordinates, a region, and three
 yearly values.
 
 ``` r
+
 set.seed(1)
 
 n <- 2000
@@ -76,6 +79,7 @@ Now create a circle layer and define three views that map radius to a
 different column each time.
 
 ``` r
+
 maplamina() |>
   add_circles(
     d,
@@ -100,6 +104,7 @@ Here we add:
 - a select filter for region
 
 ``` r
+
 maplamina() |>
   add_circles(
     d,

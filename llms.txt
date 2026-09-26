@@ -28,12 +28,14 @@ Demo
 Install from CRAN:
 
 ``` r
+
 install.packages("maplamina")
 ```
 
 Or install the development version from GitHub:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("jhumbl/maplamina")
 ```
@@ -44,6 +46,7 @@ A minimal example of a layer with multiple views transitioning between
 different **radius** sizes, and a GPU-accelerated filter.
 
 ``` r
+
 set.seed(1)
 n <- 2000
 d <- data.frame(
@@ -102,6 +105,7 @@ maplamina() |>
 ## Hardware-dependent demo: filtering 10 Million points
 
 ``` r
+
 maplamina() |>
   add_circles(big_dataset, radius=~value) |>
   add_filters(
