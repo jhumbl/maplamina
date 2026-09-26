@@ -321,7 +321,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     // PANEL MOUNTING
     const panelGroups = new Set();
     if (hasPanel) {
-      const corner = normText(panelSpec.corner) || 'topleft';
+      const corner = normText(panelSpec.position) || 'topleft';
       const key = normText(panelSpec.key) || 'controls-panel';
 
       const panelHost = hostApi.ensurePanelHost(el, {
@@ -387,7 +387,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // STANDALONE MOUNTING
     const standaloneGroups = allGroups.filter(g => !panelGroups.has(g));
-    const defaultStandaloneCorner = (panelSpec && normText(panelSpec.corner)) ? normText(panelSpec.corner) : 'topleft';
+    const defaultStandaloneCorner = (panelSpec && normText(panelSpec.position)) ? normText(panelSpec.position) : 'topleft';
 
     // Track order per corner so each corner stacks deterministically.
     const cornerCount = { topleft: 0, topright: 0, bottomright: 0, bottomleft: 0 };

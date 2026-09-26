@@ -96,3 +96,17 @@ test('C7: mounting the controls a second time keeps one dock item per group', as
   expect(await count(), 'second sync reused the dock item').toBe(1);
   expect(await page.locator('input[type=radio][value="big"]').count()).toBe(1);
 });
+
+test('C5: the panel and a standalone control sit in the corners they were given', async ({ page }) => {
+  const { errors } = await openWidget(page, 'panel-corners');
+  const box = await widgetBox(page);
+  const midX = (box.left + box.right) / 2;
+  const midY = (box.top + box.bottom) / 2;
+  const panel = await page.locator('.ml-control-panel').first().boundingBox();
+  expect(panel.x + panel.width / 2, 'panel is on the right').toBeGreaterThan(midX);
+  expect(panel.y + panel.height / 2, 'panel is at the bottom').toBeGreaterThan(midY);
+  const standalone = await page.locator('.ml-control-standalone').first().boundingBox();
+  expect(standalone.x + standalone.width / 2, 'standalone is on the right').toBeGreaterThan(midX);
+  expect(standalone.y + standalone.height / 2, 'standalone is at the top').toBeLessThan(midY);
+  expect(errors).toEqual([]);
+});

@@ -271,3 +271,12 @@ maplamina(lab) |>
   add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
   add_filters(filter_range(~`speed / rate`), filter_select(~`colour group`)) |>
   save("circles-filter-labels")
+
+# C5: a panel in the bottom-right corner and a standalone views control in the top-right.
+maplamina() |>
+  add_circles(va, stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 5) |>
+  add_views(view("small", radius = 5), view("big", radius = 12), duration = 1, bind = "views") |>
+  add_circles(vb, stroke = FALSE, fill_color = "darkred", fill_opacity = 1, radius = 5) |>
+  add_views(view("small", radius = 5), view("big", radius = 12), duration = 1, bind = "views_b", position = "topright") |>
+  add_panel(title = "Panel", position = "bottomright", sections = sections(section("views"))) |>
+  save("panel-corners")
