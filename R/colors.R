@@ -112,8 +112,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     f <- factor(xv, levels = dom)
     col <- pal[as.integer(f)]
     col[is.na(col)] <- na_color
-    attr(spec, "levels") <- dom
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -139,8 +137,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     pal <- .ml_palette_resolve(spec$palette, 1L, reverse = reverse)
     col <- rep_len(pal[[1L]], n)
     col[!ok] <- na_color
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -161,9 +157,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     idx[!ok] <- NA_integer_
     col <- pal[idx]
     col[is.na(col)] <- na_color
-
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -184,8 +177,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
       pal <- .ml_palette_resolve(spec$palette, 1L, reverse = reverse)
       col <- rep_len(pal[[1L]], n)
       col[!ok] <- na_color
-      attr(spec, "breaks") <- breaks
-      attr(spec, "colors") <- pal
       return(col)
     }
 
@@ -200,10 +191,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
 
     col <- pal[b]
     col[!ok | is.na(col)] <- na_color
-
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "breaks") <- breaks
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -221,8 +208,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
       pal <- .ml_palette_resolve(spec$palette, 1L, reverse = reverse)
       col <- rep_len(pal[[1L]], n)
       col[!ok] <- na_color
-      attr(spec, "breaks") <- breaks
-      attr(spec, "colors") <- pal
       return(col)
     }
 
@@ -237,10 +222,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
 
     col <- pal[b]
     col[!ok | is.na(col)] <- na_color
-
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "breaks") <- breaks
-    attr(spec, "colors") <- pal
     return(col)
   }
 
