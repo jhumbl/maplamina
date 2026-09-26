@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-filters-range.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-filters-range.js");
   }
 
   const utils = core.require('utils', 'ml-filters-range.js');
@@ -11,6 +11,7 @@
     throw new Error("[maplamina] Missing function utils.domKey required by ml-filters-range.js");
   }
   const domKey = utils.domKey;
+  const widgetKey = utils.widgetKey;
 
   const filterCore = core.require('filterCore', 'ml-filters-range.js');
   const { ensureFiltersContainer, publishFilterState, getElState } = filterCore;
@@ -66,9 +67,9 @@
     const filtersBox = ensureFiltersContainer(el, bindId, panelMeta);
     if (!filtersBox) return;
 
-    const domLayerId = domKey(bindId);
+    const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
 
-    const cid = `ml-rng-${domLayerId}-${(rng && rng.dom_id) ? rng.dom_id : rng.id}`;
+    const cid = `ml-rng-${domLayerId}-${rng.dom_id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) {
       box = document.createElement('div');
@@ -117,7 +118,7 @@
       hiLab.textContent = formatValue(current[1], decimals);
     }
 
-    // v3: always use the provided onChange callback.
+    // Always use the provided onChange callback.
     // The runtime scheduler coalesces rebuilds, so UI can emit live changes directly.
     const notify = () => {
       try {
@@ -166,9 +167,6 @@
 
     syncLabels();
   }
-
-  // (v3) GPU filtering is driven by .__controls.filters in maplamina.js.
-  // Legacy per-layer GPU wiring removed.
 
   root.filterRange = Object.assign({}, root.filterRange, { ensureRangeUI });
 })(window);

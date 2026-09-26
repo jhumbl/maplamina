@@ -5,6 +5,7 @@
 
   const normText = root.utils.normText;
   const safeId = root.utils.safeId;
+  const widgetKey = root.utils.widgetKey;
 
   function ensureTitleRow(panelEl, titleText) {
     let titleEl = panelEl.querySelector('.ml-panel-title');
@@ -31,7 +32,7 @@
 function ensureTitleIconLink(panelEl, panelSpec) {
   if (!panelEl || !panelSpec) return;
 
-  // NOTE (v3): panelSpec.icon is the only supported input.
+  // panelSpec.icon is the only supported input.
   // It is expected to be a URL string (or a depUrl() object) and we use it as:
   //  - <img src="..."> for the icon image
   //  - <a href="..."> to make it clickable
@@ -123,12 +124,11 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     if (!inserted) panelEl.appendChild(slotEl);
   }
 
-  function ensureSectionSlot(panelEl, groupId, opts) {
+  function ensureSectionSlot(panelEl, sid, groupId, opts) {
     opts = opts || {};
     const label = normText(opts.label) || groupId;
     const orderNum = Number.isFinite(opts.order) ? opts.order : 100;
 
-    const sid = `ml-controls-slot-${safeId(groupId)}`;
     let slot = panelEl.querySelector(`#${sid}`);
 
     if (!slot) {
@@ -221,20 +221,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     // Prefer registry dispatch by control type.
     const reg = root.controls && root.controls.registry;
     let handler = null;
-    if (type && reg) {
-      if (typeof reg.getHandler === 'function') handler = reg.getHandler(type);
-      else if (typeof reg.get === 'function') {
-        const fn = reg.get(type);
-        if (typeof fn === 'function') handler = { render: fn, update: null };
-      }
-    }
-    let renderer = (handler && typeof handler.render === 'function') ? handler.render : null;
-
-    // Fallback: allow direct module dispatch if registry is not yet initialized (load-order safety).
-    if (!renderer && type) {
-      const api = root.controls && root.controls[type];
-      if (api && typeof api.render === 'function') renderer = api.render;
-    }
+    if (type && reg) handler = reg.getHandler(type);
+    const renderer = (handler && typeof handler.render === 'function') ? handler.render : null;
 
     if (renderer && typeof renderer === 'function') {
       try { renderer(mountEl, el, x, groupId, controlSpec); return; } catch (e) { console.error(e); return renderPlaceholder(mountEl, groupId, controlSpec, 'Renderer crashed — see console.'); }
@@ -243,7 +231,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     renderPlaceholder(mountEl, groupId, controlSpec);
   }
 
-  // Stage 2: update hook for mounted control groups (no re-mount).
+  // Update hook for mounted control groups (no re-mount).
   // Called by runtime pipeline when job.controls is set.
   function update(el, x, rt, job) {
     if (!el) return;
@@ -263,22 +251,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       const type = controlSpec && controlSpec.type ? normText(controlSpec.type) : '';
       if (!type) continue;
 
-      let handler = null;
-      if (reg) {
-        if (typeof reg.getHandler === 'function') handler = reg.getHandler(type);
-        else if (typeof reg.get === 'function') {
-          const fn = reg.get(type);
-          if (typeof fn === 'function') handler = { render: fn, update: null };
-        }
-      }
-
-      let updater = (handler && typeof handler.update === 'function') ? handler.update : null;
-
-      // Fallback: allow direct module dispatch if registry isn't initialized.
-      if (!updater) {
-        const api = root.controls && root.controls[type];
-        if (api && typeof api.update === 'function') updater = api.update;
-      }
+      const handler = reg ? reg.getHandler(type) : null;
+      const updater = (handler && typeof handler.update === 'function') ? handler.update : null;
 
       if (typeof updater === 'function') {
         try {
@@ -291,7 +265,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
   }
 
 
-  // Standalone positioning (v3): allow each control group to choose its own dock corner.
+  // Standalone positioning: allow each control group to choose its own dock corner.
   const ALL_CORNERS = ['topleft', 'topright', 'bottomright', 'bottomleft'];
 
   function normalizeCorner(pos, fallback) {
@@ -333,7 +307,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     const controls = specControls.getControlGroups(x);
 
-    // IMPORTANT (v3): Respect authored order from the compiled spec.
+    // Respect authored order from the compiled spec.
     // Prefer the centralized spec helper which applies panel order first (if present),
     // then insertion order in .__controls.
     const allGroups = (typeof specControls.getControlGroupIdsOrdered === 'function')
@@ -344,13 +318,10 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     const sections = panelSpec && Array.isArray(panelSpec.sections) ? panelSpec.sections : null;
     const hasPanel = !!(sections && sections.length);
 
-    // Always remove legacy per-layer UI (safe; does not touch v3 containers)
-    try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
-
     // PANEL MOUNTING
     const panelGroups = new Set();
     if (hasPanel) {
-      const corner = normText(panelSpec.corner) || 'topleft';
+      const corner = normText(panelSpec.position) || 'topleft';
       const key = normText(panelSpec.key) || 'controls-panel';
 
       const panelHost = hostApi.ensurePanelHost(el, {
@@ -361,7 +332,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       });
 
       if (panelHost) {
-        panelHost.id = panelHost.id || 'ml-controls-panel';
+        panelHost.id = panelHost.id || `ml-controls-panel-${widgetKey(el)}`;
         ensureTitleRow(panelHost, normText(panelSpec.title) || 'controls');
         ensureDescription(panelHost, panelSpec.description);
 
@@ -377,12 +348,13 @@ function ensureTitleIconLink(panelEl, panelSpec) {
           if (!gid) continue;
 
           panelGroups.add(gid);
-          const body = ensureSectionSlot(panelHost, gid, {
+          const sid = `ml-controls-slot-${widgetKey(el)}-${safeId(gid)}`;
+          const body = ensureSectionSlot(panelHost, sid, gid, {
             label: normText(sec.label) || gid,
             order: Number.isFinite(sec.order) ? sec.order : (10 + i * 10)
           });
 
-          seenSlots.add(`ml-controls-slot-${safeId(gid)}`);
+          seenSlots.add(sid);
 
           // Ensure both group- and type-scoped classes are applied (e.g. ml-panel-views)
           applyBodyClasses(body, gid, controls[gid]);
@@ -415,7 +387,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // STANDALONE MOUNTING
     const standaloneGroups = allGroups.filter(g => !panelGroups.has(g));
-    const defaultStandaloneCorner = (panelSpec && normText(panelSpec.corner)) ? normText(panelSpec.corner) : 'topleft';
+    const defaultStandaloneCorner = (panelSpec && normText(panelSpec.position)) ? normText(panelSpec.position) : 'topleft';
 
     // Track order per corner so each corner stacks deterministically.
     const cornerCount = { topleft: 0, topright: 0, bottomright: 0, bottomleft: 0 };
@@ -439,7 +411,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       });
 
       if (container) {
-        container.id = container.id || `ml-controls-standalone-${safeId(gid)}`;
+        container.id = container.id || `ml-controls-standalone-${widgetKey(el)}-${safeId(gid)}`;
 
         // Standalone controls should be "bare": no bind-id title, no description,
         // and no slot wrapper (which would trigger divider chrome).
@@ -474,7 +446,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // Remove stale standalone nodes in the DOM (fallback path)
     try {
-      const nodes = el.querySelectorAll('[data-ml-control-kind="standalone"]');
+      const nodes = el.querySelectorAll('[data-mf-control-kind="standalone"]');
       nodes && nodes.forEach(n => {
         const gid = n.dataset.mfControlGroup;
         if (!gid) return;
@@ -500,7 +472,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // Remove v3 standalone hosts (best-effort via attributes)
     try {
-      const nodes = el.querySelectorAll('[data-ml-control-kind="standalone"]');
+      const nodes = el.querySelectorAll('[data-mf-control-kind="standalone"]');
       nodes && nodes.forEach(n => {
         const gid = n.dataset.mfControlGroup;
         if (gid) {
@@ -512,29 +484,13 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       });
     } catch (_) {}
 
-    // Also remove any legacy per-layer UI
-    try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
-
     try { el.__mlMountedControls = {}; } catch (_) {}
-  }
-
-  function removeLegacyLayerUI(el) {
-    const hostApi = root.controls && root.controls.host;
-    if (!hostApi) return;
-    try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
-
-    // Also remove older view-switcher stack if still present
-    try {
-      const old = el.querySelector('.ml-view-switcher-stack');
-      if (old) old.remove();
-    } catch (_) {}
   }
 
   // v3 API: mounting only.
   root.controls.panel = {
     sync,
     update,
-    clear,
-    removeLegacyLayerUI
+    clear
   };
 })(window);

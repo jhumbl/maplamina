@@ -60,7 +60,7 @@
     if (!corner) return null;
 
     // Reuse if it exists in DOM (e.g. hot reload)
-    let group = corner.querySelector(`[data-ml-dock-group="${p}"]`);
+    let group = corner.querySelector(`[data-mf-dock-group="${p}"]`);
     if (!group) {
       group = document.createElement('div');
       group.className = `maplibregl-ctrl ml-dock-group ml-dock-group--${p}`;
@@ -114,7 +114,7 @@
     opts = opts || {};
     const orderNum = Number.isFinite(opts.order) ? Number(opts.order) : 100;
 
-    let item = parent.querySelector(`[data-ml-dock-pos="${p}"][data-ml-dock-item="${k}"]`);
+    let item = parent.querySelector(`[data-mf-dock-pos="${p}"][data-mf-dock-item="${k}"]`);
     if (!item) {
       item = document.createElement('div');
       const extra = opts.className ? String(opts.className) : '';
@@ -144,7 +144,7 @@
     const container = group || getMapContainer(el) || el;
     if (!container) return;
 
-    const item = container.querySelector(`[data-ml-dock-pos="${p}"][data-ml-dock-item="${k}"]`);
+    const item = container.querySelector(`[data-mf-dock-pos="${p}"][data-mf-dock-item="${k}"]`);
     if (item) {
       try { item.remove(); } catch (_) {
         try { item.parentNode && item.parentNode.removeChild(item); } catch (_) {}
@@ -152,7 +152,7 @@
     }
 
     // If the group is now empty, remove it
-    const g = getState(el).groups.get(p) || (container.querySelector ? container.querySelector(`[data-ml-dock-group="${p}"]`) : null);
+    const g = getState(el).groups.get(p) || (container.querySelector ? container.querySelector(`[data-mf-dock-group="${p}"]`) : null);
     if (g && g.dataset && g.dataset.mfDockGroup === p) {
       const hasItems = Array.from(g.children).some(n => n && n.dataset && n.dataset.mfDockItem);
       if (!hasItems) {
@@ -166,7 +166,7 @@
     if (!el) return;
     const container = getMapContainer(el) || el;
     if (container && container.querySelectorAll) {
-      const groups = container.querySelectorAll('[data-ml-dock-group]');
+      const groups = container.querySelectorAll('[data-mf-dock-group]');
       groups.forEach(n => {
         try { n.remove(); } catch (_) {}
       });

@@ -2,12 +2,13 @@
   'use strict';
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
-  if (!core || typeof core.now !== 'function') {
-    throw new Error("[maplamina] Missing core; ensure ml-core.js is loaded before ml-runtime-initial-render.js");
+  if (!core || typeof core.require !== 'function') {
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-initial-render.js");
   }
 
   const mod = root.runtimeInitialRender = root.runtimeInitialRender || {};
   const viewsMod = core.require('views', 'ml-runtime-initial-render.js');
+  const escapeHtml = root.utils.escapeHtml;
   const applyOrderedViewOps = viewsMod && viewsMod.applyOrderedViewOps;
   const collectPrimeViewEncodingKeys = viewsMod && viewsMod.collectPrimeViewEncodingKeys;
 
@@ -25,14 +26,7 @@
 
   function readInitialTransitions(rt, layerId, transitionsForBuild) {
     try {
-      if (typeof transitionsForBuild === 'function') {
-        return transitionsForBuild(rt, layerId, {
-          reason: 'initial',
-          allowTransitions: false,
-          motionEligible: false,
-          invalidation: { initial: true, render: true, encodings: true, motionEligible: false }
-        });
-      }
+      if (typeof transitionsForBuild === 'function') return transitionsForBuild(rt, layerId);
     } catch (_) {}
 
     try {
@@ -103,7 +97,7 @@
 
     try {
       if (rt.pruneTasks && rt.pruneTasks.size) {
-        for (const id of rt.pruneTasks) core.cancelIdlePrune(id);
+        for (const id of rt.pruneTasks) root.assets.cancelIdlePrune(id);
         rt.pruneTasks.clear();
       }
     } catch (_) {}
@@ -117,7 +111,7 @@
       }
     } catch (_) {}
 
-    const t0 = (opts.t0 != null) ? opts.t0 : core.now();
+    const t0 = (opts.t0 != null) ? opts.t0 : root.utils.now();
     const activeViews = (typeof pickActiveViews === 'function') ? pickActiveViews(rt, x) : {};
     const viewOps = (typeof computeViewOpsByLayerV3 === 'function') ? computeViewOpsByLayerV3(x, activeViews) : null;
     const viewOpsByLayer = viewOps && viewOps.opsByLayer ? viewOps.opsByLayer : new Map();
@@ -148,7 +142,6 @@
         spec: x,
         rt,
         x,
-        core,
         mergeEncodings,
         opsByLayer: viewOpsByLayer,
         applyOrderedViewOps,
@@ -181,7 +174,7 @@
     try { root.controls && root.controls.panel && typeof root.controls.panel.update === 'function' && root.controls.panel.update(el, x, rt, { reason: 'initial' }); } catch (_) {}
 
     try {
-      const t1 = core.now();
+      const t1 = root.utils.now();
       const parts = (typeof ensureHudParts === 'function') ? ensureHudParts(el) : null;
       if (parts && parts.summary) parts.summary.textContent = `layers: ${currentLayers.length} • build ${(t1 - t0).toFixed(1)}ms`;
 
@@ -198,12 +191,12 @@
         totalCategoryDims += (m.categoryDims || 0);
 
         if (m.rangeDims || m.categoryDims) {
-          metaRows.push(`<div class="ml-hud-gpu-row">gpu ${layerId}: range×${m.rangeDims || 0} • cat×${m.categoryDims || 0}</div>`);
+          metaRows.push(`<div class="ml-hud-gpu-row">gpu ${escapeHtml(layerId)}: range×${m.rangeDims || 0} • cat×${m.categoryDims || 0}</div>`);
         }
 
         const warnState = getRenderState(entry) || getLogicalLayer(entry) || null;
         const warns = (warnState && Array.isArray(warnState.__warns)) ? warnState.__warns : [];
-        for (const w of warns) warnLines.push(`<div class="ml-hud-warn">⚠️ ${layerId}: ${w}</div>`);
+        for (const w of warns) warnLines.push(`<div class="ml-hud-warn">⚠️ ${escapeHtml(layerId)}: ${escapeHtml(w)}</div>`);
       }
 
       if (parts && parts.gpu) parts.gpu.innerHTML = [

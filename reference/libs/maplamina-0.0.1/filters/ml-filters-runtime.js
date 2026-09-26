@@ -4,12 +4,11 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-filters-runtime.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-filters-runtime.js");
   }
   const utils = core.require('utils', 'ml-filters-runtime.js');
   const normText = utils.normText;
 
-  // Spec helpers (Stage 1 extraction)
   const spec = core.require('spec', 'ml-filters-runtime.js');
   const specControls = spec.controls;
   const getControlGroupsByType = specControls.getControlGroupsByType;
@@ -19,6 +18,10 @@
     throw new Error("[maplamina] Missing data.getIndexers; ensure ml-data.js is loaded before ml-filters-runtime.js");
   }
   const assetsMod = core.require('assets', 'ml-filters-runtime.js');
+
+  // NA in a range column never passes the filter. The most negative float32 is used rather
+  // than -Infinity, which the GPU range test does not reliably place below the minimum.
+  const NA_RANGE_VALUE = -3.4028234663852886e38;
 
   function ensureFiltersState(rt) {
     if (!rt || typeof rt !== 'object') return { filters: {} };
@@ -479,16 +482,16 @@
         if (rangeDims === 1) {
           const arr = rngArrays[0];
           const ii = indexForArray(arr, p);
-          const v = arr ? arr[ii] : 0;
-          return Number.isFinite(v) ? v : 0;
+          const v = arr ? arr[ii] : NaN;
+          return Number.isFinite(v) ? v : NA_RANGE_VALUE;
         }
 
         const out = scratchRange;
         for (let k = 0; k < rangeDims; k++) {
           const arr = rngArrays[k];
           const ii = indexForArray(arr, p);
-          const v = arr ? arr[ii] : 0;
-          out[k] = Number.isFinite(v) ? v : 0;
+          const v = arr ? arr[ii] : NaN;
+          out[k] = Number.isFinite(v) ? v : NA_RANGE_VALUE;
         }
         return out;
       };

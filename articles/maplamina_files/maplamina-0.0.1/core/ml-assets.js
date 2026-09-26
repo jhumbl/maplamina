@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-assets.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-assets.js");
   }
 
   const utils = core.require('utils', 'ml-assets.js');
@@ -14,8 +14,7 @@
     const scripts = document.getElementsByTagName('script');
     for (let i = scripts.length - 1; i >= 0; --i) {
       const s = scripts[i].src || '';
-      // Prefer the module name if present; fall back to ml-core.js for legacy builds.
-      const m = s.match(/(.*\/)(?:ml-assets|ml-core)\.js(?:\?.*)?$/);
+      const m = s.match(/(.*\/)ml-assets\.js(?:\?.*)?$/);
       if (m) { __DEP_BASE = m[1]; break; }
     }
   } catch (_) {}
@@ -77,48 +76,55 @@
   function cancelIdlePrune(id){ if (id) __cic(id); }
 
   // ------------------------ fetch + hydration helpers ------------------------
+  // Decoded arrays by blob id, so a column shared by several layers is decoded once. Keyed on
+  // the id rather than the data URI so pruning the embedded base64 actually frees it.
   const MEMO = new Map();
-  async function fetchArray(href, dtype) {
+  function clearMemo() { MEMO.clear(); }
+
+  function typedArray(buf, dt) {
+    switch (dt) {
+      case 'u32': return new Uint32Array(buf);
+      case 'u8':  return new Uint8Array(buf);
+      default:    return new Float32Array(buf);
+    }
+  }
+
+  function decodeBase64DataUri(url) {
+    const bin = atob(url.slice(url.indexOf(',') + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  async function fetchArray(href, dtype, memoKey) {
     const url = depUrl(href);
     const dt = (dtype || '').toLowerCase();
 
-    const key = url + '|' + dt;
-
-    const empty = () => {
-      switch (dt) {
-        case 'u32': return new Uint32Array(0);
-        case 'u8':  return new Uint8Array(0);
-        case 'f32': return new Float32Array(0);
-        default:    return new Float32Array(0);
-      }
-    };
-
     if (typeof url !== 'string') {
       console.warn('[maplamina] fetchArray bad href', href);
-      return empty();
+      return typedArray(new ArrayBuffer(0), dt);
     }
-    if (MEMO.has(key)) return MEMO.get(key);
+    if (memoKey && MEMO.has(memoKey)) return MEMO.get(memoKey);
 
     try {
-      const res = await fetch(url);
-      if (!res || !res.ok) {
-        const status = res ? `${res.status} ${res.statusText || ''}`.trim() : 'no response';
-        console.warn('[maplamina] fetchArray failed', status, url);
-        return empty();
+      let buf;
+      if (/^data:[^,]*;base64,/.test(url)) {
+        buf = decodeBase64DataUri(url);
+      } else {
+        const res = await fetch(url);
+        if (!res || !res.ok) {
+          const status = res ? `${res.status} ${res.statusText || ''}`.trim() : 'no response';
+          console.warn('[maplamina] fetchArray failed', status, url);
+          return typedArray(new ArrayBuffer(0), dt);
+        }
+        buf = await res.arrayBuffer();
       }
-      const buf = await res.arrayBuffer();
-      let arr;
-      switch (dt) {
-        case 'f32': arr = new Float32Array(buf); break;
-        case 'u32': arr = new Uint32Array(buf); break;
-        case 'u8':  arr = new Uint8Array(buf);  break;
-        default:    arr = new Float32Array(buf); break;
-      }
-      MEMO.set(key, arr);
+      const arr = typedArray(buf, dt);
+      if (memoKey) MEMO.set(memoKey, arr);
       return arr;
     } catch (e) {
       console.warn('[maplamina] fetchArray error', url, e);
-      return empty();
+      return typedArray(new ArrayBuffer(0), dt);
     }
   }
 
@@ -160,7 +166,7 @@
     }
 
     // hydrate now, then cache on the blob (so view switches never fetch/decode)
-    const arr = await fetchArray(blob.href, blob.dtype);
+    const arr = await fetchArray(blob.href, blob.dtype, blobId);
     blob.__array = arr;
     return { array: arr, dtype: blob.dtype, size: (blob.size != null ? blob.size : outerSize), blobId };
   }
@@ -180,5 +186,5 @@
   return null;
 }
 
-  root.assets = { depUrl, fetchArray, resolveRefOrHref, pruneEmbeddedBlobs, pruneEmbeddedBlobsIdle, cancelIdlePrune };
+  root.assets = { depUrl, fetchArray, clearMemo, resolveRefOrHref, pruneEmbeddedBlobs, pruneEmbeddedBlobsIdle, cancelIdlePrune };
 })(window);

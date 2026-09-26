@@ -52,17 +52,6 @@
     return bucket;
   }
 
-  function clearLayerBuildCache(ctx, st) {
-    const byLayer = ctx && ctx.cache && ctx.cache.layerBuildCache;
-    if (!(byLayer instanceof Map)) return;
-    byLayer.delete(layerCacheKey(st));
-  }
-
-  function clearAllLayerBuildCaches(ctx) {
-    const byLayer = ctx && ctx.cache && ctx.cache.layerBuildCache;
-    if (byLayer instanceof Map) byLayer.clear();
-  }
-
   function flattenLayers(L) {
     // Deck.gl expects a flat layer array. Some builders may return nested arrays.
     if (L == null) return [];
@@ -119,10 +108,7 @@
 
   root.layerUtils = {
     mergeEncodings,
-    layerCacheKey,
     getLayerBuildCache,
-    clearLayerBuildCache,
-    clearAllLayerBuildCaches,
     flattenLayers,
     swapOverlayLayers
   };

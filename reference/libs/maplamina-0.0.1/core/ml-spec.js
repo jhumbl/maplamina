@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-spec.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-spec.js");
   }
 
   const utils = core.require('utils', 'ml-spec.js');
@@ -88,7 +88,7 @@
     return s || [];
   }
 
-  // Controls group ordering contract (v3):
+  // Controls group ordering contract:
   // 1) If a panel is present, its sections order is authoritative for card order and
   //    is also used as the precedence order for group application (e.g. views).
   // 2) Any remaining groups not referenced by the panel follow insertion order in .__controls.
@@ -140,29 +140,7 @@
     return out;
   }
 
-  function pickControlGroupByType(x, type, preferId) {
-    const list = getControlGroupsByType(x, type);
-    if (!list.length) return null;
-    const pref = normText(preferId);
-    if (pref) {
-      const hit = list.find(g => normText(g.groupId) === pref);
-      if (hit) return hit;
-    }
-    return list[0];
-  }
-
-  function getViewsControlSpec(x) {
-    const g = pickControlGroupByType(x, 'views', 'views');
-    return g ? g.spec : null;
-  }
-
-  function getFiltersControlGroup(x) {
-    return pickControlGroupByType(x, 'filters', 'filters');
-  }
-
-
-  // --- v3 spec assertions (no legacy support) ---
-  // Throws if the incoming spec is not in the expected v3 shape.
+  // Throws if the incoming spec is not in the expected shape.
   function assertV3Spec(x, where) {
     const loc = where ? ` (${where})` : '';
     if (!x || typeof x !== 'object') {
@@ -235,7 +213,7 @@
       }
     }
 
-    // Validate layers + disallow legacy per-layer UI/components fields.
+    // Layers must not carry UI or component fields.
     const legacyKeys = ['views', 'filters', 'panel', 'controls', 'transitions'];
     for (const lid of Object.keys(layers)) {
       const st = layers[lid];
@@ -265,13 +243,9 @@
     controls: {
       getControlGroups,
       getPanelSpec,
-      getPanelSections,
       getControlGroupIdsOrdered,
       getControlSpec,
-      getControlGroupsByType,
-      pickControlGroupByType,
-      getViewsControlSpec,
-      getFiltersControlGroup
+      getControlGroupsByType
     }
   };
 })(window);

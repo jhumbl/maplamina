@@ -62,7 +62,5 @@
   : Summary: sum of values
 - [`tmpl()`](https://jhumbl.github.io/maplamina/reference/tmpl.md) :
   Create a tooltip/popup template
-- [`transition()`](https://jhumbl.github.io/maplamina/reference/transition.md)
-  : Deprecated transition helper
 - [`view()`](https://jhumbl.github.io/maplamina/reference/view.md) :
   Define a view

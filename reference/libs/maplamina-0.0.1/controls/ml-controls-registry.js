@@ -3,10 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   root.controls = root.controls || {};
 
-  // Simple registry for control handlers, keyed by controlSpec.type.
-  // Back-compat: existing code can still register a render function.
-  // New in Stage 2: handlers may also provide an `update` hook.
-  // Mirrors ml-layer-registry pattern, but for UI controls.
+  // Registry for control handlers, keyed by controlSpec.type.
   const _handlers = new Map();
 
   function normType(t) {
@@ -36,18 +33,10 @@
     _handlers.set(key, h);
   }
 
-  // Back-compat: return render function.
-  function get(type) {
-    const key = normType(type);
-    const h = key ? (_handlers.get(key) || null) : null;
-    return (h && typeof h.render === 'function') ? h.render : null;
-  }
-
-  // New: return full handler {render, update}.
   function getHandler(type) {
     const key = normType(type);
     return key ? (_handlers.get(key) || null) : null;
   }
 
-  root.controls.registry = Object.assign(root.controls.registry || {}, { register, get, getHandler });
+  root.controls.registry = Object.assign(root.controls.registry || {}, { register, getHandler });
 })(window);

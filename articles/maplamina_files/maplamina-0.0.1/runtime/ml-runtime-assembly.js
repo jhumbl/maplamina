@@ -67,12 +67,10 @@
     return st;
   }
 
-  async function prepareLogicalLayer(st0, layerId, core) {
+  async function prepareLogicalLayer(st0, layerId) {
     const st = cloneLogicalLayer(st0, layerId);
     if (!st) return null;
-    if (core && typeof core.resolveActiveOnly === 'function') {
-      await core.resolveActiveOnly(st);
-    }
+    await root.data.resolveActiveOnly(st);
     return st;
   }
 
@@ -84,10 +82,6 @@
     if (!Object.prototype.hasOwnProperty.call(out, 'logical')) out.logical = null;
     if (!Object.prototype.hasOwnProperty.call(out.cache, 'lastRenderState')) out.cache.lastRenderState = null;
     return out;
-  }
-
-  function createLayerEntry(logical) {
-    return ensureLayerEntry({}, logical || null);
   }
 
   function getLogicalLayer(entry) {
@@ -125,7 +119,6 @@
 
   async function assembleRenderState(opts) {
     const layerId = opts && opts.layerId;
-    const core = opts && opts.core;
     const spec = opts && opts.spec;
     const rt = opts && opts.rt;
     const sourceState = opts && opts.sourceState;
@@ -138,7 +131,7 @@
 
     if (!logical) {
       logical = (typeof prepareLogical === 'function')
-        ? await prepareLogical(sourceState, layerId, core)
+        ? await prepareLogical(sourceState, layerId)
         : (cloneLayer(sourceState, layerId) || Object.assign({}, sourceState || {}));
       logicalChanged = true;
     }
@@ -158,8 +151,8 @@
       viewOps = (res && Array.isArray(res.ops)) ? res.ops : [];
     }
 
-    if (viewOps.length && core && typeof core.resolveActiveOnly === 'function') {
-      await core.resolveActiveOnly(renderState);
+    if (viewOps.length) {
+      await root.data.resolveActiveOnly(renderState);
     }
 
     const filterContribution = await collectFilterContribution({
@@ -194,8 +187,8 @@
     if (out.logicalChanged && typeof pruneEmbeddedBlobs === 'function') {
       try { pruneEmbeddedBlobs(out.logical); } catch (_) {}
     }
-    if (opts && opts.core && typeof opts.core.resolveRemainingViewsIdle === 'function' && out.renderState) {
-      opts.core.resolveRemainingViewsIdle(out.renderState);
+    if (out.renderState) {
+      root.data.resolveRemainingViewsIdle(out.renderState);
     }
 
     return {
@@ -209,17 +202,8 @@
     };
   }
 
-  root.runtime.assembly.ensureRenderBucket = ensureRenderBucket;
   root.runtime.assembly.readRenderField = readRenderField;
-  root.runtime.assembly.applyRenderPatch = applyRenderPatch;
-  root.runtime.assembly.cloneLogicalLayer = cloneLogicalLayer;
-  root.runtime.assembly.prepareLogicalLayer = prepareLogicalLayer;
-  root.runtime.assembly.ensureLayerEntry = ensureLayerEntry;
-  root.runtime.assembly.createLayerEntry = createLayerEntry;
   root.runtime.assembly.getLogicalLayer = getLogicalLayer;
   root.runtime.assembly.getRenderState = getRenderState;
-  root.runtime.assembly.attachFilterContribution = attachFilterContribution;
-  root.runtime.assembly.collectFilterContribution = collectFilterContribution;
-  root.runtime.assembly.assembleRenderState = assembleRenderState;
   root.runtime.assembly.buildRenderArtifacts = buildRenderArtifacts;
 })(window);

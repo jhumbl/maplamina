@@ -55,8 +55,8 @@ add_circles(
 
 - fill_color, fill_opacity:
 
-  Fill color/opacity. `fill_color` can be a single color, a vector of
-  colors, or a color scale spec such as
+  Fill color/opacity. `fill_color` is a single color, a formula
+  returning colors, or a color scale spec such as
   [`color_quantile()`](https://jhumbl.github.io/maplamina/reference/color_quantile.md).
 
 - radius:

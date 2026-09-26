@@ -5,7 +5,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-tooltips.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-tooltips.js");
   }
 
 
@@ -15,10 +15,7 @@
   const assets = core.require('assets', 'ml-tooltips.js');
   const data   = core.require('data',   'ml-tooltips.js');
 
-  const escapeHtml = (s) => String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escapeHtml = root.utils.escapeHtml;
 
   function compileTemplate(template) {
     // Split "M {mag:.1f} at {depth:.0f}" -> parts + slots
@@ -114,14 +111,6 @@
     const c = containerFromInfo(info);
     const wc = __findMapWidgetContainer(c);
     if (wc) return wc;
-
-    // Legacy fallback (older builds may expose a global getter)
-    try {
-      const map = (global.MAPLAMINA && global.MAPLAMINA.__getMap && global.MAPLAMINA.__getMap()) || null;
-      const mc = map && map.getContainer ? map.getContainer() : null;
-      if (mc) return mc;
-    } catch (_) {}
-
     return c || document.body;
   }
 
@@ -269,12 +258,13 @@
       const partIdx = pickPartIndex(info.object, info);
       if (!Number.isFinite(partIdx)) return null;
 
-      // Build output; if any slot can't be read, abort (no "[missing]" flicker)
+      // Build output; if any slot can't be read, abort (no "[missing]" flicker).
+      // Values are always escaped; only the template text of an html template is markup.
       let slotIdx = 0;
       let out = '';
       for (let i = 0; i < parts.length; i++) {
         const p = parts[i];
-        if (p !== null) { out += p; continue; }
+        if (p !== null) { out += spec.html ? p : escapeHtml(p); continue; }
 
         const ph  = phs[slotIdx++];
         const fmt = state.fmtByName[ph.name] || ((v)=>v);
@@ -286,7 +276,7 @@
           const c = ph._codes[ii] >>> 0;
           const label = (ph._dict && ph._dict[c] != null) ? ph._dict[c] : null;
           if (label == null) return null;
-          out += spec.html ? label : escapeHtml(label);
+          out += escapeHtml(label);
           continue;
         }
 
@@ -295,28 +285,31 @@
           if (ii < 0 || ii >= ph._array.length) return null;
           const v = ph._array[ii];
           const s = fmt(v);
-          out += spec.html ? s : escapeHtml(s);
+          out += escapeHtml(s);
         } else {
           return null;
         }
       }
 
-      return spec.html ? { html: out } : { text: out };
+      return { html: out };
     };
   }
 
   // ------------------------------------------------------------
-  // Registry (layerId -> tooltip function) + dispatcher
+  // Registry (widget element -> layerId -> tooltip function) + dispatcher
   // ------------------------------------------------------------
-  const __TT_REG = new Map(); // layerId -> fn(info) -> {text|html}
+  const __TT_REG = new WeakMap(); // el -> Map(layerId -> fn(info) -> {html})
 
-  function register(layerId, fn) {
-    if (fn) __TT_REG.set(layerId, fn); else __TT_REG.delete(layerId);
+  function register(el, layerId, fn) {
+    if (!el) return;
+    let reg = __TT_REG.get(el);
+    if (!reg) { reg = new Map(); __TT_REG.set(el, reg); }
+    if (fn) reg.set(layerId, fn); else reg.delete(layerId);
   }
 
   function dispatch(info) {
-    if (!info || !info.layer) return null;
-    const fn = __TT_REG.get(info.layer.id);
+    if (!info || !info.layer || !info.__mfContainer) return null;
+    const fn = __TT_REG.get(info.__mfContainer)?.get(info.layer.id);
     return typeof fn === 'function' ? fn(info) : null;
   }
 
@@ -349,6 +342,7 @@
 
   function destroy(el) {
     const container = containerFromEl(el);
+    __TT_REG.delete(el);
 
     // Close popup if open
     const cleanup = POPUP_CLEANUP.get(container);
@@ -406,9 +400,8 @@
     const side = info.x < rect.width * 0.5 ? 'right' : 'left';
 
     // Inner HTML (content + caret span; caret styled in CSS)
-    const content = ('html' in res) ? res.html : escapeHtml(res.text);
     el.className = `ml-tt2 ml-tt2--${side}`;
-    el.innerHTML = `<div class="ml-tt2__inner">${content}</div><span class="ml-tt2__caret"></span>`;
+    el.innerHTML = `<div class="ml-tt2__inner">${res.html}</div><span class="ml-tt2__caret"></span>`;
 
     // Position near cursor; vertically centered; nudge 12px away horizontally
     el.style.display = 'block';
@@ -448,9 +441,7 @@
       // Get the MapLibre instance (preferred: widget-scoped getter)
       const mapCanvas = container.querySelector('canvas');
       const legacyMap = (mapCanvas && mapCanvas._map) || null;
-      const map = __getMapFromContainer(container) ||
-                  legacyMap ||
-                  (global.MAPLAMINA && global.MAPLAMINA.__getMap && global.MAPLAMINA.__getMap());
+      const map = __getMapFromContainer(container) || legacyMap;
       if (!map) return;
 
       // Cleanup any previous popup FIRST (prevents second-click no-show)
@@ -472,7 +463,7 @@
       // Content
       const tip = getTpl(info);
       if (!tip) return;
-      if ('html' in tip) panel.innerHTML = tip.html; else panel.textContent = tip.text;
+      panel.innerHTML = tip.html;
 
       // Anchor at feature coordinate; fallback to pointer unproject
       let anchor;
@@ -522,7 +513,7 @@
     buildOnClickPopup,
 
     // Registry
-    register,          // layerId -> fn(info)
+    register,          // (el, layerId, fn(info))
     dispatch,          // info -> calls registered fn
 
     // Widget lifecycle

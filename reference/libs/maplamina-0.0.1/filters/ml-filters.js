@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-filters.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-filters.js");
   }
 
 
@@ -26,9 +26,6 @@
     if (spec.type === 'select') return getSelect().ensureSelectUI(el, layerId, spec, onChange, panelMeta);
     if (spec.type === 'range')  return getRange().ensureRangeUI(el, layerId, spec, onChange, panelMeta);
   }
-
-  // (v3) GPU filtering is driven by .__controls.filters in maplamina.js.
-  // Legacy per-layer GPU wiring removed.
 
   root.filters = { ensureFilterUI };
 })(window);

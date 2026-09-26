@@ -4,7 +4,7 @@
   root.runtime = root.runtime || {};
   const core0 = root.core;
   if (!core0 || typeof core0.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-runtime-scheduler.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-scheduler.js");
   }
 
   const utils0 = core0.require('utils', 'ml-runtime-scheduler.js');
@@ -12,7 +12,7 @@
     throw new Error("[maplamina] Missing function utils.normText required by ml-runtime-scheduler.js");
   }
 
-  // IMPORTANT: preserve canonical utils.normText semantics (trim only, no lowercasing).
+  // utils.normText trims only, no lowercasing.
   // Scheduler keys must match ids used across runtime/pipeline.
   const normText = utils0.normText;
 
@@ -80,12 +80,6 @@
     };
   }
 
-  function idsToArray(ids) {
-    if (ids == null) return [];
-    if (ids === true) return ['*'];
-    return (Array.isArray(ids) ? ids : [ids]).map(v => normText(v)).filter(Boolean);
-  }
-
   function schedAdd(set, ids, rt) {
     if (!set || ids == null) return;
 
@@ -105,7 +99,7 @@
   }
 
   /**
-   * Attach Stage 6 scheduler to a runtime instance (idempotent).
+   * Attach the scheduler to a runtime instance (idempotent).
    * Requires rt._flushSnapshot(job) to exist (installed by ml-runtime-pipeline.js).
    */
   function attach(rt) {

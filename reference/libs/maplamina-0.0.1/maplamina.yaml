@@ -17,7 +17,6 @@ dependencies:
   script:
   - core/ml-namespace.js
   - core/ml-utils.js
-  - core/ml-core.js
   - core/ml-spec.js
   - layers/ml-layer-utils.js
   - core/ml-assets.js
@@ -44,7 +43,6 @@ dependencies:
   - controls/ml-controls-summaries.js
   - filters/ml-filters-core.js
   - filters/ml-filters-select.js
-  - filters/ml-filters-adapter.js
   - filters/ml-filters-runtime.js
   - filters/ml-range-slider.js
   - filters/ml-filters-range.js

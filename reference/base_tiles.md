@@ -50,6 +50,10 @@ A named list of character strings (URLs).
 
   Positron style hosted by OpenFreeMap. No API key required.
 
+- openfreemap_dark:
+
+  Dark style hosted by OpenFreeMap. No API key required.
+
 - demotiles:
 
   MapLibre demo tiles. Lightweight, no API key, useful for testing.

@@ -4,7 +4,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-runtime-map.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-map.js");
   }
 
   root.runtime = root.runtime || {};
@@ -412,6 +412,7 @@
     if (overlay) return overlay;
 
     overlay = new deck.MapboxOverlay({
+      id: `deckgl-overlay-${root.utils.widgetKey(el)}`,
       layers: [],
       onHover: (info) => {
         info.__mfContainer = el;

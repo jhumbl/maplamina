@@ -114,8 +114,7 @@
           getGPUFilterContribution,
           injectMotionTransitions,
           syncJobTransitions,
-          transitionsForBuild,
-          core
+          transitionsForBuild
         }
       };
     }
@@ -126,11 +125,6 @@
     return {
       renderValue: async function(x) {
         try { MAPLAMINA?.tooltips?.destroy?.(el); } catch (_) {}
-        try {
-          const oldStack = el.querySelector('.ml-view-switcher-stack');
-          if (oldStack && oldStack.parentNode) oldStack.parentNode.removeChild(oldStack);
-        } catch (_) {}
-        try { MAPLAMINA?.controls?.panel?.removeLegacyLayerUI?.(el); } catch (_) {}
 
         const showHud = x?.map_options?.hud === true;
         if (!showHud) {
@@ -153,7 +147,7 @@
         }
         mfSpec.assertV3Spec(x, 'runtime.widget.renderValue');
 
-        const t0 = core.now();
+        const t0 = root.utils.now();
         const unionBbox = (x.map_options?.fit_bounds === false) ? null : unionBboxFromSpec(x);
         const desiredProjection = normProjection(x.map_options?.projection);
         const rt = ensureRuntime(el, runtimeDeps());
@@ -197,12 +191,26 @@
 
         overlay = ensureOverlay({ el, map, overlay });
         el.__mfGetMap = () => map;
+        if (!map.__mfOriginHook) {
+          map.__mfOriginHook = true;
+          map.on('move', () => {
+            let moved = false;
+            const next = (currentLayers || []).map((l) => {
+              const o = l && l.props && l.props.coordinateOrigin;
+              if (!Array.isArray(o)) return l;
+              const near = MAPLAMINA.layerProps.originNearView(o, map);
+              if (near === o) return l;
+              moved = true;
+              return l.clone({ coordinateOrigin: near });
+            });
+            if (moved && overlay) { currentLayers = next; overlay.setProps({ layers: next }); }
+          });
+        }
         MAPLAMINA?.tooltips?.init?.(el);
 
         const out = await renderInitial({
           el,
           x,
-          core,
           rt,
           map,
           overlay,
@@ -236,7 +244,7 @@
         const rt = el.__mfRuntime;
         try { mfRuntimeMap?.clearDeferredFit?.(rt, el); } catch (_) {}
         if (rt && rt.pruneTasks && rt.pruneTasks.size) {
-          for (const id of rt.pruneTasks) core.cancelIdlePrune(id);
+          for (const id of rt.pruneTasks) root.assets.cancelIdlePrune(id);
           rt.pruneTasks.clear();
         }
 
@@ -248,12 +256,7 @@
 
         try {
           if (dock && typeof dock.destroy === 'function') dock.destroy(el);
-        } catch (_) {
-          const stack = el.querySelector('.ml-layer-panel-stack');
-          if (stack && stack.parentNode) stack.parentNode.removeChild(stack);
-          const legacy = el.querySelector('.ml-view-switcher-stack');
-          if (legacy && legacy.parentNode) legacy.parentNode.removeChild(legacy);
-        }
+        } catch (_) {}
 
         try { clearMapLibreControls(map, el.__mfRuntime); } catch (_) {}
         try { resetProjectionManager(el.__mfRuntime); } catch (_) {}
@@ -264,6 +267,7 @@
         }
 
         if (el.__mfRuntime) { el.__mfRuntime.layers?.clear?.(); el.__mfRuntime = null; }
+        MAPLAMINA.assets.clearMemo();
         try { el.__mfCtxCache?.layerBuildCache?.clear?.(); } catch (_) {}
         try { delete el.__mfCtxCache; } catch (_) {}
         currentLayers = [];

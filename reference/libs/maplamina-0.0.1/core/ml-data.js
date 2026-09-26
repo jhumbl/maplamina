@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-data.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-data.js");
   }
 
   const assets = core.require('assets', 'ml-data.js');
@@ -74,39 +74,18 @@
   const idx =
     idxMapOverride ||
     st?.data_columns?.feature_index_array ||
-    (st?.data_columns?.feature_index && st.data_columns.feature_index.array) ||
     null;
 
   const hasIdx = !!(idx && ArrayBuffer.isView(idx) && idx.length);
   const nParts = hasIdx ? (idx.length >>> 0) : 0;
 
-  // Detect whether feature_index is 0-based (0..n-1) or 1-based (1..n).
-  let base = 0;
-  if (hasIdx) {
-    let min = Infinity;
-    const n = Math.min(nParts, 64);
-    for (let i = 0; i < n; i++) {
-      const v = idx[i];
-      if (Number.isFinite(v)) {
-        const vv = (v >>> 0);
-        if (vv < min) min = vv;
-      }
-    }
-    base = (min === 0) ? 0 : 1;
-  }
-
+  // feature_index is the 0-based u32 blob the collectors emit (part -> row).
   const rowIndex = hasIdx
     ? (partIdx) => {
         const p = (Number.isFinite(partIdx) && partIdx >= 0) ? (partIdx >>> 0) : 0;
         if (p >= nParts) return 0;
         const v = idx[p];
-        if (!Number.isFinite(v)) return 0;
-        let r = (v >>> 0);
-        if (base === 1) {
-          if (r === 0) return 0;
-          r = (r - 1) >>> 0;
-        }
-        return r;
+        return Number.isFinite(v) ? (v >>> 0) : 0;
       }
     : (partIdx) => (Number.isFinite(partIdx) && partIdx >= 0) ? (partIdx >>> 0) : 0;
 
@@ -131,7 +110,7 @@
     return Number.isFinite(ix) ? (ix >>> 0) : 0;
   };
 
-  return { idxMap: idx, hasIdxMap: hasIdx, nParts, base, rowIndex, indexForArray, pickPartIndex };
+  return { idxMap: idx, hasIdxMap: hasIdx, nParts, rowIndex, indexForArray, pickPartIndex };
 }
 
   async function resolveColumnsAndViews(st) {
@@ -235,7 +214,7 @@
 
     await Promise.all([hydrateBaseColor('fillColor'), hydrateBaseColor('lineColor')]);
 
-    // v3-only: per-view encodings are applied as patches into base_encodings upstream.
+    // Per-view encodings are applied as patches into base_encodings upstream.
 
     st.data_columns   = cols;
     st.base_encodings = base;
@@ -243,7 +222,7 @@
   }
 
   async function resolveActiveOnly(st) {
-    // v3-only: active view patches are already merged into base_encodings upstream.
+    // Active view patches are already merged into base_encodings upstream.
     await resolveColumnsAndViews(st);
   }
 

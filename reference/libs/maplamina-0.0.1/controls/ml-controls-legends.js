@@ -5,7 +5,7 @@
   root.controls.legends = root.controls.legends || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-controls-legends.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-controls-legends.js");
   }
 
   const utils = core.require('utils', 'ml-controls-legends.js');
@@ -74,7 +74,7 @@
     stack.className = 'ml-legend-stack ml-control-legends-stack';
     mountEl.appendChild(stack);
 
-    // Stage 2.1: stable hook for group-level hide/show (used by ml-legends.applyVisibility).
+    // Stable hook for group-level hide/show (used by ml-legends.applyVisibility).
     try { stack.dataset.mfLegendsGroup = gid; } catch (_) {}
 
     const bucket = getLegendsBucket(spec);
@@ -117,7 +117,7 @@
       mountEl.appendChild(msg);
     }
 
-    // Stage 2: apply `when` visibility rules on first mount.
+    // Apply `when` visibility rules on first mount.
     try { root?.legends?.applyVisibility?.(widgetEl, spec); } catch (_) {}
   }
 

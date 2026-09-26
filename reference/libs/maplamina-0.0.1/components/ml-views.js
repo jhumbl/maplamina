@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-views.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-views.js");
   }
 
   const utils = core.require('utils', 'ml-views.js');
@@ -15,22 +15,9 @@
   }
 
   const asArray = utils.asArray;
-  // IMPORTANT: preserve the canonical utils.normText semantics (trim only, no lowercasing).
+  // utils.normText trims only, no lowercasing.
   // Many ids (layer ids, view ids, component ids) are case-sensitive in the authored spec.
   const normText = utils.normText;
-
-  function inheritAlpha(baseRGBA, newRGBA) {
-    if (!Array.isArray(baseRGBA) || baseRGBA.length !== 4) return newRGBA;
-    if (!Array.isArray(newRGBA)  || newRGBA.length  !== 4)  return newRGBA;
-    const out = newRGBA.slice(); out[3] = baseRGBA[3]; return out;
-  }
-
-  // NOTE (v3-only):
-  // Legacy per-layer views (st.views / st.active_view) are no longer supported.
-  // View patches must arrive via .__components.views + .__controls.views and be applied by the runtime.
-  function applyActiveView() {
-    throw new Error('[maplamina] applyActiveView() is removed in v3-only mode. Use v3 view components + controls.');
-  }
 
   // v3 helpers ---------------------------------------------------------------
   // Return a plain object whose keys are the union of keys in a and b (objects), or null if none.
@@ -111,7 +98,7 @@
     return { state: out, ops };
   }
 
-  // v3: compute per-layer, per-component view ops from .__controls.views + .__components.views.
+  // Compute per-layer, per-component view ops from .__controls.views + .__components.views.
   // Returns:
   //   controlledByGroup: Map<groupId, Set<layerId>>
   //   opsByLayer: Map<layerId, Array<op>>
@@ -176,9 +163,6 @@
   }
 
   root.views = {
-    applyActiveView,
-    inheritAlpha,
-    unionEncodingKeys,
     collectPrimeViewEncodingKeys,
     applyOrderedViewOps,
     computeViewOpsByLayer

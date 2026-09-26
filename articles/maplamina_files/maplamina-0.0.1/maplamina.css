@@ -50,13 +50,6 @@ html, body {
 
 /* MapLibre Control Panel - Clean Navy Style */
 
-.ml-layer-panel-stack {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8px !important;
-  pointer-events: auto !important;
-}
-
 /* Legends */
 
 .ml-legend-stack {

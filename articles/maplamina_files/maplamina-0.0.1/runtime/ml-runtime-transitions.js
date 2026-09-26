@@ -3,10 +3,9 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   root.runtime = root.runtime || {};
 
-  // v3: Layers are rendering-only and MUST NOT own/define transitions.
-  // Runtime helper module for motion (e.g. Views motion injected at patch-time).
+  // Layers do not own transitions; motion is injected at patch time.
 
-  // NOTE: keys are lowercased to make matching case-insensitive.
+  // Keys are lowercased to make matching case-insensitive.
   const EASINGS = {
     linear: (t) => t,
     easein: (t) => t * t,
@@ -61,16 +60,6 @@ function disableTransitionEntry(entry) {
   e.duration = 0;
   try { delete e.onEnd; delete e.onInterrupt; } catch (_) {}
   return e;
-}
-
-// Public: disable an entire transitions map (per-prop) by forcing duration=0 entries.
-// Returns a new object (does not mutate the input).
-function disableTransitionsMap(transitionsMap) {
-  const t = (transitionsMap && typeof transitionsMap === 'object') ? transitionsMap : null;
-  if (!t) return null;
-  const out = {};
-  for (const k of Object.keys(t)) out[k] = disableTransitionEntry(t[k]);
-  return out;
 }
 
 // Public: create a "primed" transition entry from motion metadata (duration=0, no callbacks).
@@ -136,5 +125,5 @@ function disableTransitionsForProps(transitionsMap, props) {
   }
   
 
-  root.transitions = { parseEasingKey, buildTransitionEntry, disableTransitionEntry, disableTransitionsMap, primeTransitionEntryFromMotion, primeTransitionsForProps, disableTransitionsForProps };
+  root.transitions = { parseEasingKey, buildTransitionEntry, disableTransitionEntry, primeTransitionsForProps, disableTransitionsForProps };
 })(window);

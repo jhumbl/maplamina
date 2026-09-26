@@ -5,8 +5,8 @@
   const UISTATE = new WeakMap();
   function getElState(el){ let s = UISTATE.get(el); if (!s) { s = {}; UISTATE.set(el, s); } return s; }
 
-  // v3 mounting: callers provide a concrete mount node (panel section body / standalone container)
-  // using panelMeta.mountEl. No legacy slot fallback under v3.
+  // Callers provide a concrete mount node (panel section body or standalone container)
+  // through panelMeta.mountEl.
   function ensureFiltersContainer(el, bindId, panelMeta) {
     if (panelMeta && panelMeta.mountEl) return panelMeta.mountEl;
     return null;
@@ -26,7 +26,7 @@
     if (Array.isArray(d) && d.every(v => typeof v === 'number' && Number.isFinite(v))) return d.slice();
     if (typeof d === 'number' && Number.isFinite(d)) return [d];
 
-    // v3: defaults are authored as values; map to indices using dict when available
+    // Defaults are authored as values; map to indices using dict when available
     const dict = Array.isArray(sel.dict) ? sel.dict : [];
     const arr = (d == null) ? [] : (Array.isArray(d) ? d : [d]);
     const out = [];
@@ -52,9 +52,11 @@
   function publishFilterState(el, bindId) {
     if (window.Shiny && el.id) {
       const ui = getElState(el);
-      const perLayer = ui[bindId] && ui[bindId].select ? ui[bindId].select : {};
+      const selects = (ui[bindId] && ui[bindId].select) || {};
+      const ranges = (ui[bindId] && ui[bindId].range) || {};
       const snapshot = {};
-      for (const fid of Object.keys(perLayer)) snapshot[fid] = Array.from(perLayer[fid]);
+      for (const fid of Object.keys(selects)) snapshot[fid] = Array.from(selects[fid]);
+      for (const fid of Object.keys(ranges)) snapshot[fid] = Array.from(ranges[fid]);
       Shiny.setInputValue(el.id + "_filters", {layer: bindId, ts: Date.now(), state: snapshot}, {priority:"event"});
     }
   }
