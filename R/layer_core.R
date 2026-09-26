@@ -168,7 +168,7 @@ add_layer <- function(
       paste0(
         msg, "\n",
         "This is due to an upstream deck.gl IconLayer limitation with MapLibre globe.\n",
-        "Use add_circle_markers() instead, or set projection='mercator'."
+        "Use add_circles() instead, or set projection='mercator'."
       ),
       call. = FALSE
     )

@@ -16,7 +16,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
     gtype <- as.character(sf::st_geometry_type(g, by_geometry = TRUE))
     if (any(gtype != "POINT")) {
       stop(
-        "add_circle_markers() currently requires sf geometries of type POINT. ",
+        "Point layers require sf geometries of type POINT. ",
         "Please cast with sf::st_cast(x, 'POINT') (and drop other geometry types) before plotting.",
         call. = FALSE
       )
