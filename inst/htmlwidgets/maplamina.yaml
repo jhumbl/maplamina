@@ -44,7 +44,6 @@ dependencies:
   - controls/ml-controls-summaries.js
   - filters/ml-filters-core.js
   - filters/ml-filters-select.js
-  - filters/ml-filters-adapter.js
   - filters/ml-filters-runtime.js
   - filters/ml-range-slider.js
   - filters/ml-filters-range.js
