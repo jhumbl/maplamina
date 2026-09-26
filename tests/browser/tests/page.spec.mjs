@@ -53,11 +53,6 @@ test('S2: two widgets on one page produce no duplicate DOM ids', async ({ page }
 });
 
 test("S2: tooltips on each widget show that widget's data", async ({ page }) => {
-  // Known failure: the tooltip registry is module-level and keyed by layer id, and layer ids
-  // are deterministic, so the second widget's "circle1" template replaces the first's and
-  // hovering widget 1 shows widget 2's rows (P-26-03). Remove test.fail() once the registry
-  // is per widget.
-  test.fail();
   const { w1, w2 } = await twoWidgets(page);
   expect(await hoverTooltip(page, w1.a.x, w1.a.y), 'first widget tooltip').toBe('alpha');
   await hideTooltip(page);

@@ -272,11 +272,7 @@
       MAPLAMINA?.tooltips?.prime?.(st);
       const tt = MAPLAMINA?.tooltips?.buildGetTemplate?.(st, 'tooltip');
       if (tt) {
-        MAPLAMINA?.tooltips?.register?.(st.id, tt);
-        if (st.type === 'polygon') {
-          MAPLAMINA?.tooltips?.register?.(`${st.id}-polygon-fill`, tt);
-          MAPLAMINA?.tooltips?.register?.(`${st.id}-polygon-stroke`, tt);
-        }
+        MAPLAMINA?.tooltips?.register?.(ctx?.el, st.id, tt);
       }
       const oc = MAPLAMINA?.tooltips?.buildOnClickPopup?.(st);
       if (oc) {

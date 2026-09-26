@@ -306,17 +306,20 @@
   }
 
   // ------------------------------------------------------------
-  // Registry (layerId -> tooltip function) + dispatcher
+  // Registry (widget element -> layerId -> tooltip function) + dispatcher
   // ------------------------------------------------------------
-  const __TT_REG = new Map(); // layerId -> fn(info) -> {text|html}
+  const __TT_REG = new WeakMap(); // el -> Map(layerId -> fn(info) -> {text|html})
 
-  function register(layerId, fn) {
-    if (fn) __TT_REG.set(layerId, fn); else __TT_REG.delete(layerId);
+  function register(el, layerId, fn) {
+    if (!el) return;
+    let reg = __TT_REG.get(el);
+    if (!reg) { reg = new Map(); __TT_REG.set(el, reg); }
+    if (fn) reg.set(layerId, fn); else reg.delete(layerId);
   }
 
   function dispatch(info) {
-    if (!info || !info.layer) return null;
-    const fn = __TT_REG.get(info.layer.id);
+    if (!info || !info.layer || !info.__mfContainer) return null;
+    const fn = __TT_REG.get(info.__mfContainer)?.get(info.layer.id);
     return typeof fn === 'function' ? fn(info) : null;
   }
 
@@ -349,6 +352,7 @@
 
   function destroy(el) {
     const container = containerFromEl(el);
+    __TT_REG.delete(el);
 
     // Close popup if open
     const cleanup = POPUP_CLEANUP.get(container);
@@ -522,7 +526,7 @@
     buildOnClickPopup,
 
     // Registry
-    register,          // layerId -> fn(info)
+    register,          // (el, layerId, fn(info))
     dispatch,          // info -> calls registered fn
 
     // Widget lifecycle
