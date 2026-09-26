@@ -5,6 +5,7 @@ ml_collect_geometry_lines <- function(data, use_offsets = NULL) {
   # Prefer sf
   x <- data
   stopifnot(inherits(x, "sf"))
+  x <- to_wgs84(x)
 
   g  <- sf::st_geometry(x)
   bb <- sf::st_bbox(x)

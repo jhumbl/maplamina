@@ -1,5 +1,6 @@
 ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets = NULL) {
   if (inherits(data, "sf")) {
+    data <- to_wgs84(data)
     g <- sf::st_geometry(data)
 
     # Drop empty geometries (e.g. POINT EMPTY)

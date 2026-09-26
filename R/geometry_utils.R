@@ -10,6 +10,14 @@ deg2rad <- function(x) x * pi / 180
 wrap_lon <- function(x) ((x + 180) %% 360) - 180
 shift_lon <- function(x) x + (wrap_lon(x[1]) - x[1])
 
+# Projected sf data is transformed to WGS84; a missing CRS is taken to be lon/lat already.
+to_wgs84 <- function(x) {
+  if (!isFALSE(sf::st_is_longlat(x))) return(x)
+  from <- sf::st_crs(x)
+  message("[maplamina] Transforming layer data from ", from$Name %||% from$input, " to WGS84.")
+  sf::st_transform(x, 4326)
+}
+
 use_offsets_from_bbox <- function(bb, tol = 0.01) {
   # Clamp to Web Mercator valid lat range
   clamp_lat <- function(lat) pmax(pmin(lat, 85.05113), -85.05113)

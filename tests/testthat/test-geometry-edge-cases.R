@@ -245,3 +245,34 @@ test_that("longitudes beyond 180 are wrapped for deck.gl; the bbox keeps the raw
   expect_equal(g$position$values[c(1, 3, 5, 7)], c(178.5, -179, -176.5, -179))
   expect_equal(g$bbox, c(178.5, -18, 183.5, 20))
 })
+
+test_that("projected sf data is transformed to WGS84 with a message", {
+  skip_if_not_installed("sf")
+  pts <- sf::st_sf(
+    v = 1:2,
+    geometry = sf::st_sfc(sf::st_point(c(0, 0)), sf::st_point(c(1000, 2000)), crs = 4326)
+  )
+  utm <- sf::st_transform(sf::st_sf(v = 1:2, geometry = sf::st_sfc(
+    sf::st_point(c(-1.5, 52)), sf::st_point(c(-1.4, 52.1)), crs = 4326
+  )), 32630)
+
+  expect_message(
+    got <- maplamina:::ml_collect_geometry_points(utm, use_offsets = FALSE),
+    "WGS84"
+  )
+  want <- maplamina:::ml_collect_geometry_points(sf::st_transform(utm, 4326), use_offsets = FALSE)
+  expect_equal(got$position, want$position, tolerance = 1e-9)
+
+  expect_silent(maplamina:::ml_collect_geometry_points(pts, use_offsets = FALSE))
+  no_crs <- sf::st_set_crs(pts, NA)
+  expect_silent(maplamina:::ml_collect_geometry_points(no_crs, use_offsets = FALSE))
+
+  lines <- sf::st_transform(sf::st_sf(v = 1, geometry = sf::st_sfc(
+    sf::st_linestring(rbind(c(-1.5, 52), c(-1.4, 52.1))), crs = 4326
+  )), 32630)
+  expect_message(maplamina:::ml_collect_geometry_lines(lines, use_offsets = FALSE), "WGS84")
+  polys <- sf::st_transform(sf::st_sf(v = 1, geometry = sf::st_sfc(
+    sf::st_polygon(list(rbind(c(-1.5, 52), c(-1.4, 52), c(-1.4, 52.1), c(-1.5, 52)))), crs = 4326
+  )), 32630)
+  expect_message(maplamina:::ml_collect_geometry_polygons(polys, use_offsets = FALSE), "WGS84")
+})

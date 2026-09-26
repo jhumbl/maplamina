@@ -17,6 +17,7 @@ ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
 
   x <- data
   stopifnot(inherits(x, "sf"))
+  x <- to_wgs84(x)
 
   g  <- sf::st_geometry(x)
   bb <- sf::st_bbox(x)
