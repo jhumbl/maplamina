@@ -127,3 +127,13 @@ test_that("color_bin clamps values outside the domain to the end bins", {
   expect_equal(cols[1:4], rep("#FF0000", 4))
   expect_equal(cols[7:10], rep("#0000FF", 4))
 })
+
+test_that("an unknown palette name is an error, a single colour is not", {
+  df <- data.frame(v = 1:3)
+  resolve <- function(pal) maplamina:::.ml_resolve_color_scale(
+    color_numeric(~v, palette = pal, steps = 3), data = df, n = 3
+  )
+  expect_error(resolve("Vridis"), "Unknown palette 'Vridis'")
+  expect_equal(unique(resolve("red")), "red")
+  expect_length(unique(resolve("viridis")), 3)
+})

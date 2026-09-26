@@ -54,13 +54,15 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
   if (is.null(palette)) {
     pal <- .ml_default_palette(n)
   } else if (is.character(palette) && length(palette) == 1L) {
-    pal <- tryCatch(
-      grDevices::hcl.colors(n, palette = palette),
-      error = function(e) NULL
-    )
-    if (is.null(pal)) {
-      # Fall back: treat the single string as an actual color.
-      pal <- rep_len(as.character(palette), n)
+    if (tolower(palette) %in% tolower(grDevices::hcl.pals())) {
+      pal <- grDevices::hcl.colors(n, palette = palette)
+    } else if (.ml_are_valid_colors(palette)) {
+      pal <- rep_len(palette, n)
+    } else {
+      stop(
+        "Unknown palette '", palette, "'. Use a name from grDevices::hcl.pals() or a vector of colors.",
+        call. = FALSE
+      )
     }
   } else if (is.character(palette) && length(palette) >= 2L) {
     pal <- grDevices::colorRampPalette(palette)(n)
