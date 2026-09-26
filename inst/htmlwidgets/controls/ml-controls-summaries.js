@@ -60,6 +60,28 @@
     return 0;
   }
 
+  // Summaries are per row. Multipart geometry has one part per entry in the mask, so each
+  // row is visited through its first part only.
+  function forEachRow(n, mask, indexers, fn) {
+    const rowIndex = (indexers && indexers.hasIdxMap && typeof indexers.rowIndex === 'function') ? indexers.rowIndex : null;
+    const seen = rowIndex ? new Uint8Array(n) : null;
+    for (let p = 0; p < n; p++) {
+      if (mask && mask[p] !== 1) continue;
+      if (seen) {
+        const r = rowIndex(p);
+        if (seen[r]) continue;
+        seen[r] = 1;
+      }
+      if (fn(p) === false) return;
+    }
+  }
+
+  function countRows(n, mask, indexers) {
+    let c = 0;
+    forEachRow(n, mask, indexers, () => { c++; });
+    return c;
+  }
+
   function buildRowOrder(rows, orderRaw) {
     const keys = Object.keys(rows || {});
     if (!keys.length) return [];
@@ -226,7 +248,7 @@
 
     if (!selDims.length && !rngDims.length) {
       // No filters affect this layer.
-      return { st, n, passCount: n, mask: null, indexers };
+      return { st, n, passCount: countRows(n, null, indexers), mask: null, indexers };
     }
 
     const stateAll = (rt && rt.state && rt.state.filters && typeof rt.state.filters === 'object') ? rt.state.filters : {};
@@ -276,8 +298,7 @@
     }
 
     // Early exit
-    let passCount = 0;
-    for (let i = 0; i < n; i++) passCount += (mask[i] ? 1 : 0);
+    let passCount = countRows(n, mask, indexers);
     if (!passCount) return { st, n, passCount: 0, mask, indexers };
 
     // --- Range dims ---
@@ -317,8 +338,7 @@
       }
     }
 
-    passCount = 0;
-    for (let i = 0; i < n; i++) passCount += (mask[i] ? 1 : 0);
+    passCount = countRows(n, mask, indexers);
     return { st, n, passCount, mask, indexers };
   }
 
@@ -351,17 +371,13 @@
       return { kind: 'empty', empty: true, na: false };
     }
 
-    // Helpers
-    const passes = (p) => (mask ? (mask[p] === 1) : true);
-
     if (op === 'count_non_na') {
       let nn = 0;
-      for (let p = 0; p < n; p++) {
-        if (!passes(p)) continue;
+      forEachRow(n, mask, indexers, (p) => {
         const ii = indexForArray(arr, p);
         const v = arr[ii];
         if (Number.isFinite(v)) nn++;
-      }
+      });
       return { kind: 'count', n: nn, empty: false, na: false };
     }
 
@@ -369,17 +385,16 @@
       let s = 0;
       let nn = 0;
       let sawNA = false;
-      for (let p = 0; p < n; p++) {
-        if (!passes(p)) continue;
+      forEachRow(n, mask, indexers, (p) => {
         const ii = indexForArray(arr, p);
         const v = arr[ii];
         if (Number.isFinite(v)) {
           s += v;
           nn += 1;
         } else {
-          if (!naRm) { sawNA = true; break; }
+          if (!naRm) { sawNA = true; return false; }
         }
-      }
+      });
       if (sawNA) return { kind: 'na', na: true, empty: false };
       if (nn === 0) return { kind: 'empty', empty: true, na: false };
       return (op === 'sum')
@@ -391,8 +406,7 @@
       let best = (op === 'min') ? Infinity : -Infinity;
       let has = false;
       let sawNA = false;
-      for (let p = 0; p < n; p++) {
-        if (!passes(p)) continue;
+      forEachRow(n, mask, indexers, (p) => {
         const ii = indexForArray(arr, p);
         const v = arr[ii];
         if (Number.isFinite(v)) {
@@ -402,9 +416,9 @@
             else { if (v > best) best = v; }
           }
         } else {
-          if (!naRm) { sawNA = true; break; }
+          if (!naRm) { sawNA = true; return false; }
         }
-      }
+      });
       if (sawNA) return { kind: 'na', na: true, empty: false };
       if (!has) return { kind: 'empty', empty: true, na: false };
       return { kind: op, v: best, empty: false, na: false };

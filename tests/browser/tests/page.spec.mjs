@@ -1,9 +1,9 @@
-// Scenarios S1, S2, T5 from notes/regression-scenarios.md: pages rather than single widgets.
+// Scenarios S1, S2, T5, C5, C7, C8 from notes/regression-scenarios.md: pages rather than single widgets.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, waitForWidgets, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
   toggleSelectOption, selectOptionChecked, zoomOut, widgetBox, mapZoom, hoverTooltip, hideTooltip,
-  clickPopup, popupBox,
+  clickPopup, popupBox, setFilter,
 } from '../lib/widget.mjs';
 
 async function twoWidgets(page) {
@@ -108,5 +108,22 @@ test('C5: the panel and a standalone control sit in the corners they were given'
   const standalone = await page.locator('.ml-control-standalone').first().boundingBox();
   expect(standalone.x + standalone.width / 2, 'standalone is on the right').toBeGreaterThan(midX);
   expect(standalone.y + standalone.height / 2, 'standalone is at the top').toBeLessThan(midY);
+  expect(errors).toEqual([]);
+});
+
+test('C8: summaries count rows rather than parts on multipart geometry', async ({ page }) => {
+  const { errors } = await openWidget(page, 'polygons-multipart-summaries');
+  const read = async () => {
+    const rows = await page.locator('.ml-summary-row').all();
+    const out = {};
+    for (const r of rows) {
+      out[(await r.locator('.ml-summary-label').innerText()).trim()] = (await r.locator('.ml-summary-value').innerText()).trim();
+    }
+    return out;
+  };
+  expect(await read()).toEqual({ n: '2', sum: '11', mean: '5.5', min: '1' });
+  await setFilter(page, 'v', [5, 10]);
+  await page.waitForTimeout(500);
+  expect(await read()).toEqual({ n: '1', sum: '10', mean: '10.0', min: '10' });
   expect(errors).toEqual([]);
 });

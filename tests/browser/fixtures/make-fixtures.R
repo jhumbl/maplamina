@@ -288,3 +288,19 @@ maplamina() |>
   add_icons(im, icon = "circle", size = 600, size_units = "meters", color = "darkblue") |>
   add_icons(ip, icon = "circle", size = 40, size_units = "pixels", color = "darkred") |>
   save("icons-size-units")
+
+# C8: summaries count rows, not parts, on multipart geometry.
+sm <- sf::st_sf(
+  v = c(10, 1),
+  geometry = sf::st_sfc(
+    sf::st_multipolygon(list(sq(-0.03, 51.49), sq(0.02, 51.49))),
+    sq(-0.005, 51.51),
+    crs = 4326
+  )
+)
+maplamina(sm) |>
+  add_polygons(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1) |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(summary_count(label = "n"), summary_sum(~v, label = "sum"), summary_mean(~v, label = "mean", digits = 1),
+                summary_min(~v, label = "min"), bind = "summaries") |>
+  save("polygons-multipart-summaries")
