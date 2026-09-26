@@ -4,6 +4,10 @@
 
   function isTA(v){ return !!(v && typeof v === 'object' && ArrayBuffer.isView(v)); }
 
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   function pushWarn(st, msg) {
     try {
       st.__warns = st.__warns || [];
@@ -110,5 +114,5 @@
     try { return Number(value).toFixed(key); } catch (_) { return String(value); }
   }
 
-  root.utils = { isTA, pushWarn, assertTA, now, asArray, normText, safeId, widgetKey, hash32, domKey, stablePairTA, formatNumber };
+  root.utils = { isTA, escapeHtml, pushWarn, assertTA, now, asArray, normText, safeId, widgetKey, hash32, domKey, stablePairTA, formatNumber };
 })(window);

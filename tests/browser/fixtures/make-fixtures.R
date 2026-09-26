@@ -155,6 +155,16 @@ maplamina(two) |>
               tooltip = tmpl("{name} {v:.1f}"), popup = tmpl("P {name}")) |>
   save("tooltips-circles")
 
+# T7: column values holding markup are shown literally in text and html templates alike;
+# only the html template's own tags become elements.
+esc <- data.frame(lon = c(-0.02, 0.02), lat = 51.5, name = c("a<b & c", "a<b & c"))
+maplamina(esc) |>
+  add_circles(esc[1, ], stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 12,
+              tooltip = tmpl("{name}"), popup = tmpl("P {name}")) |>
+  add_circles(esc[2, ], stroke = FALSE, fill_color = "darkred", fill_opacity = 1, radius = 12,
+              tooltip = tmpl("<b>{name}</b>", html = TRUE), popup = tmpl("<b>P {name}</b>", html = TRUE)) |>
+  save("tooltips-escaping")
+
 # T2: tooltip and popup on every layer type, one row per band of latitude. The two polygons
 # touch along x = 0 so hovering their shared edge exercises the stroke-edge pick.
 tt_points <- data.frame(lon = c(-0.02, 0.02), lat = 51.52, name = c("circle-a", "circle-b"))

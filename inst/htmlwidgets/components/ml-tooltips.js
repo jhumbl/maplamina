@@ -15,10 +15,7 @@
   const assets = core.require('assets', 'ml-tooltips.js');
   const data   = core.require('data',   'ml-tooltips.js');
 
-  const escapeHtml = (s) => String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escapeHtml = root.utils.escapeHtml;
 
   function compileTemplate(template) {
     // Split "M {mag:.1f} at {depth:.0f}" -> parts + slots
@@ -269,12 +266,13 @@
       const partIdx = pickPartIndex(info.object, info);
       if (!Number.isFinite(partIdx)) return null;
 
-      // Build output; if any slot can't be read, abort (no "[missing]" flicker)
+      // Build output; if any slot can't be read, abort (no "[missing]" flicker).
+      // Values are always escaped; only the template text of an html template is markup.
       let slotIdx = 0;
       let out = '';
       for (let i = 0; i < parts.length; i++) {
         const p = parts[i];
-        if (p !== null) { out += p; continue; }
+        if (p !== null) { out += spec.html ? p : escapeHtml(p); continue; }
 
         const ph  = phs[slotIdx++];
         const fmt = state.fmtByName[ph.name] || ((v)=>v);
@@ -286,7 +284,7 @@
           const c = ph._codes[ii] >>> 0;
           const label = (ph._dict && ph._dict[c] != null) ? ph._dict[c] : null;
           if (label == null) return null;
-          out += spec.html ? label : escapeHtml(label);
+          out += escapeHtml(label);
           continue;
         }
 
@@ -295,20 +293,20 @@
           if (ii < 0 || ii >= ph._array.length) return null;
           const v = ph._array[ii];
           const s = fmt(v);
-          out += spec.html ? s : escapeHtml(s);
+          out += escapeHtml(s);
         } else {
           return null;
         }
       }
 
-      return spec.html ? { html: out } : { text: out };
+      return { html: out };
     };
   }
 
   // ------------------------------------------------------------
   // Registry (widget element -> layerId -> tooltip function) + dispatcher
   // ------------------------------------------------------------
-  const __TT_REG = new WeakMap(); // el -> Map(layerId -> fn(info) -> {text|html})
+  const __TT_REG = new WeakMap(); // el -> Map(layerId -> fn(info) -> {html})
 
   function register(el, layerId, fn) {
     if (!el) return;
@@ -410,9 +408,8 @@
     const side = info.x < rect.width * 0.5 ? 'right' : 'left';
 
     // Inner HTML (content + caret span; caret styled in CSS)
-    const content = ('html' in res) ? res.html : escapeHtml(res.text);
     el.className = `ml-tt2 ml-tt2--${side}`;
-    el.innerHTML = `<div class="ml-tt2__inner">${content}</div><span class="ml-tt2__caret"></span>`;
+    el.innerHTML = `<div class="ml-tt2__inner">${res.html}</div><span class="ml-tt2__caret"></span>`;
 
     // Position near cursor; vertically centered; nudge 12px away horizontally
     el.style.display = 'block';
@@ -476,7 +473,7 @@
       // Content
       const tip = getTpl(info);
       if (!tip) return;
-      if ('html' in tip) panel.innerHTML = tip.html; else panel.textContent = tip.text;
+      panel.innerHTML = tip.html;
 
       // Anchor at feature coordinate; fallback to pointer unproject
       let anchor;
