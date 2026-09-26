@@ -192,9 +192,8 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     k <- length(breaks) - 1L
     pal <- .ml_palette_resolve(spec$palette, k, reverse = reverse)
 
-    # Use cut to assign bins
-    b <- cut(xnum, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
-
+    xc <- if (clamp) pmin(pmax(xnum, breaks[[1L]]), breaks[[k + 1L]]) else xnum
+    b <- cut(xc, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
     if (!clamp) {
       ok <- ok & !is.na(b)
     }
@@ -213,7 +212,9 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     if (is.na(nq) || nq < 1L) nq <- 5L
 
     probs <- seq(0, 1, length.out = nq + 1L)
-    breaks <- as.numeric(stats::quantile(xnum[ok], probs = probs, na.rm = TRUE, names = FALSE, type = 7))
+    inside <- ok & xnum >= dmin & xnum <= dmax
+    breaks <- as.numeric(stats::quantile(xnum[inside], probs = probs, na.rm = TRUE, names = FALSE, type = 7))
+    breaks[c(1L, length(breaks))] <- c(dmin, dmax)
     breaks <- unique(breaks)
 
     if (length(breaks) < 2L) {
@@ -228,7 +229,8 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     k <- length(breaks) - 1L
     pal <- .ml_palette_resolve(spec$palette, k, reverse = reverse)
 
-    b <- cut(xnum, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
+    xc <- if (clamp) pmin(pmax(xnum, dmin), dmax) else xnum
+    b <- cut(xc, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
     if (!clamp) {
       ok <- ok & !is.na(b)
     }

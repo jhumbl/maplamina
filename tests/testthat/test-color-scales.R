@@ -101,3 +101,29 @@ test_that("na_color = '#00000000' resolves to a transparent dictionary entry", {
   rgba <- matrix(as.integer(cobj$dict_rgba), nrow = 4L)
   expect_true(any(rgba[4L, ] == 0L))
 })
+
+test_that("color_quantile honours domain and clamp", {
+  df <- data.frame(v = 1:10)
+  resolve <- function(spec) maplamina:::.ml_resolve_color_scale(spec, data = df, n = nrow(df))
+
+  # Breaks come from the values inside the domain, with the ends pinned to it.
+  clamped <- resolve(color_quantile(~v, domain = c(4, 7), n = 2, palette = c("red", "blue")))
+  expect_equal(clamped, rep(c("#FF0000", "#0000FF"), each = 5))
+
+  dropped <- resolve(color_quantile(~v, domain = c(4, 7), n = 2, palette = c("red", "blue"), clamp = FALSE))
+  expect_equal(dropped[c(1:3, 8:10)], rep("#00000000", 6))
+  expect_equal(dropped[4:7], c("#FF0000", "#FF0000", "#0000FF", "#0000FF"))
+
+  # A domain wider than the data leaves the quantile bins unchanged.
+  wide <- resolve(color_quantile(~v, domain = c(0, 100), n = 4, palette = c("red", "blue")))
+  plain <- resolve(color_quantile(~v, n = 4, palette = c("red", "blue")))
+  expect_equal(wide, plain)
+})
+
+test_that("color_bin clamps values outside the domain to the end bins", {
+  df <- data.frame(v = 1:10)
+  spec <- color_bin(~v, domain = c(4, 7), bins = 3, palette = c("red", "blue"))
+  cols <- maplamina:::.ml_resolve_color_scale(spec, data = df, n = nrow(df))
+  expect_equal(cols[1:4], rep("#FF0000", 4))
+  expect_equal(cols[7:10], rep("#0000FF", 4))
+})
