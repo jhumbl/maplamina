@@ -84,3 +84,15 @@ test('S1: a widget created in a hidden container fits its bounds once shown', as
   expect(isDrawnAt(await screenshot(page), c.x, c.y), 'centre circle drawn').toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('C7: mounting the controls a second time keeps one dock item per group', async ({ page }) => {
+  await openWidget(page, 'circles-views');
+  const count = () => page.locator('.ml-dock-item.ml-control-standalone').count();
+  expect(await count()).toBe(1);
+  await page.evaluate(() => {
+    const el = document.querySelector('.maplamina');
+    MAPLAMINA.controls.panel.sync(el, el.__mfRuntime.specRef);
+  });
+  expect(await count(), 'second sync reused the dock item').toBe(1);
+  expect(await page.locator('input[type=radio][value="big"]').count()).toBe(1);
+});

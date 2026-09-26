@@ -539,7 +539,7 @@
         // Prefer hiding the outer control shell (panel slot or standalone dock item).
         const wrapper =
           stack.closest('.ml-panel-slot') ||
-          stack.closest('[data-ml-control-kind="standalone"]') ||
+          stack.closest('[data-mf-control-kind="standalone"]') ||
           stack.closest('.ml-legends-host') ||
           stack;
 

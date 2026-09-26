@@ -446,7 +446,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // Remove stale standalone nodes in the DOM (fallback path)
     try {
-      const nodes = el.querySelectorAll('[data-ml-control-kind="standalone"]');
+      const nodes = el.querySelectorAll('[data-mf-control-kind="standalone"]');
       nodes && nodes.forEach(n => {
         const gid = n.dataset.mfControlGroup;
         if (!gid) return;
@@ -472,7 +472,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     // Remove v3 standalone hosts (best-effort via attributes)
     try {
-      const nodes = el.querySelectorAll('[data-ml-control-kind="standalone"]');
+      const nodes = el.querySelectorAll('[data-mf-control-kind="standalone"]');
       nodes && nodes.forEach(n => {
         const gid = n.dataset.mfControlGroup;
         if (gid) {
