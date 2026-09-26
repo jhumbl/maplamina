@@ -99,8 +99,8 @@
       if (resolved && resolved.url && (resolved.mask !== false)) {
         // Use mask-image so we can colorize icons from the local registry
         sw.style.backgroundColor = col; // can be 'currentColor'
-        sw.style.webkitMaskImage = `url("${resolved.url}")`;
-        sw.style.maskImage = `url("${resolved.url}")`;
+        sw.style.webkitMaskImage = `url(${JSON.stringify(resolved.url)})`;
+        sw.style.maskImage = `url(${JSON.stringify(resolved.url)})`;
         sw.style.webkitMaskRepeat = 'no-repeat';
         sw.style.maskRepeat = 'no-repeat';
         sw.style.webkitMaskPosition = 'center';
