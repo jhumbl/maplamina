@@ -370,7 +370,7 @@
         if (!passes(p)) continue;
         const ii = indexForArray(arr, p);
         const v = arr[ii];
-        if (Number.isFinite(v) && v > 0) nn += v;
+        if (Number.isFinite(v)) nn++;
       }
       return { kind: 'count', n: nn, empty: false, na: false };
     }
