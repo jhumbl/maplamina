@@ -516,57 +516,6 @@
   list(layers = layers, stores = stores)
 }
 
-.ml_compiler_flatten_components_raw <- function(raw) {
-  raw <- raw %||% list()
-  if (!is.list(raw)) return(list())
-
-  # IMPORTANT: avoid `$` partial matching here.
-  # In a flat registry, component ids like "views1" would make `raw$views` non-NULL
-  # and could cause accidental legacy-bucket detection.
-  nms <- names(raw) %||% character()
-  has_views_key   <- "views"   %in% nms
-  has_filters_key <- "filters" %in% nms
-
-  views_val   <- if (has_views_key)   raw[["views"]]   else NULL
-  filters_val <- if (has_filters_key) raw[["filters"]] else NULL
-
-  # Helper: does an object look like a single component record?
-  is_component_record <- function(x) {
-    tp <- NULL
-    if (is.list(x)) tp <- x[["type"]] %||% NULL
-    is.character(tp) && length(tp) == 1L && nzchar(tp)
-  }
-
-  views_is_legacy_bucket   <- has_views_key   && is.list(views_val)   && !is_component_record(views_val)
-  filters_is_legacy_bucket <- has_filters_key && is.list(filters_val) && !is_component_record(filters_val)
-
-  # If neither key exists, or both keys exist but they are component records (not buckets),
-  # treat as already-flat.
-  if (!views_is_legacy_bucket && !filters_is_legacy_bucket) {
-    return(raw)
-  }
-
-  # Legacy Stage 3 shape (optionally mixed with already-flat entries during transition).
-  out <- list()
-
-  if (views_is_legacy_bucket && length(views_val)) {
-    for (cid in names(views_val)) out[[cid]] <- views_val[[cid]]
-  }
-  if (filters_is_legacy_bucket && length(filters_val)) {
-    for (cid in names(filters_val)) out[[cid]] <- filters_val[[cid]]
-  }
-
-  # Preserve any already-flat entries that may co-exist (e.g., after refactor but before
-  # all call-sites stopped initializing legacy buckets).
-  for (cid in nms) {
-    if (identical(cid, "views") && views_is_legacy_bucket) next
-    if (identical(cid, "filters") && filters_is_legacy_bucket) next
-    if (is.null(out[[cid]])) out[[cid]] <- raw[[cid]]
-  }
-
-  out
-}
-
 .ml_compile_component_views <- function(widget, layers, stores, c, compiled, controls) {
   cid <- c$id %||% NULL
   if (is.null(cid) || !is.character(cid) || length(cid) != 1L || !nzchar(cid)) {
@@ -1017,7 +966,7 @@
     .ml_register_component_defaults()
   }
 
-  raw <- .ml_compiler_flatten_components_raw(widget$x$.__components_raw)
+  raw <- widget$x$.__components_raw %||% list()
 
   compiled <- list(views = list(), range = list(), select = list(), legends = list(), summaries = list())
   controls <- list()
