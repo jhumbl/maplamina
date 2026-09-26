@@ -501,12 +501,6 @@
 
     st$tooltip <- pack_template(st$tooltip, "tooltip")
     st$popup   <- pack_template(st$popup,   "popup")
-    # Stage 3: layers are rendering-only
-    st$panel <- NULL
-    st$views <- NULL
-    st$filters <- NULL
-    st$active_view <- NULL
-
     st$dataStore <- NULL
 
     stores[[id]] <- store
@@ -522,8 +516,8 @@
     stop("views component missing a valid `id`.", call. = FALSE)
   }
 
-  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
-  bind     <- c$bind  %||% c$bind_id  %||% cid
+  layer_id <- c$layer
+  bind     <- c$bind %||% cid
 
   position <- .ml_ui_validate_position(c$position %||% NULL)
 
@@ -541,8 +535,7 @@
   st <- layers[[layer_id]]
   base <- .ml_compiler_view_base(widget, layer_id)
 
-  v_in <- c$views %||% c$spec %||% NULL
-  if (is.null(v_in) && is.list(c) && length(c) && inherits(c[[1L]], "ml_view")) v_in <- c
+  v_in <- c$views
   if (is.null(v_in)) {
     stop("views component '", cid, "' has no `views` payload.", call. = FALSE)
   }
@@ -641,8 +634,8 @@
 }
 
 .ml_compiler_filter_common <- function(widget, layers, stores, cid, c) {
-  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
-  bind     <- c$bind  %||% c$bind_id  %||% cid
+  layer_id <- c$layer
+  bind     <- c$bind %||% cid
 
   if (is.null(layer_id) || is.null(layers[[layer_id]])) {
     stop("filter component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
@@ -657,9 +650,7 @@
   n_row <- meta2$n_row
   store <- stores[[layer_id]]
 
-  spec <- c$spec %||% c$filter %||% c$filters %||% NULL
-  if (is.null(spec) && inherits(c, "ml_filter")) spec <- c
-  if (is.null(spec)) spec <- c$payload %||% NULL
+  spec <- c$spec
 
   filters_in <- NULL
   if (inherits(spec, "ml_filter")) {
@@ -687,8 +678,8 @@
 }
 
 .ml_compiler_summary_common <- function(widget, layers, stores, cid, c) {
-  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
-  bind     <- c$bind  %||% c$bind_id  %||% cid
+  layer_id <- c$layer
+  bind     <- c$bind %||% cid
 
   if (is.null(layer_id) || is.null(layers[[layer_id]])) {
     stop("summaries component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
@@ -703,9 +694,7 @@
   n_row <- meta2$n_row
   store <- stores[[layer_id]]
 
-  spec <- c$spec %||% c$summary %||% c$summaries %||% NULL
-  if (is.null(spec) && inherits(c, "ml_summary")) spec <- c
-  if (is.null(spec)) spec <- c$payload %||% NULL
+  spec <- c$spec
 
   sums_in <- NULL
   if (inherits(spec, "ml_summary")) {
@@ -924,7 +913,7 @@
     stop("legends component missing a valid `id`.", call. = FALSE)
   }
 
-  bind <- c$bind %||% c$bind_id %||% cid
+  bind <- c$bind %||% cid
   if (is.null(bind) || !is.character(bind) || length(bind) != 1L || !nzchar(bind)) {
     stop("legends component '", cid, "' has an invalid `bind`.", call. = FALSE)
   }
@@ -932,7 +921,7 @@
   position <- .ml_ui_validate_position(c$position %||% NULL)
 
 
-  legend <- c$legend %||% c$spec %||% NULL
+  legend <- c$legend
   if (is.null(legend) || !is.list(legend)) {
     stop("legends component '", cid, "' has no valid `legend` payload.", call. = FALSE)
   }
@@ -1006,16 +995,8 @@
     st <- layers[[id]]
     st$dataStore <- ml_store_finalize(stores[[id]])
 
-    # remove any legacy/internal metadata fields
     internal <- grep("^\\.__", names(st), value = TRUE)
     for (nm in internal) st[[nm]] <- NULL
-
-    # enforce Stage 3: layers are rendering-only
-    st$panel <- NULL
-    st$views <- NULL
-    st$filters <- NULL
-    st$active_view <- NULL
-
     layers[[id]] <- st
   }
   layers
