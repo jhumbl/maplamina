@@ -105,8 +105,6 @@
       }
 
       if (!is.null(col$encoding) && identical(col$encoding, "dict")) {
-        # accept older naming: dict -> dict_rgba
-        if (!is.null(col$dict) && is.null(col$dict_rgba)) col$dict_rgba <- col$dict
         assert_ref(col$dict_rgba, paste0("data_columns$", nm, "$dict_rgba"))
         assert_ref(col$codes,     paste0("data_columns$", nm, "$codes"))
         next
@@ -114,11 +112,6 @@
 
       if (!is.null(col$values)) {
         assert_ref(col$values, paste0("data_columns$", nm, "$values"))
-        next
-      }
-
-      if (!is.null(col$value)) {
-        assert_ref(col$value, paste0("data_columns$", nm, "$value"))
         next
       }
 

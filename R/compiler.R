@@ -410,15 +410,9 @@
         if (identical(nm, "polygon") && is.list(col)) {
           poly <- col
 
-          pos   <- poly$positions_values   %||% poly$positions
-          rings <- poly$ring_starts_values %||% poly$ring_starts
-          polys <- poly$poly_starts_values %||% poly$poly_starts
-
-          if (!is.null(pos)   && !is.list(pos))   poly$positions   <- ml_store_ref_numeric(store, "poly.pos", pos)
-          if (!is.null(rings) && !is.list(rings)) poly$ring_starts <- ml_store_ref_u32(store, "poly.rings", rings)
-          if (!is.null(polys) && !is.list(polys)) poly$poly_starts <- ml_store_ref_u32(store, "poly.starts", polys)
-
-          poly$positions_values <- poly$ring_starts_values <- poly$poly_starts_values <- NULL
+          if (!is.list(poly$positions))   poly$positions   <- ml_store_ref_numeric(store, "poly.pos", poly$positions)
+          if (!is.list(poly$ring_starts)) poly$ring_starts <- ml_store_ref_u32(store, "poly.rings", poly$ring_starts)
+          if (!is.list(poly$poly_starts)) poly$poly_starts <- ml_store_ref_u32(store, "poly.starts", poly$poly_starts)
           st$data_columns[[nm]] <- poly
           next
         }
@@ -427,13 +421,8 @@
         if (identical(nm, "path") && is.list(col)) {
           path <- col
 
-          pos    <- path$positions_values    %||% path$positions
-          starts <- path$path_starts_values  %||% path$path_starts
-
-          if (!is.null(pos)    && !is.list(pos))    path$positions   <- ml_store_ref_numeric(store, "path.pos", pos)
-          if (!is.null(starts) && !is.list(starts)) path$path_starts <- ml_store_ref_u32(store, "path.starts", starts)
-
-          path$positions_values <- path$path_starts_values <- NULL
+          if (!is.list(path$positions))   path$positions   <- ml_store_ref_numeric(store, "path.pos", path$positions)
+          if (!is.list(path$path_starts)) path$path_starts <- ml_store_ref_u32(store, "path.starts", path$path_starts)
           st$data_columns[[nm]] <- path
           next
         }
@@ -447,82 +436,30 @@
 
         # dict encoding columns (e.g., fillColor/lineColor)
         if (!is.null(col$encoding) && identical(col$encoding, "dict")) {
-
-          # canonical fields
-          if (!is.null(col$dict_rgba) && !is.list(col$dict_rgba)) {
+          if (!is.list(col$dict_rgba)) {
             col$dict_rgba <- ml_store_ref_u8(store, paste0(nm, ".dict_rgba"), col$dict_rgba, size = 4L)
           }
-          if (!is.null(col$codes) && !is.list(col$codes)) {
+          if (!is.list(col$codes)) {
             col$codes <- ml_store_ref_u32(store, paste0(nm, ".codes"), col$codes)
           }
-
-          # legacy *_values fields (if present)
-          if (!is.null(col$dict_rgba_values)) {
-            col$dict_rgba <- ml_store_ref_u8(store, paste0(nm, ".dict_rgba"), col$dict_rgba_values, size = 4L)
-            col$dict_rgba_values <- NULL
-          }
-          if (!is.null(col$codes_values)) {
-            col$codes <- ml_store_ref_u32(store, paste0(nm, ".codes"), col$codes_values)
-            col$codes_values <- NULL
-          }
-
-          # older naming: dict -> dict_rgba
-          if (!is.null(col$dict) && is.null(col$dict_rgba)) {
-            col$dict_rgba <- col$dict
-            col$dict <- NULL
-          }
-
           st$data_columns[[nm]] <- col
           next
         }
-        # raw u8 column: values → {ref} (e.g., per-feature RGBA)
-        # NOTE: `raw` vectors are byte buffers and must NOT go through ml_store_ref_numeric(),
-        # otherwise they get coerced to float32 which breaks deck.gl color attributes and bloats payloads.
+        # raw vectors are byte buffers (per-feature RGBA) and must not be coerced to float32
         if (!is.null(col$values) && is.raw(col$values)) {
           col$values <- ml_store_ref_u8(store, nm, col$values, size = col$size %||% NULL)
           st$data_columns[[nm]] <- col
           next
         }
 
-
-        # generic numeric column: values → {ref}
         if (!is.null(col$values) && !is.list(col$values)) {
           col$values <- ml_store_ref_numeric(store, nm, col$values)
           st$data_columns[[nm]] <- col
           next
         }
-
-        # legacy shape: values_values → value {ref}
-        if (!is.null(col$values_values)) {
-          col$value <- ml_store_ref_numeric(store, nm, col$values_values)
-          col$values_values <- NULL
-          st$data_columns[[nm]] <- col
-          next
-        }
-
-        # legacy shape: values_u32 → value {ref}
-        if (!is.null(col$values_u32)) {
-          col$value <- ml_store_ref_u32(store, nm, col$values_u32)
-          col$values_u32 <- NULL
-          st$data_columns[[nm]] <- col
-          next
-        }
       }
     }
 
-    # ---- base_encodings numeric vectors → refs ----
-    if (!is.null(st$base_encodings)) {
-      for (nm in names(st$base_encodings)) {
-        be <- st$base_encodings[[nm]]
-        if (!is.null(be$value_values)) {
-          be$value <- ml_store_ref_numeric(store, paste0("be.", nm), be$value_values)
-          be$value_values <- NULL
-        }
-        st$base_encodings[[nm]] <- be
-      }
-    }
-
-    # ---- tooltip/popup placeholders → refs (if any) ----
     # ---- tooltip/popup placeholders → refs (if any) ----
     # Template placeholders come from R/template.R (.ml_pack_template()) and do not carry an `id`.
     # We generate a stable, unique semantic ref per placeholder occurrence and store values/codes
