@@ -22,22 +22,6 @@
   NULL
 }
 
-.ml_compiler_layer_n <- function(widget, layers, layer_id, data) {
-  st <- layers[[layer_id]] %||% NULL
-  n <- NULL
-
-  # Prefer registry meta if present
-  meta <- widget$x$.__layer_meta[[layer_id]] %||% NULL
-  if (!is.null(meta) && !is.null(meta$n)) n <- meta$n
-
-  # Else legacy per-layer n
-  if (is.null(n) && !is.null(st) && !is.null(st$.__n)) n <- st$.__n
-
-  if (is.null(n) && !is.null(data)) n <- nrow(data)
-
-  as.integer(n %||% NA_integer_)
-}
-
 # Stage 3: layers may be multipart (e.g., MULTIPOLYGON / MULTILINESTRING).
 # Views and filters are authored at feature (row) grain, but GPU attributes must be
 # emitted at part grain. We persist a 0-based feature_index in layer_meta to expand
