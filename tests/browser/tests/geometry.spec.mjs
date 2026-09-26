@@ -1,6 +1,6 @@
-// Scenarios G1, G3, G4 from notes/regression-scenarios.md.
+// Scenarios G1, G3, G4, G12 from notes/regression-scenarios.md.
 import { test, expect } from '@playwright/test';
-import { openWidget, project, screenshot, isDrawnAt, zoomOut } from '../lib/widget.mjs';
+import { openWidget, project, screenshot, isDrawnAt, zoomOut, measureDrawnRadius } from '../lib/widget.mjs';
 
 test('G1: a polygon with a hole renders the ring and leaves the hole empty', async ({ page }) => {
   const { errors } = await openWidget(page, 'polygons-hole');
@@ -42,3 +42,21 @@ for (const fixture of ['circles-dateline', 'circles-dateline-wide']) {
     expect(seen, 'each point visible centred at each zoom').toEqual(expected);
   });
 }
+
+test('G12: an icon sized in meters shrinks on zoom out while one in pixels keeps its size', async ({ page }) => {
+  const { errors } = await openWidget(page, 'icons-size-units');
+  const meters = await project(page, -0.02, 51.5);
+  const pixels = await project(page, 0.02, 51.5);
+  let png = await screenshot(page);
+  const before = [measureDrawnRadius(png, meters.x, meters.y), measureDrawnRadius(png, pixels.x, pixels.y)];
+  // The first two levels out are hidden by the 64 px size cap.
+  await zoomOut(page, 3);
+  const m2 = await project(page, -0.02, 51.5);
+  const p2 = await project(page, 0.02, 51.5);
+  png = await screenshot(page);
+  const after = [measureDrawnRadius(png, m2.x, m2.y), measureDrawnRadius(png, p2.x, p2.y)];
+  expect(before[0], `meters radius ${before[0]} before zoom out`).toBeGreaterThan(4);
+  expect(after[0], `meters radius ${before[0]} -> ${after[0]}`).toBeLessThan(before[0] / 2);
+  expect(Math.abs(after[1] - before[1]), `pixels radius ${before[1]} -> ${after[1]}`).toBeLessThanOrEqual(2);
+  expect(errors).toEqual([]);
+});

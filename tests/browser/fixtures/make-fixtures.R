@@ -280,3 +280,11 @@ maplamina() |>
   add_views(view("small", radius = 5), view("big", radius = 12), duration = 1, bind = "views_b", position = "topright") |>
   add_panel(title = "Panel", position = "bottomright", sections = sections(section("views"))) |>
   save("panel-corners")
+
+# G12: an icon sized in meters shrinks when zooming out; one sized in pixels does not.
+im <- data.frame(lon = -0.02, lat = 51.5)
+ip <- data.frame(lon = 0.02, lat = 51.5)
+maplamina() |>
+  add_icons(im, icon = "circle", size = 600, size_units = "meters", color = "darkblue") |>
+  add_icons(ip, icon = "circle", size = 40, size_units = "pixels", color = "darkred") |>
+  save("icons-size-units")

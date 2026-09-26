@@ -50,7 +50,7 @@
       getColor,
       getSize,
 
-      sizeUnits: "pixels",
+      sizeUnits: st.cfg?.sizeUnits || "pixels",
       sizeMinPixels: Number.isFinite(st.cfg?.sizeMinPixels) ? st.cfg.sizeMinPixels : 0,
       sizeMaxPixels: Number.isFinite(st.cfg?.sizeMaxPixels) ? st.cfg.sizeMaxPixels : 64,
 
