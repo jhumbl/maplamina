@@ -86,3 +86,18 @@ test_that("Stage 3 strict semantics: numeric ~col must error; categorical labels
   expect_true(!is.null(c_lab$dict_rgba) && !is.null(c_lab$codes))
   expect_equal(.dict_n(c_lab), 2)
 })
+
+test_that("ml_color_to_rgba keeps a colour's own alpha channel", {
+  expect_equal(unname(maplamina:::ml_color_to_rgba("#00000000")), c(0L, 0L, 0L, 0L))
+  expect_equal(unname(maplamina:::ml_color_to_rgba("#FF000080", 0.5)), c(255L, 0L, 0L, 64L))
+  packed <- maplamina:::ml_color_to_rgba(c("transparent", "blue"), 1)
+  expect_equal(as.integer(packed), c(255L, 255L, 255L, 0L, 0L, 0L, 255L, 255L))
+})
+
+test_that("na_color = '#00000000' resolves to a transparent dictionary entry", {
+  df <- data.frame(pop = c(1, NA, 3))
+  spec <- maplamina:::color_numeric(~pop, palette = c("red", "blue"), steps = 4)
+  cobj <- maplamina:::ml_prepare_color(spec, opacity = 1, n = nrow(df), data = df)
+  rgba <- matrix(as.integer(cobj$dict_rgba), nrow = 4L)
+  expect_true(any(rgba[4L, ] == 0L))
+})

@@ -17,14 +17,13 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     stop("ml_color_to_rgba(): `alpha` must be length 1 or length(col).", call. = FALSE)
   }
 
-  # clamp alpha and convert to 0-255
+  # clamp alpha and convert to 0-255; a colour's own alpha channel scales it
   alpha <- pmax(0, pmin(1, as.numeric(alpha)))
-  a <- as.integer(round(alpha * 255))
-
-  m <- grDevices::col2rgb(col) # 3 x length(col)
+  m <- grDevices::col2rgb(col, alpha = TRUE) # 4 x length(col)
+  a <- as.integer(round(alpha * m[4L, ]))
 
   if (length(col) == 1L) {
-    return(c(m[, 1], a[[1L]]))
+    return(c(m[1:3, 1], a[[1L]]))
   }
 
   ncol_m <- ncol(m)
