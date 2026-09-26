@@ -75,7 +75,7 @@ tmpl <- function(template, ..., html = FALSE) {
 }
 
 # internal: collect one placeholder vector (numeric/u32, categorical codes, or dates)
-# NOTE: we keep dict (labels) inline JSON like filters do; only codes get blob-ified.
+# dict (labels) stays inline JSON as in filters; only codes go to blobs.
 .ml_collect_placeholder <- function(data, name, fmt, bindings, n, env = parent.frame()) {
   if (!nzchar(name)) stop("[maplamina] empty placeholder name in tmpl()", call. = FALSE)
   # 1) resolve expression: alias in ... wins; else column by name
@@ -92,28 +92,28 @@ tmpl <- function(template, ..., html = FALSE) {
     vals <- rep(vals, as.integer(n))
   }
 
-  # 2) coerce & classify
+  # 2) coerce & classify. The u32 blob is written through as.integer(), so it only holds
+  # whole numbers in [0, .Machine$integer.max] with no NA; anything else goes as f32.
+  fits_u32 <- function(v) {
+    !anyNA(v) && all(is.finite(v)) && all(v >= 0 & v <= .Machine$integer.max) && all(v == trunc(v))
+  }
+
   if (is.numeric(vals)) {
-    # Prefer integer codes as u32 when they are whole numbers
-    if (is.integer(vals) || (is.double(vals) && all(is.finite(vals) & (vals == as.integer(vals)), na.rm = TRUE))) {
+    if (fits_u32(vals)) {
       return(list(kind = "numeric-u32", name = name, fmt = fmt, values_values = as.integer(vals)))
     } else {
       return(list(kind = "numeric-f32", name = name, fmt = fmt, values_values = as.numeric(vals)))
     }
   }
 
-  # Dates/POSIXct -> seconds since epoch as u32 when safe; else f32
-  if (inherits(vals, "Date")) {
-    secs <- as.integer(as.numeric(vals) * 86400) # days -> seconds
-    return(list(kind = "epoch-u32", name = name, fmt = if (nzchar(fmt)) fmt else "%Y-%m-%d", values_values = secs))
-  }
-  if (inherits(vals, "POSIXct") || inherits(vals, "POSIXt")) {
-    secs <- as.numeric(vals) # seconds since epoch (double)
-    # u32 if within safe range; else f32
-    if (all(is.finite(secs)) && max(secs, na.rm = TRUE) < 4.29e9) {
-      return(list(kind = "epoch-u32", name = name, fmt = if (nzchar(fmt)) fmt else "%Y-%m-%d", values_values = as.integer(secs)))
+  # Dates/POSIXct -> seconds since epoch as u32 when they fit; else f32
+  if (inherits(vals, "Date") || inherits(vals, "POSIXct") || inherits(vals, "POSIXt")) {
+    secs <- if (inherits(vals, "Date")) as.numeric(vals) * 86400 else as.numeric(vals)
+    dfmt <- if (nzchar(fmt)) fmt else "%Y-%m-%d"
+    if (fits_u32(secs)) {
+      return(list(kind = "epoch-u32", name = name, fmt = dfmt, values_values = as.integer(secs)))
     } else {
-      return(list(kind = "epoch-f32", name = name, fmt = if (nzchar(fmt)) fmt else "%Y-%m-%d", values_values = as.numeric(secs)))
+      return(list(kind = "epoch-f32", name = name, fmt = dfmt, values_values = as.numeric(secs)))
     }
   }
 

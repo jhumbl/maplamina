@@ -4,6 +4,10 @@
 
   function isTA(v){ return !!(v && typeof v === 'object' && ArrayBuffer.isView(v)); }
 
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   function pushWarn(st, msg) {
     try {
       st.__warns = st.__warns || [];
@@ -37,6 +41,11 @@
 
   function safeId(x) {
     return normText(x).replace(/[^A-Za-z0-9_-]+/g, '_');
+  }
+
+  // Prefix for DOM ids and radio group names so two widgets on one page never share them.
+  function widgetKey(el) {
+    return safeId(el && el.id ? el.id : 'maplamina');
   }
 
   // ---- DOM-safe stable keys -------------------------------------------------
@@ -105,5 +114,5 @@
     try { return Number(value).toFixed(key); } catch (_) { return String(value); }
   }
 
-  root.utils = { isTA, pushWarn, assertTA, now, asArray, normText, safeId, hash32, domKey, stablePairTA, formatNumber };
+  root.utils = { isTA, escapeHtml, pushWarn, assertTA, now, asArray, normText, safeId, widgetKey, hash32, domKey, stablePairTA, formatNumber };
 })(window);

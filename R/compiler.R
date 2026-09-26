@@ -1,7 +1,3 @@
-# ---- v3 prerender compiler (preRenderHook) ----
-# Refactor: keep behavior the same, but structure the compiler into explicit passes
-# and promote small helpers to file-scope for easier maintenance/testing.
-
 .ml_compiler_union_ordered <- function(x, y) {
   if (is.list(x)) x <- unlist(x, use.names = FALSE)
   if (is.list(y)) y <- unlist(y, use.names = FALSE)
@@ -11,34 +7,11 @@
   x
 }
 
-.ml_compiler_layer_data <- function(widget, layers, layer_id) {
-  # Prefer explicit registry (Stage 2+ design), else fall back to legacy per-layer metadata.
-  d <- widget$x$.__data_registry[[layer_id]] %||% NULL
-  if (!is.null(d)) return(d)
-
-  st <- layers[[layer_id]] %||% NULL
-  if (!is.null(st) && !is.null(st$.__data)) return(st$.__data)
-
-  NULL
+.ml_compiler_layer_data <- function(widget, layer_id) {
+  widget$x$.__data_registry[[layer_id]] %||% NULL
 }
 
-.ml_compiler_layer_n <- function(widget, layers, layer_id, data) {
-  st <- layers[[layer_id]] %||% NULL
-  n <- NULL
-
-  # Prefer registry meta if present
-  meta <- widget$x$.__layer_meta[[layer_id]] %||% NULL
-  if (!is.null(meta) && !is.null(meta$n)) n <- meta$n
-
-  # Else legacy per-layer n
-  if (is.null(n) && !is.null(st) && !is.null(st$.__n)) n <- st$.__n
-
-  if (is.null(n) && !is.null(data)) n <- nrow(data)
-
-  as.integer(n %||% NA_integer_)
-}
-
-# Stage 3: layers may be multipart (e.g., MULTIPOLYGON / MULTILINESTRING).
+# Layers may be multipart (e.g., MULTIPOLYGON / MULTILINESTRING).
 # Views and filters are authored at feature (row) grain, but GPU attributes must be
 # emitted at part grain. We persist a 0-based feature_index in layer_meta to expand
 # per-row vectors to per-part vectors.
@@ -83,17 +56,13 @@
   x
 }
 
-.ml_compiler_view_base <- function(widget, layers, layer_id) {
-  meta <- widget$x$.__layer_meta[[layer_id]] %||% NULL
-  if (!is.null(meta) && !is.null(meta$view_base)) return(meta$view_base)
-
-  st <- layers[[layer_id]] %||% NULL
-  st$.__view_base %||% list()
+.ml_compiler_view_base <- function(widget, layer_id) {
+  widget$x$.__layer_meta[[layer_id]]$view_base %||% list()
 }
 
 .ml_compiler_controls_add_member <- function(controls, bind, type, member_id) {
   if (is.null(controls[[bind]])) {
-    # NOTE: keep members as a list-of-strings so jsonlite::write_json(auto_unbox=TRUE)
+    # Keep members as a list-of-strings so jsonlite::write_json(auto_unbox=TRUE)
     # will still emit JSON arrays for length-1 membership.
     controls[[bind]] <- list(type = type, members = list())
   } else {
@@ -437,15 +406,9 @@
         if (identical(nm, "polygon") && is.list(col)) {
           poly <- col
 
-          pos   <- poly$positions_values   %||% poly$positions
-          rings <- poly$ring_starts_values %||% poly$ring_starts
-          polys <- poly$poly_starts_values %||% poly$poly_starts
-
-          if (!is.null(pos)   && !is.list(pos))   poly$positions   <- ml_store_ref_numeric(store, "poly.pos", pos)
-          if (!is.null(rings) && !is.list(rings)) poly$ring_starts <- ml_store_ref_u32(store, "poly.rings", rings)
-          if (!is.null(polys) && !is.list(polys)) poly$poly_starts <- ml_store_ref_u32(store, "poly.starts", polys)
-
-          poly$positions_values <- poly$ring_starts_values <- poly$poly_starts_values <- NULL
+          if (!is.list(poly$positions))   poly$positions   <- ml_store_ref_numeric(store, "poly.pos", poly$positions)
+          if (!is.list(poly$ring_starts)) poly$ring_starts <- ml_store_ref_u32(store, "poly.rings", poly$ring_starts)
+          if (!is.list(poly$poly_starts)) poly$poly_starts <- ml_store_ref_u32(store, "poly.starts", poly$poly_starts)
           st$data_columns[[nm]] <- poly
           next
         }
@@ -454,13 +417,8 @@
         if (identical(nm, "path") && is.list(col)) {
           path <- col
 
-          pos    <- path$positions_values    %||% path$positions
-          starts <- path$path_starts_values  %||% path$path_starts
-
-          if (!is.null(pos)    && !is.list(pos))    path$positions   <- ml_store_ref_numeric(store, "path.pos", pos)
-          if (!is.null(starts) && !is.list(starts)) path$path_starts <- ml_store_ref_u32(store, "path.starts", starts)
-
-          path$positions_values <- path$path_starts_values <- NULL
+          if (!is.list(path$positions))   path$positions   <- ml_store_ref_numeric(store, "path.pos", path$positions)
+          if (!is.list(path$path_starts)) path$path_starts <- ml_store_ref_u32(store, "path.starts", path$path_starts)
           st$data_columns[[nm]] <- path
           next
         }
@@ -474,82 +432,30 @@
 
         # dict encoding columns (e.g., fillColor/lineColor)
         if (!is.null(col$encoding) && identical(col$encoding, "dict")) {
-
-          # canonical fields
-          if (!is.null(col$dict_rgba) && !is.list(col$dict_rgba)) {
+          if (!is.list(col$dict_rgba)) {
             col$dict_rgba <- ml_store_ref_u8(store, paste0(nm, ".dict_rgba"), col$dict_rgba, size = 4L)
           }
-          if (!is.null(col$codes) && !is.list(col$codes)) {
+          if (!is.list(col$codes)) {
             col$codes <- ml_store_ref_u32(store, paste0(nm, ".codes"), col$codes)
           }
-
-          # legacy *_values fields (if present)
-          if (!is.null(col$dict_rgba_values)) {
-            col$dict_rgba <- ml_store_ref_u8(store, paste0(nm, ".dict_rgba"), col$dict_rgba_values, size = 4L)
-            col$dict_rgba_values <- NULL
-          }
-          if (!is.null(col$codes_values)) {
-            col$codes <- ml_store_ref_u32(store, paste0(nm, ".codes"), col$codes_values)
-            col$codes_values <- NULL
-          }
-
-          # older naming: dict -> dict_rgba
-          if (!is.null(col$dict) && is.null(col$dict_rgba)) {
-            col$dict_rgba <- col$dict
-            col$dict <- NULL
-          }
-
           st$data_columns[[nm]] <- col
           next
         }
-        # raw u8 column: values → {ref} (e.g., per-feature RGBA)
-        # NOTE: `raw` vectors are byte buffers and must NOT go through ml_store_ref_numeric(),
-        # otherwise they get coerced to float32 which breaks deck.gl color attributes and bloats payloads.
+        # raw vectors are byte buffers (per-feature RGBA) and must not be coerced to float32
         if (!is.null(col$values) && is.raw(col$values)) {
           col$values <- ml_store_ref_u8(store, nm, col$values, size = col$size %||% NULL)
           st$data_columns[[nm]] <- col
           next
         }
 
-
-        # generic numeric column: values → {ref}
         if (!is.null(col$values) && !is.list(col$values)) {
           col$values <- ml_store_ref_numeric(store, nm, col$values)
           st$data_columns[[nm]] <- col
           next
         }
-
-        # legacy shape: values_values → value {ref}
-        if (!is.null(col$values_values)) {
-          col$value <- ml_store_ref_numeric(store, nm, col$values_values)
-          col$values_values <- NULL
-          st$data_columns[[nm]] <- col
-          next
-        }
-
-        # legacy shape: values_u32 → value {ref}
-        if (!is.null(col$values_u32)) {
-          col$value <- ml_store_ref_u32(store, nm, col$values_u32)
-          col$values_u32 <- NULL
-          st$data_columns[[nm]] <- col
-          next
-        }
       }
     }
 
-    # ---- base_encodings numeric vectors → refs ----
-    if (!is.null(st$base_encodings)) {
-      for (nm in names(st$base_encodings)) {
-        be <- st$base_encodings[[nm]]
-        if (!is.null(be$value_values)) {
-          be$value <- ml_store_ref_numeric(store, paste0("be.", nm), be$value_values)
-          be$value_values <- NULL
-        }
-        st$base_encodings[[nm]] <- be
-      }
-    }
-
-    # ---- tooltip/popup placeholders → refs (if any) ----
     # ---- tooltip/popup placeholders → refs (if any) ----
     # Template placeholders come from R/template.R (.ml_pack_template()) and do not carry an `id`.
     # We generate a stable, unique semantic ref per placeholder occurrence and store values/codes
@@ -591,12 +497,6 @@
 
     st$tooltip <- pack_template(st$tooltip, "tooltip")
     st$popup   <- pack_template(st$popup,   "popup")
-    # Stage 3: layers are rendering-only
-    st$panel <- NULL
-    st$views <- NULL
-    st$filters <- NULL
-    st$active_view <- NULL
-
     st$dataStore <- NULL
 
     stores[[id]] <- store
@@ -606,65 +506,14 @@
   list(layers = layers, stores = stores)
 }
 
-.ml_compiler_flatten_components_raw <- function(raw) {
-  raw <- raw %||% list()
-  if (!is.list(raw)) return(list())
-
-  # IMPORTANT: avoid `$` partial matching here.
-  # In a flat registry, component ids like "views1" would make `raw$views` non-NULL
-  # and could cause accidental legacy-bucket detection.
-  nms <- names(raw) %||% character()
-  has_views_key   <- "views"   %in% nms
-  has_filters_key <- "filters" %in% nms
-
-  views_val   <- if (has_views_key)   raw[["views"]]   else NULL
-  filters_val <- if (has_filters_key) raw[["filters"]] else NULL
-
-  # Helper: does an object look like a single component record?
-  is_component_record <- function(x) {
-    tp <- NULL
-    if (is.list(x)) tp <- x[["type"]] %||% NULL
-    is.character(tp) && length(tp) == 1L && nzchar(tp)
-  }
-
-  views_is_legacy_bucket   <- has_views_key   && is.list(views_val)   && !is_component_record(views_val)
-  filters_is_legacy_bucket <- has_filters_key && is.list(filters_val) && !is_component_record(filters_val)
-
-  # If neither key exists, or both keys exist but they are component records (not buckets),
-  # treat as already-flat.
-  if (!views_is_legacy_bucket && !filters_is_legacy_bucket) {
-    return(raw)
-  }
-
-  # Legacy Stage 3 shape (optionally mixed with already-flat entries during transition).
-  out <- list()
-
-  if (views_is_legacy_bucket && length(views_val)) {
-    for (cid in names(views_val)) out[[cid]] <- views_val[[cid]]
-  }
-  if (filters_is_legacy_bucket && length(filters_val)) {
-    for (cid in names(filters_val)) out[[cid]] <- filters_val[[cid]]
-  }
-
-  # Preserve any already-flat entries that may co-exist (e.g., after refactor but before
-  # all call-sites stopped initializing legacy buckets).
-  for (cid in nms) {
-    if (identical(cid, "views") && views_is_legacy_bucket) next
-    if (identical(cid, "filters") && filters_is_legacy_bucket) next
-    if (is.null(out[[cid]])) out[[cid]] <- raw[[cid]]
-  }
-
-  out
-}
-
 .ml_compile_component_views <- function(widget, layers, stores, c, compiled, controls) {
   cid <- c$id %||% NULL
   if (is.null(cid) || !is.character(cid) || length(cid) != 1L || !nzchar(cid)) {
     stop("views component missing a valid `id`.", call. = FALSE)
   }
 
-  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
-  bind     <- c$bind  %||% c$bind_id  %||% cid
+  layer_id <- c$layer
+  bind     <- c$bind %||% cid
 
   position <- .ml_ui_validate_position(c$position %||% NULL)
 
@@ -672,7 +521,7 @@
     stop("views component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
   }
 
-  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  data <- .ml_compiler_layer_data(widget, layer_id)
   if (is.null(data)) {
     stop("Missing data for layer '", layer_id, "' while compiling views component '", cid, "'.", call. = FALSE)
   }
@@ -680,10 +529,9 @@
   meta2 <- .ml_compiler_layer_meta2(widget, layers, layer_id, data)
   n_row <- meta2$n_row
   st <- layers[[layer_id]]
-  base <- .ml_compiler_view_base(widget, layers, layer_id)
+  base <- .ml_compiler_view_base(widget, layer_id)
 
-  v_in <- c$views %||% c$spec %||% NULL
-  if (is.null(v_in) && is.list(c) && length(c) && inherits(c[[1L]], "ml_view")) v_in <- c
+  v_in <- c$views
   if (is.null(v_in)) {
     stop("views component '", cid, "' has no `views` payload.", call. = FALSE)
   }
@@ -782,14 +630,14 @@
 }
 
 .ml_compiler_filter_common <- function(widget, layers, stores, cid, c) {
-  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
-  bind     <- c$bind  %||% c$bind_id  %||% cid
+  layer_id <- c$layer
+  bind     <- c$bind %||% cid
 
   if (is.null(layer_id) || is.null(layers[[layer_id]])) {
     stop("filter component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
   }
 
-  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  data <- .ml_compiler_layer_data(widget, layer_id)
   if (is.null(data)) {
     stop("Missing data for layer '", layer_id, "' while compiling filter component '", cid, "'.", call. = FALSE)
   }
@@ -798,9 +646,7 @@
   n_row <- meta2$n_row
   store <- stores[[layer_id]]
 
-  spec <- c$spec %||% c$filter %||% c$filters %||% NULL
-  if (is.null(spec) && inherits(c, "ml_filter")) spec <- c
-  if (is.null(spec)) spec <- c$payload %||% NULL
+  spec <- c$spec
 
   filters_in <- NULL
   if (inherits(spec, "ml_filter")) {
@@ -828,14 +674,14 @@
 }
 
 .ml_compiler_summary_common <- function(widget, layers, stores, cid, c) {
-  layer_id <- c$layer %||% c$layer_id %||% c$target_layer %||% NULL
-  bind     <- c$bind  %||% c$bind_id  %||% cid
+  layer_id <- c$layer
+  bind     <- c$bind %||% cid
 
   if (is.null(layer_id) || is.null(layers[[layer_id]])) {
     stop("summaries component '", cid, "' targets missing layer '", layer_id %||% "<NULL>", "'.", call. = FALSE)
   }
 
-  data <- .ml_compiler_layer_data(widget, layers, layer_id)
+  data <- .ml_compiler_layer_data(widget, layer_id)
   if (is.null(data)) {
     stop("Missing data for layer '", layer_id, "' while compiling summaries component '", cid, "'.", call. = FALSE)
   }
@@ -844,9 +690,7 @@
   n_row <- meta2$n_row
   store <- stores[[layer_id]]
 
-  spec <- c$spec %||% c$summary %||% c$summaries %||% NULL
-  if (is.null(spec) && inherits(c, "ml_summary")) spec <- c
-  if (is.null(spec)) spec <- c$payload %||% NULL
+  spec <- c$spec
 
   sums_in <- NULL
   if (inherits(spec, "ml_summary")) {
@@ -1065,7 +909,7 @@
     stop("legends component missing a valid `id`.", call. = FALSE)
   }
 
-  bind <- c$bind %||% c$bind_id %||% cid
+  bind <- c$bind %||% cid
   if (is.null(bind) || !is.character(bind) || length(bind) != 1L || !nzchar(bind)) {
     stop("legends component '", cid, "' has an invalid `bind`.", call. = FALSE)
   }
@@ -1073,7 +917,7 @@
   position <- .ml_ui_validate_position(c$position %||% NULL)
 
 
-  legend <- c$legend %||% c$spec %||% NULL
+  legend <- c$legend
   if (is.null(legend) || !is.list(legend)) {
     stop("legends component '", cid, "' has no valid `legend` payload.", call. = FALSE)
   }
@@ -1107,7 +951,7 @@
     .ml_register_component_defaults()
   }
 
-  raw <- .ml_compiler_flatten_components_raw(widget$x$.__components_raw)
+  raw <- widget$x$.__components_raw %||% list()
 
   compiled <- list(views = list(), range = list(), select = list(), legends = list(), summaries = list())
   controls <- list()
@@ -1147,16 +991,8 @@
     st <- layers[[id]]
     st$dataStore <- ml_store_finalize(stores[[id]])
 
-    # remove any legacy/internal metadata fields
     internal <- grep("^\\.__", names(st), value = TRUE)
     for (nm in internal) st[[nm]] <- NULL
-
-    # enforce Stage 3: layers are rendering-only
-    st$panel <- NULL
-    st$views <- NULL
-    st$filters <- NULL
-    st$active_view <- NULL
-
     layers[[id]] <- st
   }
   layers
@@ -1192,7 +1028,7 @@
   widget$x$.__layer_meta     <- NULL
   widget$x$.__id_counters    <- NULL
 
-    # strip legacy/UI fields from outgoing spec (Stage 3 contract hygiene)
+    # strip UI fields from the outgoing spec
 
     widget$x$show_layer_controls <- NULL
 

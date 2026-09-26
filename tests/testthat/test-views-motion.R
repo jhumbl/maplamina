@@ -104,19 +104,6 @@ test_that("add_views() validates motion inputs", {
 })
 
 
-test_that("transition() is defunct (if present) and points users to add_views()", {
-  if (!exists("transition", mode = "function", inherits = TRUE)) {
-    skip("transition() not present (removed entirely)")
-  }
-
-  expect_error(
-    transition(duration = 100),
-    "removed|Defunct|add_views",
-    ignore.case = TRUE
-  )
-})
-
-
 test_that("spec validation rejects layers containing transitions", {
   df <- make_points_df(2L)
 

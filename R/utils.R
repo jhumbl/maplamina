@@ -10,7 +10,7 @@ ml_is_tilde_call <- function(x) {
 
 ml_is_formulaish <- function(x) ml_is_formula(x) || ml_is_tilde_call(x)
 
-# General evaluator (kept for geometry / legacy behavior)
+# General evaluator (geometry, filters, summaries, templates)
 ml_eval <- function(data, expr, env = parent.frame()) {
   if (missing(expr) || is.null(expr)) return(NULL)
 
@@ -53,25 +53,11 @@ ml_eval_aes <- function(data, expr, env = parent.frame()) {
   expr
 }
 
-ml_js_round <- function(x, digits = 6L) {
-  round(x, digits = digits)
-}
-
-ml_gen_id <- local({
-  c <- 0L
-  function(prefix = "layer") {
-    c <<- c + 1L
-    paste0(prefix, c)
-  }
-})
-
-
 # ---- internal: widget-scoped deterministic ids ----
-# Stage 3+ contract: ids must be deterministic per widget and not depend on the R session.
+# Ids are deterministic per widget and do not depend on the R session.
 # We store counters under map$x$.__id_counters, and strip them during prerender.
 #
-# scope = "global": a single counter shared across prefixes (preserves old ml_gen_id behavior,
-#                   but resets per widget).
+# scope = "global": a single counter shared across prefixes, reset per widget.
 # scope = "prefix": separate counters per prefix (used for filter element ids like sel_1).
 .ml_next_id <- function(map, prefix, scope = c("global", "prefix"), existing_ids = NULL) {
   scope <- match.arg(scope)

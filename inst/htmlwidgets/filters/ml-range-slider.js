@@ -91,7 +91,7 @@
     function startDrag(which, ev) {
       dragging = which;
       pointerId = ev.pointerId;
-      ev.target.setPointerCapture?.(pointerId);
+      (which === 'lo' ? thLo : thHi).setPointerCapture?.(pointerId);
       wrap.classList.add('ml-rngs--dragging');
       if (which === 'lo') { thLo.style.zIndex = '5'; thHi.style.zIndex = '4'; }
       else { thHi.style.zIndex = '5'; thLo.style.zIndex = '4'; }

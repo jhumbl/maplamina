@@ -1,10 +1,12 @@
 ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets = NULL) {
   if (inherits(data, "sf")) {
+    data <- to_wgs84(data)
     g <- sf::st_geometry(data)
 
-    # Drop empty geometries (e.g. POINT EMPTY)
+    # Drop empty geometries (e.g. POINT EMPTY); `keep` lets add_layer() drop the same rows
     empty <- sf::st_is_empty(g)
     if (any(empty)) {
+      warning("[maplamina] ", sum(empty), " row(s) have empty point geometry and were dropped.", call. = FALSE)
       data <- data[!empty, , drop = FALSE]
       g <- g[!empty]
     }
@@ -16,7 +18,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
     gtype <- as.character(sf::st_geometry_type(g, by_geometry = TRUE))
     if (any(gtype != "POINT")) {
       stop(
-        "add_circle_markers() currently requires sf geometries of type POINT. ",
+        "Point layers require sf geometries of type POINT. ",
         "Please cast with sf::st_cast(x, 'POINT') (and drop other geometry types) before plotting.",
         call. = FALSE
       )
@@ -42,7 +44,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
         pos[2L * idx + 1L] <- coords[, 1] - origin[1]
         pos[2L * idx + 2L] <- coords[, 2] - origin[2]
       } else {
-        pos[2L * idx + 1L] <- coords[, 1]
+        pos[2L * idx + 1L] <- wrap_lon(coords[, 1])
         pos[2L * idx + 2L] <- coords[, 2]
       }
     }
@@ -52,7 +54,8 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
       position = list(values = pos, size = 2L),
       bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
     )
-    if (use_offsets) out$coordinate_origin <- origin
+    if (use_offsets) out$coordinate_origin <- c(wrap_lon(origin[1]), origin[2])
+    if (any(empty)) out$keep <- !empty
     return(out)
   }
 
@@ -80,9 +83,10 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
 
   xy <- get_xy_cols(data, lon, lat)
 
-  # Drop non-finite rows (NA/NaN/Inf) to avoid bad bbox / buffers
+  # Drop non-finite rows (NA/NaN/Inf); `keep` lets add_layer() drop the same rows
   ok <- is.finite(xy$x) & is.finite(xy$y)
   if (!all(ok)) {
+    warning("[maplamina] ", sum(!ok), " row(s) have missing or non-finite coordinates and were dropped.", call. = FALSE)
     xy$x <- xy$x[ok]
     xy$y <- xy$y[ok]
   }
@@ -107,7 +111,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
       pos[2L * idx + 1L] <- xy$x - origin[1]
       pos[2L * idx + 2L] <- xy$y - origin[2]
     } else {
-      pos[2L * idx + 1L] <- xy$x
+      pos[2L * idx + 1L] <- wrap_lon(xy$x)
       pos[2L * idx + 2L] <- xy$y
     }
   }
@@ -117,6 +121,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
     position = list(values = pos, size = 2L),
     bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
   )
-  if (use_offsets) out$coordinate_origin <- unname(origin)
+  if (use_offsets) out$coordinate_origin <- unname(c(wrap_lon(origin[1]), origin[2]))
+  if (!all(ok)) out$keep <- ok
   out
 }

@@ -1,6 +1,3 @@
-# ---- Maplamina v3: aesthetics collectors ----
-# Refactor: split from aesthetics.R for readability.
-
 ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
   # Convert colors to RGBA.
   #
@@ -17,14 +14,13 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     stop("ml_color_to_rgba(): `alpha` must be length 1 or length(col).", call. = FALSE)
   }
 
-  # clamp alpha and convert to 0-255
+  # clamp alpha and convert to 0-255; a colour's own alpha channel scales it
   alpha <- pmax(0, pmin(1, as.numeric(alpha)))
-  a <- as.integer(round(alpha * 255))
-
-  m <- grDevices::col2rgb(col) # 3 x length(col)
+  m <- grDevices::col2rgb(col, alpha = TRUE) # 4 x length(col)
+  a <- as.integer(round(alpha * m[4L, ]))
 
   if (length(col) == 1L) {
-    return(c(m[, 1], a[[1L]]))
+    return(c(m[1:3, 1], a[[1L]]))
   }
 
   ncol_m <- ncol(m)
@@ -55,13 +51,15 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
   if (is.null(palette)) {
     pal <- .ml_default_palette(n)
   } else if (is.character(palette) && length(palette) == 1L) {
-    pal <- tryCatch(
-      grDevices::hcl.colors(n, palette = palette),
-      error = function(e) NULL
-    )
-    if (is.null(pal)) {
-      # Fall back: treat the single string as an actual color.
-      pal <- rep_len(as.character(palette), n)
+    if (tolower(palette) %in% tolower(grDevices::hcl.pals())) {
+      pal <- grDevices::hcl.colors(n, palette = palette)
+    } else if (.ml_are_valid_colors(palette)) {
+      pal <- rep_len(palette, n)
+    } else {
+      stop(
+        "Unknown palette '", palette, "'. Use a name from grDevices::hcl.pals() or a vector of colors.",
+        call. = FALSE
+      )
     }
   } else if (is.character(palette) && length(palette) >= 2L) {
     pal <- grDevices::colorRampPalette(palette)(n)
@@ -113,8 +111,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     f <- factor(xv, levels = dom)
     col <- pal[as.integer(f)]
     col[is.na(col)] <- na_color
-    attr(spec, "levels") <- dom
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -140,8 +136,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     pal <- .ml_palette_resolve(spec$palette, 1L, reverse = reverse)
     col <- rep_len(pal[[1L]], n)
     col[!ok] <- na_color
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -162,9 +156,6 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     idx[!ok] <- NA_integer_
     col <- pal[idx]
     col[is.na(col)] <- na_color
-
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -185,27 +176,20 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
       pal <- .ml_palette_resolve(spec$palette, 1L, reverse = reverse)
       col <- rep_len(pal[[1L]], n)
       col[!ok] <- na_color
-      attr(spec, "breaks") <- breaks
-      attr(spec, "colors") <- pal
       return(col)
     }
 
     k <- length(breaks) - 1L
     pal <- .ml_palette_resolve(spec$palette, k, reverse = reverse)
 
-    # Use cut to assign bins
-    b <- cut(xnum, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
-
+    xc <- if (clamp) pmin(pmax(xnum, breaks[[1L]]), breaks[[k + 1L]]) else xnum
+    b <- cut(xc, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
     if (!clamp) {
       ok <- ok & !is.na(b)
     }
 
     col <- pal[b]
     col[!ok | is.na(col)] <- na_color
-
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "breaks") <- breaks
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -214,32 +198,29 @@ ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
     if (is.na(nq) || nq < 1L) nq <- 5L
 
     probs <- seq(0, 1, length.out = nq + 1L)
-    breaks <- as.numeric(stats::quantile(xnum[ok], probs = probs, na.rm = TRUE, names = FALSE, type = 7))
+    inside <- ok & xnum >= dmin & xnum <= dmax
+    breaks <- as.numeric(stats::quantile(xnum[inside], probs = probs, na.rm = TRUE, names = FALSE, type = 7))
+    breaks[c(1L, length(breaks))] <- c(dmin, dmax)
     breaks <- unique(breaks)
 
     if (length(breaks) < 2L) {
       pal <- .ml_palette_resolve(spec$palette, 1L, reverse = reverse)
       col <- rep_len(pal[[1L]], n)
       col[!ok] <- na_color
-      attr(spec, "breaks") <- breaks
-      attr(spec, "colors") <- pal
       return(col)
     }
 
     k <- length(breaks) - 1L
     pal <- .ml_palette_resolve(spec$palette, k, reverse = reverse)
 
-    b <- cut(xnum, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
+    xc <- if (clamp) pmin(pmax(xnum, dmin), dmax) else xnum
+    b <- cut(xc, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)
     if (!clamp) {
       ok <- ok & !is.na(b)
     }
 
     col <- pal[b]
     col[!ok | is.na(col)] <- na_color
-
-    attr(spec, "domain") <- c(dmin, dmax)
-    attr(spec, "breaks") <- breaks
-    attr(spec, "colors") <- pal
     return(col)
   }
 
@@ -298,7 +279,7 @@ ml_prepare_color <- function(color, opacity = 1, n, data, env = parent.frame()) 
     )
   }
 
-  # Stage 3 strict semantics:
+  # Strict semantics:
   # If the user supplies a formula (~col) for fill/line colors, it must evaluate to
   # actual colors (character/factor). Numeric (or date/logical) vectors are NOT treated
   # as colors; users must use color_bin()/color_quantile()/color_numeric()/color_factor().

@@ -17,6 +17,7 @@ A named list of character strings (URLs).
 \item{openfreemap_liberty}{OSM Liberty style hosted by OpenFreeMap. No API key required.}
 \item{openfreemap_bright}{OSM Bright style hosted by OpenFreeMap. No API key required.}
 \item{openfreemap_positron}{Positron style hosted by OpenFreeMap. No API key required.}
+\item{openfreemap_dark}{Dark style hosted by OpenFreeMap. No API key required.}
 \item{demotiles}{MapLibre demo tiles. Lightweight, no API key, useful for testing.}
 }
 }

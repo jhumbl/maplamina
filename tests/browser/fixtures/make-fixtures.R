@@ -143,12 +143,27 @@ maplamina(dateline) |>
   add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
   save("circles-dateline")
 
+# Same points plus one far to the north, so the extent is too wide for the offsets mode.
+maplamina(rbind(dateline, data.frame(lon = 181, lat = 20))) |>
+  add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
+  save("circles-dateline-wide")
+
 # T1: popups on a circle layer; two features so a second click can open a second popup.
 two <- data.frame(lon = c(-0.02, 0.02), lat = c(51.5, 51.5), name = c("alpha", "beta"), v = c(1.5, 2.5))
 maplamina(two) |>
   add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 12,
               tooltip = tmpl("{name} {v:.1f}"), popup = tmpl("P {name}")) |>
   save("tooltips-circles")
+
+# T7: column values holding markup are shown literally in text and html templates alike;
+# only the html template's own tags become elements.
+esc <- data.frame(lon = c(-0.02, 0.02), lat = 51.5, name = c("a<b & c", "a<b & c"))
+maplamina(esc) |>
+  add_circles(esc[1, ], stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 12,
+              tooltip = tmpl("{name}"), popup = tmpl("P {name}")) |>
+  add_circles(esc[2, ], stroke = FALSE, fill_color = "darkred", fill_opacity = 1, radius = 12,
+              tooltip = tmpl("<b>{name}</b>", html = TRUE), popup = tmpl("<b>P {name}</b>", html = TRUE)) |>
+  save("tooltips-escaping")
 
 # T2: tooltip and popup on every layer type, one row per band of latitude. The two polygons
 # touch along x = 0 so hovering their shared edge exercises the stroke-edge pick.
@@ -223,6 +238,15 @@ maplamina(sf::st_sf(name = "one", geometry = sf::st_sfc(sq(-0.01, 51.49, 0.02), 
   add_views(view("blue", fill_color = "darkblue"), view("red", fill_color = "red"), duration = 1500) |>
   save("polygons-views-fill")
 
+# V16: a layer whose base fill is a colour scale; a view sets a constant fill.
+sc <- sf::st_sf(name = c("a", "b"), v = c(1, 9),
+                geometry = sf::st_sfc(sq(-0.01, 51.49, 0.02), sq(0.03, 51.49, 0.02), crs = 4326))
+maplamina(sc) |>
+  add_polygons(stroke = FALSE, fill_color = color_bin(~v, palette = c("darkblue", "navy"), bins = 2), fill_opacity = 1) |>
+  add_views(view("scale", fill_color = color_bin(~v, palette = c("darkblue", "navy"), bins = 2)),
+            view("flat", fill_color = "red"), duration = 1500) |>
+  save("polygons-scale-views-constant")
+
 # T3, T4: a template with no placeholders, and a constant string column.
 const <- data.frame(lon = c(-0.02, 0.02), lat = 51.5, label = c("constant text", "constant text"))
 maplamina(const) |>
@@ -247,3 +271,44 @@ maplamina(lab) |>
   add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
   add_filters(filter_range(~`speed / rate`), filter_select(~`colour group`)) |>
   save("circles-filter-labels")
+
+# C5: a panel in the bottom-right corner and a standalone views control in the top-right.
+maplamina() |>
+  add_circles(va, stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 5) |>
+  add_views(view("small", radius = 5), view("big", radius = 12), duration = 1, bind = "views") |>
+  add_circles(vb, stroke = FALSE, fill_color = "darkred", fill_opacity = 1, radius = 5) |>
+  add_views(view("small", radius = 5), view("big", radius = 12), duration = 1, bind = "views_b", position = "topright") |>
+  add_panel(title = "Panel", position = "bottomright", sections = sections(section("views"))) |>
+  save("panel-corners")
+
+# G12: an icon sized in meters shrinks when zooming out; one sized in pixels does not.
+im <- data.frame(lon = -0.02, lat = 51.5)
+ip <- data.frame(lon = 0.02, lat = 51.5)
+maplamina() |>
+  add_icons(im, icon = "circle", size = 600, size_units = "meters", color = "darkblue") |>
+  add_icons(ip, icon = "circle", size = 40, size_units = "pixels", color = "darkred") |>
+  save("icons-size-units")
+
+# C8: summaries count rows, not parts, on multipart geometry.
+sm <- sf::st_sf(
+  v = c(10, 1),
+  geometry = sf::st_sfc(
+    sf::st_multipolygon(list(sq(-0.03, 51.49), sq(0.02, 51.49))),
+    sq(-0.005, 51.51),
+    crs = 4326
+  )
+)
+maplamina(sm) |>
+  add_polygons(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1) |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(summary_count(label = "n"), summary_sum(~v, label = "sum"), summary_mean(~v, label = "mean", digits = 1),
+                summary_min(~v, label = "min"), bind = "summaries") |>
+  save("polygons-multipart-summaries")
+
+# F14: a range filter whose domain includes 0 never shows the NA row.
+na <- data.frame(lon = c(-0.02, 0, 0.02), lat = 51.5, v = c(-1, NA, 1))
+maplamina(na) |>
+  add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(summary_count(label = "n"), bind = "summaries") |>
+  save("circles-range-na")

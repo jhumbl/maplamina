@@ -1,9 +1,9 @@
-// Scenarios S1, S2, T5 from notes/regression-scenarios.md: pages rather than single widgets.
+// Scenarios S1, S2, T5, C5, C7, C8 from notes/regression-scenarios.md: pages rather than single widgets.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, waitForWidgets, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
   toggleSelectOption, selectOptionChecked, zoomOut, widgetBox, mapZoom, hoverTooltip, hideTooltip,
-  clickPopup, popupBox,
+  clickPopup, popupBox, setFilter,
 } from '../lib/widget.mjs';
 
 async function twoWidgets(page) {
@@ -43,10 +43,6 @@ test('S2: select filters on one widget do not filter the other', async ({ page }
 });
 
 test('S2: two widgets on one page produce no duplicate DOM ids', async ({ page }) => {
-  // Known failure: the overlay, standalone control hosts and select boxes use ids derived
-  // from bind and layer ids only, so two widgets repeat them (P-26-02). Remove test.fail()
-  // once ids are widget-scoped.
-  test.fail();
   await openWidget(page, 'page-two-widgets', 2);
   const dupes = await page.evaluate(() => {
     const seen = new Map();
@@ -57,11 +53,6 @@ test('S2: two widgets on one page produce no duplicate DOM ids', async ({ page }
 });
 
 test("S2: tooltips on each widget show that widget's data", async ({ page }) => {
-  // Known failure: the tooltip registry is module-level and keyed by layer id, and layer ids
-  // are deterministic, so the second widget's "circle1" template replaces the first's and
-  // hovering widget 1 shows widget 2's rows (P-26-03). Remove test.fail() once the registry
-  // is per widget.
-  test.fail();
   const { w1, w2 } = await twoWidgets(page);
   expect(await hoverTooltip(page, w1.a.x, w1.a.y), 'first widget tooltip').toBe('alpha');
   await hideTooltip(page);
@@ -91,5 +82,48 @@ test('S1: a widget created in a hidden container fits its bounds once shown', as
   expect(c.x).toBeGreaterThan(box.left);
   expect(c.x).toBeLessThan(box.right);
   expect(isDrawnAt(await screenshot(page), c.x, c.y), 'centre circle drawn').toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('C7: mounting the controls a second time keeps one dock item per group', async ({ page }) => {
+  await openWidget(page, 'circles-views');
+  const count = () => page.locator('.ml-dock-item.ml-control-standalone').count();
+  expect(await count()).toBe(1);
+  await page.evaluate(() => {
+    const el = document.querySelector('.maplamina');
+    MAPLAMINA.controls.panel.sync(el, el.__mfRuntime.specRef);
+  });
+  expect(await count(), 'second sync reused the dock item').toBe(1);
+  expect(await page.locator('input[type=radio][value="big"]').count()).toBe(1);
+});
+
+test('C5: the panel and a standalone control sit in the corners they were given', async ({ page }) => {
+  const { errors } = await openWidget(page, 'panel-corners');
+  const box = await widgetBox(page);
+  const midX = (box.left + box.right) / 2;
+  const midY = (box.top + box.bottom) / 2;
+  const panel = await page.locator('.ml-control-panel').first().boundingBox();
+  expect(panel.x + panel.width / 2, 'panel is on the right').toBeGreaterThan(midX);
+  expect(panel.y + panel.height / 2, 'panel is at the bottom').toBeGreaterThan(midY);
+  const standalone = await page.locator('.ml-control-standalone').first().boundingBox();
+  expect(standalone.x + standalone.width / 2, 'standalone is on the right').toBeGreaterThan(midX);
+  expect(standalone.y + standalone.height / 2, 'standalone is at the top').toBeLessThan(midY);
+  expect(errors).toEqual([]);
+});
+
+test('C8: summaries count rows rather than parts on multipart geometry', async ({ page }) => {
+  const { errors } = await openWidget(page, 'polygons-multipart-summaries');
+  const read = async () => {
+    const rows = await page.locator('.ml-summary-row').all();
+    const out = {};
+    for (const r of rows) {
+      out[(await r.locator('.ml-summary-label').innerText()).trim()] = (await r.locator('.ml-summary-value').innerText()).trim();
+    }
+    return out;
+  };
+  expect(await read()).toEqual({ n: '2', sum: '11', mean: '5.5', min: '1' });
+  await setFilter(page, 'v', [5, 10]);
+  await page.waitForTimeout(500);
+  expect(await read()).toEqual({ n: '1', sum: '10', mean: '10.0', min: '10' });
   expect(errors).toEqual([]);
 });

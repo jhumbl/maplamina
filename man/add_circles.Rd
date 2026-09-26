@@ -38,8 +38,8 @@ add_circles(
 
 \item{color, opacity, width}{Stroke color/opacity/width.}
 
-\item{fill_color, fill_opacity}{Fill color/opacity. \code{fill_color} can be a single color,
-a vector of colors, or a color scale spec such as \code{\link[=color_quantile]{color_quantile()}}.}
+\item{fill_color, fill_opacity}{Fill color/opacity. \code{fill_color} is a single color, a formula
+returning colors, or a color scale spec such as \code{\link[=color_quantile]{color_quantile()}}.}
 
 \item{radius}{Circle radius (numeric or formula).}
 

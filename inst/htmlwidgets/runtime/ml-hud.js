@@ -4,8 +4,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   root.hud = root.hud || {};
 
-  // Stage 5.1: extracted HUD DOM wiring from ml-runtime-widget.js.
-  // This module is intentionally UI-only. The runtime/widget decides *what* to display.
+  // HUD DOM wiring only; the widget decides what to display.
 
   root.hud.ensureParts = function ensureParts(el) {
     if (!el) return null;

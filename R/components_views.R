@@ -97,26 +97,14 @@ view_keys_for <- function(layer = NULL) {
   if (!is.null(cfg$stroke_opacity) && is.null(cfg$opacity))  cfg$opacity <- cfg$stroke_opacity
   cfg$stroke_color <- cfg$stroke_width <- cfg$stroke_opacity <- NULL
 
-  allowed <- if (!is.null(layer_type) && layer_type %in% names(view_keys)) {
-    view_keys[[layer_type]]
-  } else {
-    unique(unlist(view_keys, use.names = FALSE))
-  }
-
-  unknown <- setdiff(names(cfg), allowed)
+  unknown <- setdiff(names(cfg), view_keys[[layer_type]])
   if (length(unknown) > 0L) {
-    layer_lbl <- layer_type %||% "<unknown>"
     keys_txt <- paste(sprintf("'%s'", unknown), collapse = ", ")
-    see_txt <- if (!is.null(layer_type) && layer_type %in% names(view_keys)) {
-      paste0(" See view_keys$", layer_type, ".")
-    } else {
-      " See view_keys."
-    }
 
     warning(
       sprintf(
-        "view '%s': unknown keys for %s layer: %s (ignored).%s",
-        view_name, layer_lbl, keys_txt, see_txt
+        "view '%s': unknown keys for %s layer: %s (ignored). See view_keys$%s.",
+        view_name, layer_type, keys_txt, layer_type
       ),
       call. = FALSE
     )
@@ -190,7 +178,7 @@ view_keys_for <- function(layer = NULL) {
   stop("Unexpected color object returned from ml_prepare_color().", call. = FALSE)
 }
 
-.ml_normalize_views <- function(data, views, n, layer_type = NULL,
+.ml_normalize_views <- function(data, views, n, layer_type,
                                 base_fill_opacity = 1,
                                 base_stroke_opacity = 1,
                                 base_stroke_color = NULL,
@@ -357,7 +345,7 @@ add_views <- function(
   easing <- match.arg(easing)
 
 
-  # Ensure registries exist (Stage 3+: flat component list)
+  # Ensure the registry exists
   if (is.null(map$x$.__components_raw)) {
     map$x$.__components_raw <- list()
   }

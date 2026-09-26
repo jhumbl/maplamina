@@ -1,4 +1,4 @@
-// maplamina adapter (Stage 4 refactor)
+// htmlwidgets entry point.
 // The implementation lives in ml-runtime-widget.js (MAPLAMINA.runtime.widget.create).
 
 HTMLWidgets.widget({

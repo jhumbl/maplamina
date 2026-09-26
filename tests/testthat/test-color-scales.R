@@ -86,3 +86,54 @@ test_that("Stage 3 strict semantics: numeric ~col must error; categorical labels
   expect_true(!is.null(c_lab$dict_rgba) && !is.null(c_lab$codes))
   expect_equal(.dict_n(c_lab), 2)
 })
+
+test_that("ml_color_to_rgba keeps a colour's own alpha channel", {
+  expect_equal(unname(maplamina:::ml_color_to_rgba("#00000000")), c(0L, 0L, 0L, 0L))
+  expect_equal(unname(maplamina:::ml_color_to_rgba("#FF000080", 0.5)), c(255L, 0L, 0L, 64L))
+  packed <- maplamina:::ml_color_to_rgba(c("transparent", "blue"), 1)
+  expect_equal(as.integer(packed), c(255L, 255L, 255L, 0L, 0L, 0L, 255L, 255L))
+})
+
+test_that("na_color = '#00000000' resolves to a transparent dictionary entry", {
+  df <- data.frame(pop = c(1, NA, 3))
+  spec <- maplamina:::color_numeric(~pop, palette = c("red", "blue"), steps = 4)
+  cobj <- maplamina:::ml_prepare_color(spec, opacity = 1, n = nrow(df), data = df)
+  rgba <- matrix(as.integer(cobj$dict_rgba), nrow = 4L)
+  expect_true(any(rgba[4L, ] == 0L))
+})
+
+test_that("color_quantile honours domain and clamp", {
+  df <- data.frame(v = 1:10)
+  resolve <- function(spec) maplamina:::.ml_resolve_color_scale(spec, data = df, n = nrow(df))
+
+  # Breaks come from the values inside the domain, with the ends pinned to it.
+  clamped <- resolve(color_quantile(~v, domain = c(4, 7), n = 2, palette = c("red", "blue")))
+  expect_equal(clamped, rep(c("#FF0000", "#0000FF"), each = 5))
+
+  dropped <- resolve(color_quantile(~v, domain = c(4, 7), n = 2, palette = c("red", "blue"), clamp = FALSE))
+  expect_equal(dropped[c(1:3, 8:10)], rep("#00000000", 6))
+  expect_equal(dropped[4:7], c("#FF0000", "#FF0000", "#0000FF", "#0000FF"))
+
+  # A domain wider than the data leaves the quantile bins unchanged.
+  wide <- resolve(color_quantile(~v, domain = c(0, 100), n = 4, palette = c("red", "blue")))
+  plain <- resolve(color_quantile(~v, n = 4, palette = c("red", "blue")))
+  expect_equal(wide, plain)
+})
+
+test_that("color_bin clamps values outside the domain to the end bins", {
+  df <- data.frame(v = 1:10)
+  spec <- color_bin(~v, domain = c(4, 7), bins = 3, palette = c("red", "blue"))
+  cols <- maplamina:::.ml_resolve_color_scale(spec, data = df, n = nrow(df))
+  expect_equal(cols[1:4], rep("#FF0000", 4))
+  expect_equal(cols[7:10], rep("#0000FF", 4))
+})
+
+test_that("an unknown palette name is an error, a single colour is not", {
+  df <- data.frame(v = 1:3)
+  resolve <- function(pal) maplamina:::.ml_resolve_color_scale(
+    color_numeric(~v, palette = pal, steps = 3), data = df, n = 3
+  )
+  expect_error(resolve("Vridis"), "Unknown palette 'Vridis'")
+  expect_equal(unique(resolve("red")), "red")
+  expect_length(unique(resolve("viridis")), 3)
+})

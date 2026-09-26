@@ -1,4 +1,4 @@
-// Scenarios T1, T2 from notes/regression-scenarios.md.
+// Scenarios T1, T2, T7 from notes/regression-scenarios.md.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, zoomOut, hoverTooltip, hideTooltip, clickPopup, popupTexts,
@@ -62,4 +62,24 @@ test('T2: hovering a polygon stroke edge shows that polygon, not row 0', async (
     await hideTooltip(page);
   }
   expect([...seen], 'stroke edge picks').toEqual(['poly-b']);
+});
+
+test('T7: values with markup are shown literally; html templates keep only their own tags', async ({ page }) => {
+  const { errors } = await openWidget(page, 'tooltips-escaping');
+  await zoomOut(page, 2);
+  const a = await project(page, -0.02, 51.5);
+  const b = await project(page, 0.02, 51.5);
+
+  expect(await hoverTooltip(page, a.x, a.y), 'text tooltip').toBe('a<b & c');
+  await hideTooltip(page);
+  expect(await clickPopup(page, a.x, a.y), 'text popup').toEqual(['P a<b & c']);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  expect(await hoverTooltip(page, b.x, b.y), 'html tooltip').toBe('a<b & c');
+  expect(await page.locator('.ml-tt2:visible .ml-tt2__inner b').count(), 'template tag kept').toBe(1);
+  await hideTooltip(page);
+  expect(await clickPopup(page, b.x, b.y), 'html popup').toEqual(['P a<b & c']);
+  expect(await page.locator('.ml-popup b').count(), 'popup template tag kept').toBe(1);
+  expect(errors).toEqual([]);
 });

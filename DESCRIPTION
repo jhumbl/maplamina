@@ -15,7 +15,10 @@ Imports:
     htmlwidgets,
     digest,
     base64enc,
-    sf
+    sf,
+    grDevices,
+    stats,
+    utils
 Suggests: 
     testthat (>= 3.0.0),
     jsonlite,

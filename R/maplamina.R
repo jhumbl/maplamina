@@ -58,13 +58,13 @@ maplamina <- function(
 
     .__layers = list(),
 
-    # Stage 3 target fields
+    # Compiled fields
     .__components = list(views = list(), range = list(), select = list(), legends = list(), summaries = list()),
     .__controls   = list(),
     .__panel      = NULL,
 
     # Internal-only (compiler input)
-    # Stage 3+: raw components are registered as a flat list of records:
+    # Raw components are a flat list of records:
     # .__components_raw[[id]] = list(type = <component_type>, id = <id>, layer = <layer_id>, bind = <bind_id>, ...)
     .__components_raw = list(),
     .__data_registry  = list(),

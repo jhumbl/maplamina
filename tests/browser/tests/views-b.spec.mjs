@@ -1,4 +1,4 @@
-// Priority B view scenarios V7, V8, V9, V10, V11 from notes/regression-scenarios.md.
+// Priority B view scenarios V7, V8, V9, V10, V11, V16 from notes/regression-scenarios.md.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, screenshot, pixel, measureRadius, measureDrawnRadius, measureColumnAbove,
@@ -68,6 +68,18 @@ test('V11: polygon fill colour animates on view switch', async ({ page }) => {
   await zoomOut(page, 1);
   const c = await project(page, 0, 51.5);
   const samples = await sampleAfter(page, () => selectView(page, 'red'), 2200,
+    (png) => pixel(png, c.x, c.y)[0]);
+  const reds = samples.map((s) => s.v);
+  expect(reds[0]).toBeLessThan(60);
+  expect(reds[reds.length - 1]).toBeGreaterThan(200);
+  expect(animated(samples), `red channel: ${reds.join(',')}`).toBe(true);
+});
+
+test('V16: a constant fill view overrides a colour scale on the base', async ({ page }) => {
+  await openWidget(page, 'polygons-scale-views-constant');
+  await zoomOut(page, 1);
+  const c = await project(page, 0, 51.5);
+  const samples = await sampleAfter(page, () => selectView(page, 'flat'), 2200,
     (png) => pixel(png, c.x, c.y)[0]);
   const reds = samples.map((s) => s.v);
   expect(reds[0]).toBeLessThan(60);

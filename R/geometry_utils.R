@@ -1,7 +1,19 @@
-# ---- Maplamina v3: geometry collectors ----
-# Refactor: split from geometry.R for readability.
-
 deg2rad <- function(x) x * pi / 180
+
+# deck.gl works in [-180, 180). Absolute positions are sent with their first vertex in that
+# range: points wrap individually, a path or polygon part shifts whole so it stays continuous.
+# In offsets mode only the origin is wrapped; the runtime moves it to the world copy nearest
+# the viewport (layerProps.originNearView).
+wrap_lon <- function(x) ((x + 180) %% 360) - 180
+shift_lon <- function(x) x + (wrap_lon(x[1]) - x[1])
+
+# Projected sf data is transformed to WGS84; a missing CRS is taken to be lon/lat already.
+to_wgs84 <- function(x) {
+  if (!isFALSE(sf::st_is_longlat(x))) return(x)
+  from <- sf::st_crs(x)
+  message("[maplamina] Transforming layer data from ", from$Name %||% from$input, " to WGS84.")
+  sf::st_transform(x, 4326)
+}
 
 use_offsets_from_bbox <- function(bb, tol = 0.01) {
   # Clamp to Web Mercator valid lat range

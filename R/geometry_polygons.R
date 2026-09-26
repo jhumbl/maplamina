@@ -1,6 +1,3 @@
-# ---- Maplamina v3: geometry collectors ----
-# Refactor: split from geometry.R for readability.
-
 ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
   # Fast "drop closing vertex" without copying the matrix
   drop_closing_idx <- function(xy) {
@@ -17,6 +14,7 @@ ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
 
   x <- data
   stopifnot(inherits(x, "sf"))
+  x <- to_wgs84(x)
 
   g  <- sf::st_geometry(x)
   bb <- sf::st_bbox(x)
@@ -57,6 +55,8 @@ ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
       p_off <- p_off + 1L
       poly_starts[p_off] <- r_off
       feature_idx[p_off] <- (i - 1L)
+      x0 <- poly[[1]][1, 1]
+      shift <- if (use_offsets) 0 else wrap_lon(x0) - x0
 
       for (ring in poly) {
         # View first two columns only; decide if we drop the closing vertex
@@ -66,7 +66,7 @@ ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
         if (n == 0L) next
 
         # Prepare X/Y vectors (no matrix copies)
-        xv <- xy_view[idx, 1]
+        xv <- xy_view[idx, 1] + shift
         yv <- xy_view[idx, 2]
         if (use_offsets) {
           xv <- xv - origin[1]
@@ -106,6 +106,6 @@ ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
     feature_index = list(values = as.integer(feature_idx)),
     bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
   )
-  if (use_offsets) out$coordinate_origin <- origin
+  if (use_offsets) out$coordinate_origin <- c(wrap_lon(origin[1]), origin[2])
   out
 }

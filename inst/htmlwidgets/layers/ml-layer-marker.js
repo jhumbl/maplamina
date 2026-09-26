@@ -104,7 +104,7 @@
       alphaCutoff: 0
     };
 
-    // IMPORTANT: give both sublayers the SAME filterKey (default to base id)
+    // Both sublayers share one filterKey (default: the base id)
     const filterKey = st.filterKey || st.id;
 
     // ---- STROKE (under) -----------------------------------------------------

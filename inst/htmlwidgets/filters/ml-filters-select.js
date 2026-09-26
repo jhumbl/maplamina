@@ -3,7 +3,7 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-filters-select.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-filters-select.js");
   }
 
   const utils = core.require('utils', 'ml-filters-select.js');
@@ -11,6 +11,7 @@
     throw new Error("[maplamina] Missing function utils.domKey required by ml-filters-select.js");
   }
   const domKey = utils.domKey;
+  const widgetKey = utils.widgetKey;
 
   const filterCore = core.require('filterCore', 'ml-filters-select.js');
   const { getElState, ensureFiltersContainer, seedSelectionSet, publishFilterState } = filterCore;
@@ -56,8 +57,8 @@
   }
 
   function renderInline(filtersBox, el, bindId, sel, selected, onChange) {
-    const domLayerId = domKey(bindId);
-    const cid = `ml-sel-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
+    const cid = `ml-sel-${domLayerId}-${sel.dom_id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) { box = document.createElement('div'); box.id = cid; box.className = 'ml-filter'; filtersBox.appendChild(box); }
 
@@ -68,7 +69,7 @@
 
     const optionsBox = document.createElement('div'); optionsBox.className = 'ml-filter-options'; box.appendChild(optionsBox);
 
-    const name = `ml-radio-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const name = `ml-radio-${domLayerId}-${sel.dom_id}`;
     let expanded = false;
 
     function drawOptions() {
@@ -101,8 +102,8 @@
   }
 
   function renderDropdown(filtersBox, el, bindId, sel, selected, onChange) {
-    const domLayerId = domKey(bindId);
-    const cid = `ml-sel-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
+    const cid = `ml-sel-${domLayerId}-${sel.dom_id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) { box = document.createElement('div'); box.id = cid; box.className = 'ml-filter'; filtersBox.appendChild(box); }
 
@@ -133,7 +134,7 @@
     }
 
     const optsWrap = document.createElement('div'); optsWrap.className = 'ml-dd-options'; menu.appendChild(optsWrap);
-    const groupName = `ml-dd-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const groupName = `ml-dd-${domLayerId}-${sel.dom_id}`;
     let expanded = false;
 
     function renderOptions(filterText) {
@@ -207,9 +208,6 @@
     if (useDropdown) renderDropdown(filtersBox, el, bindId, sel, selected, onAnyChange);
     else renderInline(filtersBox, el, bindId, sel, selected, onAnyChange);
   }
-
-  // (v3) GPU filtering is driven by .__controls.filters in maplamina.js.
-  // Legacy per-layer GPU wiring removed.
 
   root.filterSelect = Object.assign(root.filterSelect || {}, {
     ensureSelectUI,

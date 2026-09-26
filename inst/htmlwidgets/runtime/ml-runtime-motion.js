@@ -5,7 +5,7 @@
   root.runtime.motion = root.runtime.motion || {};
   const core = root.core;
   if (!core || typeof core.require !== 'function') {
-    throw new Error("[maplamina] Missing core.require; ensure ml-core.js is loaded before ml-runtime-motion.js");
+    throw new Error("[maplamina] Missing core.require; ensure ml-namespace.js is loaded before ml-runtime-motion.js");
   }
 
   const utils = core.require('utils', 'ml-runtime-motion.js');
@@ -48,10 +48,7 @@
     return policy;
   }
 
-  function transitionsForBuild(rt, layerId, jobOrPolicy) {
-    const policy = (jobOrPolicy && typeof jobOrPolicy === 'object' && Object.prototype.hasOwnProperty.call(jobOrPolicy, 'allowTransitions'))
-      ? jobOrPolicy
-      : deriveMotionPolicy(jobOrPolicy);
+  function transitionsForBuild(rt, layerId) {
     const lid = normText(layerId);
     if (!lid) return null;
     const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
@@ -252,10 +249,8 @@
 
   root.runtime.motion.attach = attach;
   root.runtime.motion.normalizeReason = normalizeReason;
-  root.runtime.motion.deriveMotionPolicy = deriveMotionPolicy;
   root.runtime.motion.transitionsForBuild = transitionsForBuild;
   root.runtime.motion.syncJobTransitions = syncJobTransitions;
-  root.runtime.motion.ensureLayerTransitions = ensureLayerTransitions;
   root.runtime.motion.disableRuntimeTransitions = disableRuntimeTransitions;
   root.runtime.motion.primeRuntimeTransitions = primeRuntimeTransitions;
   root.runtime.motion.injectMotionTransitions = injectMotionTransitions;

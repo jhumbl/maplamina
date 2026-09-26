@@ -1,6 +1,3 @@
-# ---- maplamina v3: layers (rendering-only) ----
-# Refactor: split from add_layer.R for navigability.
-
 .ml_infer_lonlat_formulas <- function(data, env = parent.frame()) {
   nm <- names(data)
   if (is.null(nm) || !length(nm)) return(NULL)
@@ -61,7 +58,7 @@
 
 .ml_collect_layer_aesthetics <- function(ctx, type, data, dots, env = parent.frame()) {
 
-  # NOTE: ctx$data_eval may be "part-grain" (rows repeated for multipart geometries).
+  # ctx$data_eval may be "part-grain" (rows repeated for multipart geometries).
   # For choropleth color scales we must compute breaks at row-grain (original data),
   # then expand to parts using ctx$feature_index, otherwise multipart features would
   # be overweighted.
@@ -168,7 +165,7 @@ add_layer <- function(
       paste0(
         msg, "\n",
         "This is due to an upstream deck.gl IconLayer limitation with MapLibre globe.\n",
-        "Use add_circle_markers() instead, or set projection='mercator'."
+        "Use add_circles() instead, or set projection='mercator'."
       ),
       call. = FALSE
     )
@@ -206,37 +203,23 @@ add_layer <- function(
     stop("Unknown layer type: ", type)
   )
 
+  if (!is.null(geom_part$keep)) data <- data[geom_part$keep, , drop = FALSE]
+
   ctx <- ml_layer_context(data, geom_part, env = env)
   n <- ctx$n_part %||% NA_integer_
-
-  # TEMP DEBUG: report coordinate system selection (remove once globe stabilizes)
-  #coord_sys <- if (!is.null(geom_part$coordinate_origin)) "LNGLAT_OFFSETS" else "LNGLAT"
-  #if (identical(proj, "globe") && !is.null(geom_part$coordinate_origin)) {
-  #  coord_sys <- "LNGLAT_OFFSETS (UNEXPECTED in globe)"
-  #} else if (identical(proj, "globe")) {
-  #  coord_sys <- "LNGLAT (offsets disabled)"
-  #}
-
-  #message(sprintf(
-  #  "[maplamina] layer=%s type=%s projection=%s coord=%s n_row=%s n_part=%s",
-  #  id, type, proj, coord_sys,
-  #  ctx$n_row %||% NA_integer_,
-  #  ctx$n_part %||% NA_integer_
-  #))
 
   aes_out <- .ml_collect_layer_aesthetics(ctx, type, data, dots, env = env)
   aes <- aes_out$aes
 
   tpl <- .ml_collect_layer_templates(ctx, tooltip = tooltip, popup = popup)
 
-  # NOTE: views/filters are now registered as separate components (.__components)
-  # and compiled later. Layers remain rendering-only.
+  # Views and filters are separate components; layers are rendering-only.
 
   cfg <- c(list(pickable = pickable, stroke = stroke), .ml_compact(cfg_extra %||% list()))
 
   bbox   <- geom_part$bbox %||% NULL
   origin <- geom_part$coordinate_origin %||% NULL
-  dc <- geom_part[setdiff(names(geom_part), c("n", "bbox", "coordinate_origin"))]
+  dc <- geom_part[setdiff(names(geom_part), c("n", "bbox", "coordinate_origin", "keep"))]
 
   tt_spec <- tpl$tooltip
   pp_spec <- tpl$popup
@@ -257,7 +240,7 @@ add_layer <- function(
   if (is.null(map$x$.__layers)) map$x$.__layers <- list()
   map$x$.__layers[[id]] <- layer
 
-  # Internal-only: keep original data + metadata for later compilation (Stage 3)
+  # Keep the original data and metadata for compilation
   if (is.null(map$x$.__data_registry)) map$x$.__data_registry <- list()
   map$x$.__data_registry[[id]] <- data
 
