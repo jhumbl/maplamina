@@ -209,9 +209,6 @@
     else renderInline(filtersBox, el, bindId, sel, selected, onAnyChange);
   }
 
-  // (v3) GPU filtering is driven by .__controls.filters in maplamina.js.
-  // Legacy per-layer GPU wiring removed.
-
   root.filterSelect = Object.assign(root.filterSelect || {}, {
     ensureSelectUI,
     AUTO_DROPDOWN_AT

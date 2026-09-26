@@ -312,13 +312,10 @@
   }
 
 
-  // v3: legends are stored as components in spec['.__components'].legends:
+  // Legends are stored as components in spec['.__components'].legends:
   //   { id, bind, position, when, legend: { title, type, items, scale, ... } }
   // Normalize the component into a single flat legend spec used by the renderer + visibility logic.
   function normalizeLegendSpec(input) {
-    // v3-only: legend specs must arrive as a component object:
-    //   { id, bind, position, when, legend: { title, type, items, scale, ... } }
-    // We intentionally do NOT support legacy flat payloads here.
     if (!input || typeof input !== 'object') return {};
 
     const hasLegend = (input.legend && typeof input.legend === 'object');
@@ -384,7 +381,7 @@
       ? rt.state.views
       : {};
 
-    // v3: derive per-layer active view from runtime state + views components.
+    // Derive per-layer active view from runtime state + views components.
     // This avoids relying on any derived fields being written onto spec['.__layers'].
     let activeByLayer = new Map();
     try {
@@ -524,7 +521,7 @@
       node.style.display = show ? '' : 'none';
     });
 
-    // Stage 2.1: hide empty legend containers so control-group shells don't linger when all
+    // Hide empty legend containers so control-group shells don't linger when all
     // member legends are hidden by when/view logic.
     try {
       const stacks = el.querySelectorAll('.ml-legend-stack');
@@ -554,10 +551,6 @@
   }
 
   root.legends = {
-  // v3: legends are rendered via the controls system (type: "legends").
-  // The old overlay renderer has been disabled; keep no-op stubs for safety.
-  render: function () {},
-  destroy: function () {},
   applyVisibility,
   buildLegendCard
 };

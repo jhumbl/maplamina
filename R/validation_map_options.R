@@ -1,5 +1,3 @@
-# ---- Maplamina v3: validation (map_options.controls) ----
-#
 # MapLibre built-in controls are encoded under:
 #   x$map_options$controls = list(list(type, position, options?))
 #

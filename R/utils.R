@@ -10,7 +10,7 @@ ml_is_tilde_call <- function(x) {
 
 ml_is_formulaish <- function(x) ml_is_formula(x) || ml_is_tilde_call(x)
 
-# General evaluator (kept for geometry / legacy behavior)
+# General evaluator (geometry, filters, summaries, templates)
 ml_eval <- function(data, expr, env = parent.frame()) {
   if (missing(expr) || is.null(expr)) return(NULL)
 
@@ -54,7 +54,7 @@ ml_eval_aes <- function(data, expr, env = parent.frame()) {
 }
 
 # ---- internal: widget-scoped deterministic ids ----
-# Stage 3+ contract: ids must be deterministic per widget and not depend on the R session.
+# Ids are deterministic per widget and do not depend on the R session.
 # We store counters under map$x$.__id_counters, and strip them during prerender.
 #
 # scope = "global": a single counter shared across prefixes, reset per widget.

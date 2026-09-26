@@ -149,7 +149,7 @@
       const val = document.createElement('div');
       val.className = 'ml-summary-value';
 
-      // Stage 1: values are computed later (Stage 3). Provide a safe placeholder.
+      // Values are computed later; provide a placeholder.
       const op = normText(rowSpec.op);
       val.textContent = (op === 'count' || op === 'count_non_na') ? '0' : '—';
 

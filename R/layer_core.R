@@ -1,6 +1,3 @@
-# ---- maplamina v3: layers (rendering-only) ----
-# Refactor: split from add_layer.R for navigability.
-
 .ml_infer_lonlat_formulas <- function(data, env = parent.frame()) {
   nm <- names(data)
   if (is.null(nm) || !length(nm)) return(NULL)
@@ -61,7 +58,7 @@
 
 .ml_collect_layer_aesthetics <- function(ctx, type, data, dots, env = parent.frame()) {
 
-  # NOTE: ctx$data_eval may be "part-grain" (rows repeated for multipart geometries).
+  # ctx$data_eval may be "part-grain" (rows repeated for multipart geometries).
   # For choropleth color scales we must compute breaks at row-grain (original data),
   # then expand to parts using ctx$feature_index, otherwise multipart features would
   # be overweighted.
@@ -214,8 +211,7 @@ add_layer <- function(
 
   tpl <- .ml_collect_layer_templates(ctx, tooltip = tooltip, popup = popup)
 
-  # NOTE: views/filters are now registered as separate components (.__components)
-  # and compiled later. Layers remain rendering-only.
+  # Views and filters are separate components; layers are rendering-only.
 
   cfg <- c(list(pickable = pickable, stroke = stroke), .ml_compact(cfg_extra %||% list()))
 
@@ -242,7 +238,7 @@ add_layer <- function(
   if (is.null(map$x$.__layers)) map$x$.__layers <- list()
   map$x$.__layers[[id]] <- layer
 
-  # Internal-only: keep original data + metadata for later compilation (Stage 3)
+  # Keep the original data and metadata for compilation
   if (is.null(map$x$.__data_registry)) map$x$.__data_registry <- list()
   map$x$.__data_registry[[id]] <- data
 

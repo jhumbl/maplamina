@@ -1,5 +1,3 @@
-# ---- Maplamina v3: minimal component registry (Stage 3+) ----
-#
 # Goal: make it easy to add new component families (e.g., timeslider, summaries)
 # without editing compiler.R each time.
 #
@@ -27,7 +25,7 @@
 }
 
 # Register built-in component compilers.
-# NOTE: the compile functions are defined in compiler.R.
+# The compile functions are defined in compiler.R.
 .ml_register_component_defaults <- function() {
   .ml_register_component_type("views",  .ml_compile_component_views)
   .ml_register_component_type("range",  .ml_compile_component_range)

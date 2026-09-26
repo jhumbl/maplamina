@@ -12,7 +12,7 @@
     throw new Error("[maplamina] Missing function utils.normText required by ml-runtime-scheduler.js");
   }
 
-  // IMPORTANT: preserve canonical utils.normText semantics (trim only, no lowercasing).
+  // utils.normText trims only, no lowercasing.
   // Scheduler keys must match ids used across runtime/pipeline.
   const normText = utils0.normText;
 
@@ -99,7 +99,7 @@
   }
 
   /**
-   * Attach Stage 6 scheduler to a runtime instance (idempotent).
+   * Attach the scheduler to a runtime instance (idempotent).
    * Requires rt._flushSnapshot(job) to exist (installed by ml-runtime-pipeline.js).
    */
   function attach(rt) {

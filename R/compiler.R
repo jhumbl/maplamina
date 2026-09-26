@@ -1,7 +1,3 @@
-# ---- v3 prerender compiler (preRenderHook) ----
-# Refactor: keep behavior the same, but structure the compiler into explicit passes
-# and promote small helpers to file-scope for easier maintenance/testing.
-
 .ml_compiler_union_ordered <- function(x, y) {
   if (is.list(x)) x <- unlist(x, use.names = FALSE)
   if (is.list(y)) y <- unlist(y, use.names = FALSE)
@@ -15,7 +11,7 @@
   widget$x$.__data_registry[[layer_id]] %||% NULL
 }
 
-# Stage 3: layers may be multipart (e.g., MULTIPOLYGON / MULTILINESTRING).
+# Layers may be multipart (e.g., MULTIPOLYGON / MULTILINESTRING).
 # Views and filters are authored at feature (row) grain, but GPU attributes must be
 # emitted at part grain. We persist a 0-based feature_index in layer_meta to expand
 # per-row vectors to per-part vectors.
@@ -66,7 +62,7 @@
 
 .ml_compiler_controls_add_member <- function(controls, bind, type, member_id) {
   if (is.null(controls[[bind]])) {
-    # NOTE: keep members as a list-of-strings so jsonlite::write_json(auto_unbox=TRUE)
+    # Keep members as a list-of-strings so jsonlite::write_json(auto_unbox=TRUE)
     # will still emit JSON arrays for length-1 membership.
     controls[[bind]] <- list(type = type, members = list())
   } else {
@@ -1032,7 +1028,7 @@
   widget$x$.__layer_meta     <- NULL
   widget$x$.__id_counters    <- NULL
 
-    # strip legacy/UI fields from outgoing spec (Stage 3 contract hygiene)
+    # strip UI fields from the outgoing spec
 
     widget$x$show_layer_controls <- NULL
 

@@ -118,7 +118,7 @@
       hiLab.textContent = formatValue(current[1], decimals);
     }
 
-    // v3: always use the provided onChange callback.
+    // Always use the provided onChange callback.
     // The runtime scheduler coalesces rebuilds, so UI can emit live changes directly.
     const notify = () => {
       try {
@@ -167,9 +167,6 @@
 
     syncLabels();
   }
-
-  // (v3) GPU filtering is driven by .__controls.filters in maplamina.js.
-  // Legacy per-layer GPU wiring removed.
 
   root.filterRange = Object.assign({}, root.filterRange, { ensureRangeUI });
 })(window);

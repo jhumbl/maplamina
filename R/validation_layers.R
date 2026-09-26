@@ -1,5 +1,3 @@
-# ---- Maplamina v3: validation (layers + refs) ----
-
 .ml_validate_top_level_invariants <- function(x) {
 
   # ---- top-level invariants ----
@@ -8,7 +6,7 @@
   if (!is.null(x$.__layer_meta))     stop("Internal field .__layer_meta leaked into spec.", call. = FALSE)
 
 
-  # ---- Stage 3 contract: restrict top-level keys ----
+  # restrict top-level keys
   allowed <- c(
     "map_options",
     ".__layers",
@@ -47,9 +45,9 @@
       stop("Layer '", id, "' contains internal fields: ", paste(leaked, collapse = ", "), call. = FALSE)
     }
 
-    if (!is.null(st$panel)) stop("Layer '", id, "' should not contain `panel` in Stage 3.", call. = FALSE)
+    if (!is.null(st$panel)) stop("Layer '", id, "' should not contain `panel`.", call. = FALSE)
     if (!is.null(st$views) || !is.null(st$filters) || !is.null(st$active_view)) {
-      stop("Layer '", id, "' should not contain views/filters/active_view in Stage 3.", call. = FALSE)
+      stop("Layer '", id, "' should not contain views/filters/active_view.", call. = FALSE)
     }
 
     if ("transitions" %in% names(st)) {
@@ -61,9 +59,9 @@
 
     resolve_blob_id <- function(ref) {
       if (is.null(ref)) return(NULL)
-      # New scheme: semantic ref -> blob id mapping in dataStore.refs
+      # semantic ref -> blob id via dataStore.refs
       if (!is.null(ds$refs) && !is.null(ds$refs[[ref]])) return(ds$refs[[ref]])
-      # Back-compat: ref may already be a blob id
+      # otherwise treat the ref as a blob id so the check below reports it
       ref
     }
 

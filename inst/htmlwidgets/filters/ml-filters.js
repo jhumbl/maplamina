@@ -27,8 +27,5 @@
     if (spec.type === 'range')  return getRange().ensureRangeUI(el, layerId, spec, onChange, panelMeta);
   }
 
-  // (v3) GPU filtering is driven by .__controls.filters in maplamina.js.
-  // Legacy per-layer GPU wiring removed.
-
   root.filters = { ensureFilterUI };
 })(window);

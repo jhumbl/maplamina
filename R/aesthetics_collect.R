@@ -1,6 +1,3 @@
-# ---- Maplamina v3: aesthetics collectors ----
-# Refactor: split from aesthetics.R for readability.
-
 ml_collect_aesthetics <- function(type, data, dots, n) {
   aes <- list(base_encodings = list(), data_columns = list())
 

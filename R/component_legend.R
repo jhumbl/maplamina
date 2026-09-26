@@ -213,7 +213,7 @@ add_legend <- function(
     if (!is.null(ss$icon)) legend$icon <- ss$icon
 
   }
-  # Ensure registries exist (Stage 3+: flat component list)
+  # Ensure the registry exists
   if (is.null(map$x$.__components_raw)) {
     map$x$.__components_raw <- list()
   }

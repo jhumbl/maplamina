@@ -1,5 +1,3 @@
-# ---- Maplamina v3: validation (panel + controls + components) ----
-
 .ml_validate_panel_mounts <- function(x) {
   controls <- x$.__controls %||% list()
   if (!is.list(controls)) stop(".__controls must be a list.", call. = FALSE)

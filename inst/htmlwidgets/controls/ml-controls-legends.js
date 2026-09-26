@@ -74,7 +74,7 @@
     stack.className = 'ml-legend-stack ml-control-legends-stack';
     mountEl.appendChild(stack);
 
-    // Stage 2.1: stable hook for group-level hide/show (used by ml-legends.applyVisibility).
+    // Stable hook for group-level hide/show (used by ml-legends.applyVisibility).
     try { stack.dataset.mfLegendsGroup = gid; } catch (_) {}
 
     const bucket = getLegendsBucket(spec);
@@ -117,7 +117,7 @@
       mountEl.appendChild(msg);
     }
 
-    // Stage 2: apply `when` visibility rules on first mount.
+    // Apply `when` visibility rules on first mount.
     try { root?.legends?.applyVisibility?.(widgetEl, spec); } catch (_) {}
   }
 

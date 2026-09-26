@@ -15,7 +15,7 @@
   }
 
   const asArray = utils.asArray;
-  // IMPORTANT: preserve the canonical utils.normText semantics (trim only, no lowercasing).
+  // utils.normText trims only, no lowercasing.
   // Many ids (layer ids, view ids, component ids) are case-sensitive in the authored spec.
   const normText = utils.normText;
 
@@ -98,7 +98,7 @@
     return { state: out, ops };
   }
 
-  // v3: compute per-layer, per-component view ops from .__controls.views + .__components.views.
+  // Compute per-layer, per-component view ops from .__controls.views + .__components.views.
   // Returns:
   //   controlledByGroup: Map<groupId, Set<layerId>>
   //   opsByLayer: Map<layerId, Array<op>>

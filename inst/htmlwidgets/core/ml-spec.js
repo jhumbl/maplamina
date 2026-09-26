@@ -88,7 +88,7 @@
     return s || [];
   }
 
-  // Controls group ordering contract (v3):
+  // Controls group ordering contract:
   // 1) If a panel is present, its sections order is authoritative for card order and
   //    is also used as the precedence order for group application (e.g. views).
   // 2) Any remaining groups not referenced by the panel follow insertion order in .__controls.
@@ -140,8 +140,7 @@
     return out;
   }
 
-  // --- v3 spec assertions (no legacy support) ---
-  // Throws if the incoming spec is not in the expected v3 shape.
+  // Throws if the incoming spec is not in the expected shape.
   function assertV3Spec(x, where) {
     const loc = where ? ` (${where})` : '';
     if (!x || typeof x !== 'object') {
@@ -214,7 +213,7 @@
       }
     }
 
-    // Validate layers + disallow legacy per-layer UI/components fields.
+    // Layers must not carry UI or component fields.
     const legacyKeys = ['views', 'filters', 'panel', 'controls', 'transitions'];
     for (const lid of Object.keys(layers)) {
       const st = layers[lid];

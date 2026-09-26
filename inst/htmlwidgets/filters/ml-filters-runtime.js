@@ -9,7 +9,6 @@
   const utils = core.require('utils', 'ml-filters-runtime.js');
   const normText = utils.normText;
 
-  // Spec helpers (Stage 1 extraction)
   const spec = core.require('spec', 'ml-filters-runtime.js');
   const specControls = spec.controls;
   const getControlGroupsByType = specControls.getControlGroupsByType;

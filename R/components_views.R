@@ -345,7 +345,7 @@ add_views <- function(
   easing <- match.arg(easing)
 
 
-  # Ensure registries exist (Stage 3+: flat component list)
+  # Ensure the registry exists
   if (is.null(map$x$.__components_raw)) {
     map$x$.__components_raw <- list()
   }

@@ -1,6 +1,3 @@
-# ---- Maplamina v3: geometry collectors ----
-# Refactor: split from geometry.R for readability.
-
 ml_collect_geometry_polygons <- function(data, use_offsets = NULL) {
   # Fast "drop closing vertex" without copying the matrix
   drop_closing_idx <- function(xy) {

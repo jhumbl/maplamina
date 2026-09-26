@@ -32,7 +32,7 @@
 function ensureTitleIconLink(panelEl, panelSpec) {
   if (!panelEl || !panelSpec) return;
 
-  // NOTE (v3): panelSpec.icon is the only supported input.
+  // panelSpec.icon is the only supported input.
   // It is expected to be a URL string (or a depUrl() object) and we use it as:
   //  - <img src="..."> for the icon image
   //  - <a href="..."> to make it clickable
@@ -231,7 +231,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     renderPlaceholder(mountEl, groupId, controlSpec);
   }
 
-  // Stage 2: update hook for mounted control groups (no re-mount).
+  // Update hook for mounted control groups (no re-mount).
   // Called by runtime pipeline when job.controls is set.
   function update(el, x, rt, job) {
     if (!el) return;
@@ -265,7 +265,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
   }
 
 
-  // Standalone positioning (v3): allow each control group to choose its own dock corner.
+  // Standalone positioning: allow each control group to choose its own dock corner.
   const ALL_CORNERS = ['topleft', 'topright', 'bottomright', 'bottomleft'];
 
   function normalizeCorner(pos, fallback) {
@@ -307,7 +307,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
 
     const controls = specControls.getControlGroups(x);
 
-    // IMPORTANT (v3): Respect authored order from the compiled spec.
+    // Respect authored order from the compiled spec.
     // Prefer the centralized spec helper which applies panel order first (if present),
     // then insertion order in .__controls.
     const allGroups = (typeof specControls.getControlGroupIdsOrdered === 'function')

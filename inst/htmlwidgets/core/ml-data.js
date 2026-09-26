@@ -214,7 +214,7 @@
 
     await Promise.all([hydrateBaseColor('fillColor'), hydrateBaseColor('lineColor')]);
 
-    // v3-only: per-view encodings are applied as patches into base_encodings upstream.
+    // Per-view encodings are applied as patches into base_encodings upstream.
 
     st.data_columns   = cols;
     st.base_encodings = base;
@@ -222,7 +222,7 @@
   }
 
   async function resolveActiveOnly(st) {
-    // v3-only: active view patches are already merged into base_encodings upstream.
+    // Active view patches are already merged into base_encodings upstream.
     await resolveColumnsAndViews(st);
   }
 

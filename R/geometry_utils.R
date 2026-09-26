@@ -1,6 +1,3 @@
-# ---- Maplamina v3: geometry collectors ----
-# Refactor: split from geometry.R for readability.
-
 deg2rad <- function(x) x * pi / 180
 
 # deck.gl works in [-180, 180). Absolute positions are sent with their first vertex in that

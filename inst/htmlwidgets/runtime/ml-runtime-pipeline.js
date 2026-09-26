@@ -89,10 +89,8 @@
       }
 
       const rebuildLayer = async ({ layerId, sourceState, logical, withViews }) => {
-        // NOTE: if re-adding diagnostic logging here, beware that prevEntry and
-        // result.entry are the same object — buildRenderArtifacts overwrites
-        // entry.cache.lastRenderState in place. Snapshot any previous render state
-        // *before* calling buildRenderArtifacts, not after.
+        // prevEntry and result.entry are the same object: buildRenderArtifacts overwrites
+        // entry.cache.lastRenderState in place, so snapshot previous render state before the call.
         const layerViewOps = (viewOpsByLayer && typeof viewOpsByLayer.get === 'function' && Array.isArray(viewOpsByLayer.get(layerId)))
           ? viewOpsByLayer.get(layerId)
           : [];

@@ -75,7 +75,7 @@ tmpl <- function(template, ..., html = FALSE) {
 }
 
 # internal: collect one placeholder vector (numeric/u32, categorical codes, or dates)
-# NOTE: we keep dict (labels) inline JSON like filters do; only codes get blob-ified.
+# dict (labels) stays inline JSON as in filters; only codes go to blobs.
 .ml_collect_placeholder <- function(data, name, fmt, bindings, n, env = parent.frame()) {
   if (!nzchar(name)) stop("[maplamina] empty placeholder name in tmpl()", call. = FALSE)
   # 1) resolve expression: alias in ... wins; else column by name

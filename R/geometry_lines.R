@@ -1,6 +1,3 @@
-# ---- Maplamina v3: geometry collectors ----
-# Refactor: split from geometry.R for readability.
-
 ml_collect_geometry_lines <- function(data, use_offsets = NULL) {
   # Prefer sf
   x <- data

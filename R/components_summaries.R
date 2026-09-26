@@ -305,7 +305,7 @@ add_summaries <- function(
     stop("add_summaries() expects summary_*() objects.", call. = FALSE)
   }
 
-  # Ensure registries exist (Stage 3+: flat component list)
+  # Ensure the registry exists
   if (is.null(map$x$.__components_raw)) {
     map$x$.__components_raw <- list()
   }

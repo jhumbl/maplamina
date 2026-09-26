@@ -3,10 +3,9 @@
   const root = global.MAPLAMINA = global.MAPLAMINA || {};
   root.runtime = root.runtime || {};
 
-  // v3: Layers are rendering-only and MUST NOT own/define transitions.
-  // Runtime helper module for motion (e.g. Views motion injected at patch-time).
+  // Layers do not own transitions; motion is injected at patch time.
 
-  // NOTE: keys are lowercased to make matching case-insensitive.
+  // Keys are lowercased to make matching case-insensitive.
   const EASINGS = {
     linear: (t) => t,
     easein: (t) => t * t,

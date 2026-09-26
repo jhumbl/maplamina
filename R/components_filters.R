@@ -244,7 +244,7 @@ add_filters <- function(
 
   # Deterministic ids per-widget (avoid session-global counters / runif).
   #
-  # IMPORTANT: `add_filters()` may be called multiple times in a pipeline (often once per layer).
+  # `add_filters()` may be called multiple times in a pipeline (often once per layer).
   # Therefore default ids must be unique across the whole widget, not just within a single call.
   #
   # Strategy:
@@ -261,7 +261,7 @@ next_id <- function(prefix) {
   tmp$id
 }
 
-  # NOTE: `id` is accepted for API symmetry with add_views(). In v3 we
+  # `id` is accepted for API symmetry with add_views(). We
   # register one component per filter element (filter_range()/filter_select()).
   # The `id` argument is therefore reserved for future grouping/meta and is
   # currently used only to avoid accidental capture into `...`.
@@ -292,7 +292,7 @@ next_id <- function(prefix) {
     stop("add_filters() expects filter_*() objects.", call. = FALSE)
   }
 
-  # Ensure registries exist (Stage 3+: flat component list)
+  # Ensure the registry exists
   if (is.null(map$x$.__components_raw)) {
     map$x$.__components_raw <- list()
   }

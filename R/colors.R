@@ -1,6 +1,3 @@
-# ---- Maplamina v3: aesthetics collectors ----
-# Refactor: split from aesthetics.R for readability.
-
 ml_color_to_rgba <- function(col, alpha = 1, n = NULL) {
   # Convert colors to RGBA.
   #
@@ -282,7 +279,7 @@ ml_prepare_color <- function(color, opacity = 1, n, data, env = parent.frame()) 
     )
   }
 
-  # Stage 3 strict semantics:
+  # Strict semantics:
   # If the user supplies a formula (~col) for fill/line colors, it must evaluate to
   # actual colors (character/factor). Numeric (or date/logical) vectors are NOT treated
   # as colors; users must use color_bin()/color_quantile()/color_numeric()/color_factor().

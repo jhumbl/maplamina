@@ -41,7 +41,7 @@
       dataComparator: (a,b) => a === b,
       positionFormat: size === 2 ? 'XY' : 'XYZ',
 
-      // NOTE: pickable is now handled consistently in composeLayerProps()
+      // pickable is set in composeLayerProps()
       stroked: !!st.cfg?.stroke,
 
       getRadius,
