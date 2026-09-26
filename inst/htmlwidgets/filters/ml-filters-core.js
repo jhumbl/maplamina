@@ -52,9 +52,11 @@
   function publishFilterState(el, bindId) {
     if (window.Shiny && el.id) {
       const ui = getElState(el);
-      const perLayer = ui[bindId] && ui[bindId].select ? ui[bindId].select : {};
+      const selects = (ui[bindId] && ui[bindId].select) || {};
+      const ranges = (ui[bindId] && ui[bindId].range) || {};
       const snapshot = {};
-      for (const fid of Object.keys(perLayer)) snapshot[fid] = Array.from(perLayer[fid]);
+      for (const fid of Object.keys(selects)) snapshot[fid] = Array.from(selects[fid]);
+      for (const fid of Object.keys(ranges)) snapshot[fid] = Array.from(ranges[fid]);
       Shiny.setInputValue(el.id + "_filters", {layer: bindId, ts: Date.now(), state: snapshot}, {priority:"event"});
     }
   }
