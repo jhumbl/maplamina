@@ -111,14 +111,6 @@
     const c = containerFromInfo(info);
     const wc = __findMapWidgetContainer(c);
     if (wc) return wc;
-
-    // Legacy fallback (older builds may expose a global getter)
-    try {
-      const map = (global.MAPLAMINA && global.MAPLAMINA.__getMap && global.MAPLAMINA.__getMap()) || null;
-      const mc = map && map.getContainer ? map.getContainer() : null;
-      if (mc) return mc;
-    } catch (_) {}
-
     return c || document.body;
   }
 
@@ -449,9 +441,7 @@
       // Get the MapLibre instance (preferred: widget-scoped getter)
       const mapCanvas = container.querySelector('canvas');
       const legacyMap = (mapCanvas && mapCanvas._map) || null;
-      const map = __getMapFromContainer(container) ||
-                  legacyMap ||
-                  (global.MAPLAMINA && global.MAPLAMINA.__getMap && global.MAPLAMINA.__getMap());
+      const map = __getMapFromContainer(container) || legacyMap;
       if (!map) return;
 
       // Cleanup any previous popup FIRST (prevents second-click no-show)

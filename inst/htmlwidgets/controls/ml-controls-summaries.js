@@ -47,24 +47,14 @@
     if (p && p.path_starts_array && ArrayBuffer.isView(p.path_starts_array)) {
       return (p.path_starts_array.length >>> 0);
     }
-    if (p && p.start_indices && ArrayBuffer.isView(p.start_indices)) {
-      return (p.start_indices.length >>> 0);
-    }
 
     // polygons
     const poly = cols && cols.polygon;
     if (poly && poly.poly_starts_array && ArrayBuffer.isView(poly.poly_starts_array)) {
       return (poly.poly_starts_array.length >>> 0);
     }
-    if (poly && poly.start_indices && ArrayBuffer.isView(poly.start_indices)) {
-      return (poly.start_indices.length >>> 0);
-    }
-    if (poly && typeof poly.length === 'number') {
-      return (poly.length >>> 0);
-    }
 
-    // fallback: feature_index length (when present)
-    const idx = cols?.feature_index_array || cols?.feature_index?.array;
+    const idx = cols.feature_index_array;
     if (idx && ArrayBuffer.isView(idx)) return (idx.length >>> 0);
 
     return 0;
@@ -223,7 +213,7 @@
       : ((arr, p) => (Number.isFinite(p) ? (p >>> 0) : 0));
 
     // If layer is force-hidden (e.g. select dim has no overlapping values), nothing passes.
-    const forceHidden = readRenderField ? !!readRenderField(st, 'forceHidden') : !!st.__forceHidden;
+    const forceHidden = !!readRenderField(st, 'forceHidden');
     if (forceHidden) {
       const z = new Uint8Array(n);
       return { st, n, passCount: 0, mask: z, indexers };

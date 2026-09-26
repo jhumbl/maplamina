@@ -58,7 +58,7 @@
 
   function renderInline(filtersBox, el, bindId, sel, selected, onChange) {
     const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
-    const cid = `ml-sel-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const cid = `ml-sel-${domLayerId}-${sel.dom_id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) { box = document.createElement('div'); box.id = cid; box.className = 'ml-filter'; filtersBox.appendChild(box); }
 
@@ -69,7 +69,7 @@
 
     const optionsBox = document.createElement('div'); optionsBox.className = 'ml-filter-options'; box.appendChild(optionsBox);
 
-    const name = `ml-radio-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const name = `ml-radio-${domLayerId}-${sel.dom_id}`;
     let expanded = false;
 
     function drawOptions() {
@@ -103,7 +103,7 @@
 
   function renderDropdown(filtersBox, el, bindId, sel, selected, onChange) {
     const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
-    const cid = `ml-sel-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const cid = `ml-sel-${domLayerId}-${sel.dom_id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) { box = document.createElement('div'); box.id = cid; box.className = 'ml-filter'; filtersBox.appendChild(box); }
 
@@ -134,7 +134,7 @@
     }
 
     const optsWrap = document.createElement('div'); optsWrap.className = 'ml-dd-options'; menu.appendChild(optsWrap);
-    const groupName = `ml-dd-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
+    const groupName = `ml-dd-${domLayerId}-${sel.dom_id}`;
     let expanded = false;
 
     function renderOptions(filterText) {

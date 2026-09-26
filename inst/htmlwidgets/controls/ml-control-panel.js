@@ -221,20 +221,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     // Prefer registry dispatch by control type.
     const reg = root.controls && root.controls.registry;
     let handler = null;
-    if (type && reg) {
-      if (typeof reg.getHandler === 'function') handler = reg.getHandler(type);
-      else if (typeof reg.get === 'function') {
-        const fn = reg.get(type);
-        if (typeof fn === 'function') handler = { render: fn, update: null };
-      }
-    }
-    let renderer = (handler && typeof handler.render === 'function') ? handler.render : null;
-
-    // Fallback: allow direct module dispatch if registry is not yet initialized (load-order safety).
-    if (!renderer && type) {
-      const api = root.controls && root.controls[type];
-      if (api && typeof api.render === 'function') renderer = api.render;
-    }
+    if (type && reg) handler = reg.getHandler(type);
+    const renderer = (handler && typeof handler.render === 'function') ? handler.render : null;
 
     if (renderer && typeof renderer === 'function') {
       try { renderer(mountEl, el, x, groupId, controlSpec); return; } catch (e) { console.error(e); return renderPlaceholder(mountEl, groupId, controlSpec, 'Renderer crashed — see console.'); }
@@ -263,22 +251,8 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       const type = controlSpec && controlSpec.type ? normText(controlSpec.type) : '';
       if (!type) continue;
 
-      let handler = null;
-      if (reg) {
-        if (typeof reg.getHandler === 'function') handler = reg.getHandler(type);
-        else if (typeof reg.get === 'function') {
-          const fn = reg.get(type);
-          if (typeof fn === 'function') handler = { render: fn, update: null };
-        }
-      }
-
-      let updater = (handler && typeof handler.update === 'function') ? handler.update : null;
-
-      // Fallback: allow direct module dispatch if registry isn't initialized.
-      if (!updater) {
-        const api = root.controls && root.controls[type];
-        if (api && typeof api.update === 'function') updater = api.update;
-      }
+      const handler = reg ? reg.getHandler(type) : null;
+      const updater = (handler && typeof handler.update === 'function') ? handler.update : null;
 
       if (typeof updater === 'function') {
         try {
@@ -343,9 +317,6 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     const panelSpec = (typeof specControls.getPanelSpec === 'function') ? specControls.getPanelSpec(x) : null;
     const sections = panelSpec && Array.isArray(panelSpec.sections) ? panelSpec.sections : null;
     const hasPanel = !!(sections && sections.length);
-
-    // Always remove legacy per-layer UI (safe; does not touch v3 containers)
-    try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
 
     // PANEL MOUNTING
     const panelGroups = new Set();
@@ -513,29 +484,13 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       });
     } catch (_) {}
 
-    // Also remove any legacy per-layer UI
-    try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
-
     try { el.__mlMountedControls = {}; } catch (_) {}
-  }
-
-  function removeLegacyLayerUI(el) {
-    const hostApi = root.controls && root.controls.host;
-    if (!hostApi) return;
-    try { hostApi.removeLegacyLayerPanels && hostApi.removeLegacyLayerPanels(el); } catch (_) {}
-
-    // Also remove older view-switcher stack if still present
-    try {
-      const old = el.querySelector('.ml-view-switcher-stack');
-      if (old) old.remove();
-    } catch (_) {}
   }
 
   // v3 API: mounting only.
   root.controls.panel = {
     sync,
     update,
-    clear,
-    removeLegacyLayerUI
+    clear
   };
 })(window);

@@ -74,7 +74,6 @@
   const idx =
     idxMapOverride ||
     st?.data_columns?.feature_index_array ||
-    (st?.data_columns?.feature_index && st.data_columns.feature_index.array) ||
     null;
 
   const hasIdx = !!(idx && ArrayBuffer.isView(idx) && idx.length);

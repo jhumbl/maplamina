@@ -125,11 +125,6 @@
     return {
       renderValue: async function(x) {
         try { MAPLAMINA?.tooltips?.destroy?.(el); } catch (_) {}
-        try {
-          const oldStack = el.querySelector('.ml-view-switcher-stack');
-          if (oldStack && oldStack.parentNode) oldStack.parentNode.removeChild(oldStack);
-        } catch (_) {}
-        try { MAPLAMINA?.controls?.panel?.removeLegacyLayerUI?.(el); } catch (_) {}
 
         const showHud = x?.map_options?.hud === true;
         if (!showHud) {
@@ -261,12 +256,7 @@
 
         try {
           if (dock && typeof dock.destroy === 'function') dock.destroy(el);
-        } catch (_) {
-          const stack = el.querySelector('.ml-layer-panel-stack');
-          if (stack && stack.parentNode) stack.parentNode.removeChild(stack);
-          const legacy = el.querySelector('.ml-view-switcher-stack');
-          if (legacy && legacy.parentNode) legacy.parentNode.removeChild(legacy);
-        }
+        } catch (_) {}
 
         try { clearMapLibreControls(map, el.__mfRuntime); } catch (_) {}
         try { resetProjectionManager(el.__mfRuntime); } catch (_) {}

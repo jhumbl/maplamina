@@ -69,7 +69,7 @@
 
     const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
 
-    const cid = `ml-rng-${domLayerId}-${(rng && rng.dom_id) ? rng.dom_id : rng.id}`;
+    const cid = `ml-rng-${domLayerId}-${rng.dom_id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) {
       box = document.createElement('div');

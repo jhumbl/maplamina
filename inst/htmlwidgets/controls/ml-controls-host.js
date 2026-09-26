@@ -86,31 +86,10 @@
     removeDockItem(el, corner, key);
   }
 
-  // Legacy cleanup: remove old per-layer panels host (Milestone 2/3).
-  function removeLegacyLayerPanels(el) {
-    const dock = root.dock;
-    if (dock && typeof dock.removeItem === 'function') {
-      try { dock.removeItem(el, 'topleft', 'layer-panels'); } catch (_) {}
-    }
-    try {
-      const stack = el.querySelector('.ml-layer-panel-stack');
-      if (stack) stack.remove();
-    } catch (_) {}
-    try {
-      const legacyPanels = el.querySelectorAll('[id^="ml-panel-"].ml-layer-panel');
-      legacyPanels && legacyPanels.forEach(p => { try { p.remove(); } catch (_) {} });
-    } catch (_) {}
-    try {
-      const old = el.querySelector('.ml-view-switcher-stack');
-      if (old) old.remove();
-    } catch (_) {}
-  }
-
   root.controls.host = {
     ensureStandaloneGroup,
     removeStandaloneGroup,
     ensurePanelHost,
-    removePanelHost,
-    removeLegacyLayerPanels
+    removePanelHost
   };
 })(window);
