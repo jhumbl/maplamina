@@ -8,6 +8,7 @@
 
   const mod = root.runtimeInitialRender = root.runtimeInitialRender || {};
   const viewsMod = core.require('views', 'ml-runtime-initial-render.js');
+  const escapeHtml = root.utils.escapeHtml;
   const applyOrderedViewOps = viewsMod && viewsMod.applyOrderedViewOps;
   const collectPrimeViewEncodingKeys = viewsMod && viewsMod.collectPrimeViewEncodingKeys;
 
@@ -191,12 +192,12 @@
         totalCategoryDims += (m.categoryDims || 0);
 
         if (m.rangeDims || m.categoryDims) {
-          metaRows.push(`<div class="ml-hud-gpu-row">gpu ${layerId}: range×${m.rangeDims || 0} • cat×${m.categoryDims || 0}</div>`);
+          metaRows.push(`<div class="ml-hud-gpu-row">gpu ${escapeHtml(layerId)}: range×${m.rangeDims || 0} • cat×${m.categoryDims || 0}</div>`);
         }
 
         const warnState = getRenderState(entry) || getLogicalLayer(entry) || null;
         const warns = (warnState && Array.isArray(warnState.__warns)) ? warnState.__warns : [];
-        for (const w of warns) warnLines.push(`<div class="ml-hud-warn">⚠️ ${layerId}: ${w}</div>`);
+        for (const w of warns) warnLines.push(`<div class="ml-hud-warn">⚠️ ${escapeHtml(layerId)}: ${escapeHtml(w)}</div>`);
       }
 
       if (parts && parts.gpu) parts.gpu.innerHTML = [
