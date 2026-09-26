@@ -203,6 +203,8 @@ add_layer <- function(
     stop("Unknown layer type: ", type)
   )
 
+  if (!is.null(geom_part$keep)) data <- data[geom_part$keep, , drop = FALSE]
+
   ctx <- ml_layer_context(data, geom_part, env = env)
   n <- ctx$n_part %||% NA_integer_
 
@@ -217,7 +219,7 @@ add_layer <- function(
 
   bbox   <- geom_part$bbox %||% NULL
   origin <- geom_part$coordinate_origin %||% NULL
-  dc <- geom_part[setdiff(names(geom_part), c("n", "bbox", "coordinate_origin"))]
+  dc <- geom_part[setdiff(names(geom_part), c("n", "bbox", "coordinate_origin", "keep"))]
 
   tt_spec <- tpl$tooltip
   pp_spec <- tpl$popup

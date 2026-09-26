@@ -3,9 +3,10 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
     data <- to_wgs84(data)
     g <- sf::st_geometry(data)
 
-    # Drop empty geometries (e.g. POINT EMPTY)
+    # Drop empty geometries (e.g. POINT EMPTY); `keep` lets add_layer() drop the same rows
     empty <- sf::st_is_empty(g)
     if (any(empty)) {
+      warning("[maplamina] ", sum(empty), " row(s) have empty point geometry and were dropped.", call. = FALSE)
       data <- data[!empty, , drop = FALSE]
       g <- g[!empty]
     }
@@ -54,6 +55,7 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
       bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
     )
     if (use_offsets) out$coordinate_origin <- c(wrap_lon(origin[1]), origin[2])
+    if (any(empty)) out$keep <- !empty
     return(out)
   }
 
@@ -81,9 +83,10 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
 
   xy <- get_xy_cols(data, lon, lat)
 
-  # Drop non-finite rows (NA/NaN/Inf) to avoid bad bbox / buffers
+  # Drop non-finite rows (NA/NaN/Inf); `keep` lets add_layer() drop the same rows
   ok <- is.finite(xy$x) & is.finite(xy$y)
   if (!all(ok)) {
+    warning("[maplamina] ", sum(!ok), " row(s) have missing or non-finite coordinates and were dropped.", call. = FALSE)
     xy$x <- xy$x[ok]
     xy$y <- xy$y[ok]
   }
@@ -119,5 +122,6 @@ ml_collect_geometry_points <- function(data, lon = NULL, lat = NULL, use_offsets
     bbox = unname(c(bb["xmin"], bb["ymin"], bb["xmax"], bb["ymax"]))
   )
   if (use_offsets) out$coordinate_origin <- unname(c(wrap_lon(origin[1]), origin[2]))
+  if (!all(ok)) out$keep <- ok
   out
 }

@@ -1,27 +1,22 @@
 testthat::skip_if_not_installed("jsonlite")
 
-test_that("circle markers: POINT EMPTY either errors or is dropped", {
+test_that("circle markers: POINT EMPTY is dropped with a warning", {
   skip_if_not_installed("sf")
   sf <- asNamespace("sf")
 
-  g <- sf$st_as_sfc(c("POINT EMPTY", "POINT(0 0)"), crs = 4326)
-  dat <- sf$st_sf(num_col = c(1, 2), geometry = g, crs = 4326)
+  g <- sf$st_as_sfc(c("POINT EMPTY", "POINT(0 0)", "POINT(1 1)"), crs = 4326)
+  dat <- sf$st_sf(num_col = c(1, 2, 3), geometry = g, crs = 4326)
 
-  res <- tryCatch(
-    ml_prerender(maplamina() |> add_circles(dat, id = "pts")),
-    error = identity
+  expect_warning(
+    res <- ml_prerender(maplamina() |> add_circles(dat, radius = ~num_col, id = "pts")),
+    "1 row[(]s[)] have empty point geometry"
   )
 
-  if (inherits(res, "error")) {
-    expect_match(conditionMessage(res), "empty|geometry|point", ignore.case = TRUE)
-  } else {
-    lyr <- res$x$.__layers$pts
-    # Expect empties are NOT represented: only the valid point should remain => 2 floats
-    blob_id <- lyr$dataStore$refs[["position"]]
-    expect_true(is.character(blob_id) && length(blob_id) == 1)
-    pos_len <- as.integer(lyr$dataStore$blobs[[blob_id]]$length)
-    expect_identical(pos_len, 2L)
-  }
+  lyr <- res$x$.__layers$pts
+  blob_id <- lyr$dataStore$refs[["position"]]
+  expect_true(is.character(blob_id) && length(blob_id) == 1)
+  expect_identical(as.integer(lyr$dataStore$blobs[[blob_id]]$length), 4L)
+  expect_identical(as.integer(lyr$dataStore$blobs[[lyr$dataStore$refs[[lyr$data_columns$radius$values$ref]]]]$length), 2L)
 })
 
 test_that("circle markers: MULTIPOINT either errors or provides an index mapping", {
@@ -275,4 +270,27 @@ test_that("projected sf data is transformed to WGS84 with a message", {
     sf::st_polygon(list(rbind(c(-1.5, 52), c(-1.4, 52), c(-1.4, 52.1), c(-1.5, 52)))), crs = 4326
   )), 32630)
   expect_message(maplamina:::ml_collect_geometry_polygons(polys, use_offsets = FALSE), "WGS84")
+})
+
+test_that("points with missing coordinates are dropped from every per-row column", {
+  d <- data.frame(lon = c(0, NA, 0.02), lat = 51.5, name = c("a", "b", "c"), v = c(1, 2, 3))
+
+  expect_warning(
+    w <- ml_prerender(
+      maplamina(d) |>
+        add_circles(radius = ~v, tooltip = tmpl("{name}"), id = "pts") |>
+        add_filters(filter_range(~v), bind = "f")
+    ),
+    "1 row[(]s[)] have missing or non-finite coordinates"
+  )
+
+  lyr <- w$x$.__layers$pts
+  blob_len <- function(ref) as.integer(lyr$dataStore$blobs[[lyr$dataStore$refs[[ref]]]]$length)
+
+  expect_identical(blob_len(lyr$data_columns$position$values$ref), 4L)
+  expect_identical(blob_len(lyr$data_columns$radius$values$ref), 2L)
+  ph <- lyr$tooltip$placeholders[[1]]
+  expect_identical(blob_len(ph$codes$ref), 2L)
+  expect_identical(ph$dict, c("a", "c"))
+  expect_identical(blob_len(w$x$.__components$range[[1]]$values$ref), 2L)
 })
