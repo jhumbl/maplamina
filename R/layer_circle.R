@@ -7,8 +7,8 @@
 #' @param data Data for this layer. If `NULL`, uses the default `data` supplied to [maplamina()].
 #' @param lon,lat Longitude/latitude aesthetics (formula or scalar). Required for non-`sf` data.
 #' @param color,opacity,width Stroke color/opacity/width.
-#' @param fill_color,fill_opacity Fill color/opacity. `fill_color` can be a single color,
-#'   a vector of colors, or a color scale spec such as [color_quantile()].
+#' @param fill_color,fill_opacity Fill color/opacity. `fill_color` is a single color, a formula
+#'   returning colors, or a color scale spec such as [color_quantile()].
 #' @param radius Circle radius (numeric or formula).
 #' @param stroke Logical; draw circle stroke.
 #' @param tooltip,popup Optional [tmpl()] objects (or `NULL`) for hover/click content.
