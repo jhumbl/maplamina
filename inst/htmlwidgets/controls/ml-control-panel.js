@@ -5,6 +5,7 @@
 
   const normText = root.utils.normText;
   const safeId = root.utils.safeId;
+  const widgetKey = root.utils.widgetKey;
 
   function ensureTitleRow(panelEl, titleText) {
     let titleEl = panelEl.querySelector('.ml-panel-title');
@@ -123,12 +124,11 @@ function ensureTitleIconLink(panelEl, panelSpec) {
     if (!inserted) panelEl.appendChild(slotEl);
   }
 
-  function ensureSectionSlot(panelEl, groupId, opts) {
+  function ensureSectionSlot(panelEl, sid, groupId, opts) {
     opts = opts || {};
     const label = normText(opts.label) || groupId;
     const orderNum = Number.isFinite(opts.order) ? opts.order : 100;
 
-    const sid = `ml-controls-slot-${safeId(groupId)}`;
     let slot = panelEl.querySelector(`#${sid}`);
 
     if (!slot) {
@@ -361,7 +361,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       });
 
       if (panelHost) {
-        panelHost.id = panelHost.id || 'ml-controls-panel';
+        panelHost.id = panelHost.id || `ml-controls-panel-${widgetKey(el)}`;
         ensureTitleRow(panelHost, normText(panelSpec.title) || 'controls');
         ensureDescription(panelHost, panelSpec.description);
 
@@ -377,12 +377,13 @@ function ensureTitleIconLink(panelEl, panelSpec) {
           if (!gid) continue;
 
           panelGroups.add(gid);
-          const body = ensureSectionSlot(panelHost, gid, {
+          const sid = `ml-controls-slot-${widgetKey(el)}-${safeId(gid)}`;
+          const body = ensureSectionSlot(panelHost, sid, gid, {
             label: normText(sec.label) || gid,
             order: Number.isFinite(sec.order) ? sec.order : (10 + i * 10)
           });
 
-          seenSlots.add(`ml-controls-slot-${safeId(gid)}`);
+          seenSlots.add(sid);
 
           // Ensure both group- and type-scoped classes are applied (e.g. ml-panel-views)
           applyBodyClasses(body, gid, controls[gid]);
@@ -439,7 +440,7 @@ function ensureTitleIconLink(panelEl, panelSpec) {
       });
 
       if (container) {
-        container.id = container.id || `ml-controls-standalone-${safeId(gid)}`;
+        container.id = container.id || `ml-controls-standalone-${widgetKey(el)}-${safeId(gid)}`;
 
         // Standalone controls should be "bare": no bind-id title, no description,
         // and no slot wrapper (which would trigger divider chrome).

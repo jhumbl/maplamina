@@ -43,10 +43,6 @@ test('S2: select filters on one widget do not filter the other', async ({ page }
 });
 
 test('S2: two widgets on one page produce no duplicate DOM ids', async ({ page }) => {
-  // Known failure: the overlay, standalone control hosts and select boxes use ids derived
-  // from bind and layer ids only, so two widgets repeat them (P-26-02). Remove test.fail()
-  // once ids are widget-scoped.
-  test.fail();
   await openWidget(page, 'page-two-widgets', 2);
   const dupes = await page.evaluate(() => {
     const seen = new Map();

@@ -11,6 +11,7 @@
     throw new Error("[maplamina] Missing function utils.domKey required by ml-filters-range.js");
   }
   const domKey = utils.domKey;
+  const widgetKey = utils.widgetKey;
 
   const filterCore = core.require('filterCore', 'ml-filters-range.js');
   const { ensureFiltersContainer, publishFilterState, getElState } = filterCore;
@@ -66,7 +67,7 @@
     const filtersBox = ensureFiltersContainer(el, bindId, panelMeta);
     if (!filtersBox) return;
 
-    const domLayerId = domKey(bindId);
+    const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
 
     const cid = `ml-rng-${domLayerId}-${(rng && rng.dom_id) ? rng.dom_id : rng.id}`;
     let box = el.querySelector(`#${cid}`);

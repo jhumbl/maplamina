@@ -412,6 +412,7 @@
     if (overlay) return overlay;
 
     overlay = new deck.MapboxOverlay({
+      id: `deckgl-overlay-${root.utils.widgetKey(el)}`,
       layers: [],
       onHover: (info) => {
         info.__mfContainer = el;

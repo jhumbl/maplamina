@@ -39,6 +39,11 @@
     return normText(x).replace(/[^A-Za-z0-9_-]+/g, '_');
   }
 
+  // Prefix for DOM ids and radio group names so two widgets on one page never share them.
+  function widgetKey(el) {
+    return safeId(el && el.id ? el.id : 'maplamina');
+  }
+
   // ---- DOM-safe stable keys -------------------------------------------------
   // Produces a CSS-selector-safe id fragment for arbitrary strings (e.g. bind/group ids).
   // Always starts with a letter/underscore to be safe for querySelector('#...').
@@ -105,5 +110,5 @@
     try { return Number(value).toFixed(key); } catch (_) { return String(value); }
   }
 
-  root.utils = { isTA, pushWarn, assertTA, now, asArray, normText, safeId, hash32, domKey, stablePairTA, formatNumber };
+  root.utils = { isTA, pushWarn, assertTA, now, asArray, normText, safeId, widgetKey, hash32, domKey, stablePairTA, formatNumber };
 })(window);

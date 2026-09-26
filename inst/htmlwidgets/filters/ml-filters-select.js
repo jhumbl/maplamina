@@ -11,6 +11,7 @@
     throw new Error("[maplamina] Missing function utils.domKey required by ml-filters-select.js");
   }
   const domKey = utils.domKey;
+  const widgetKey = utils.widgetKey;
 
   const filterCore = core.require('filterCore', 'ml-filters-select.js');
   const { getElState, ensureFiltersContainer, seedSelectionSet, publishFilterState } = filterCore;
@@ -56,7 +57,7 @@
   }
 
   function renderInline(filtersBox, el, bindId, sel, selected, onChange) {
-    const domLayerId = domKey(bindId);
+    const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
     const cid = `ml-sel-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) { box = document.createElement('div'); box.id = cid; box.className = 'ml-filter'; filtersBox.appendChild(box); }
@@ -101,7 +102,7 @@
   }
 
   function renderDropdown(filtersBox, el, bindId, sel, selected, onChange) {
-    const domLayerId = domKey(bindId);
+    const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
     const cid = `ml-sel-${domLayerId}-${(sel && sel.dom_id) ? sel.dom_id : sel.id}`;
     let box = el.querySelector(`#${cid}`);
     if (!box) { box = document.createElement('div'); box.id = cid; box.className = 'ml-filter'; filtersBox.appendChild(box); }
