@@ -29,7 +29,9 @@ bugs included cases where every internal value looked right and nothing was draw
 `lib/widget.mjs` projects a lon/lat to page pixels and measures the drawn radius or colour
 at that point. Transitions are sampled every few frames; "animated" means the sampled
 value passed through at least one intermediate value and moved in one direction. Transition
-fixtures use 1500 ms so a slow headless frame cannot swallow the whole window. Probe colours
+fixtures use 1500 ms so a slow headless frame cannot swallow the whole window. `sampleAfter`
+samples for a fixed time; `sampleUntil` samples until the value reaches the state the test
+asserts, so a transition that starts late is still followed to its end. Probe colours
 are chosen so a crossfade never passes through a grey the "drawn" test would reject.
 
 Every helper takes a widget index (default 0) so a page with several widgets can be driven.
