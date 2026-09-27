@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { WireSpec } from '../../srcjs/core/spec-types';
-import { loadSpecModule, normalise } from './legacy';
+import * as spec from '../../srcjs/core/spec';
+import type { Spec, WireSpec } from '../../srcjs/core/spec-types';
 import circlesConstant from './spec-samples/circles-constant';
 import circlesPerFeature from './spec-samples/circles-per-feature';
 import empty from './spec-samples/empty';
@@ -21,7 +21,11 @@ const samples: Record<string, WireSpec> = {
   'length-one': lengthOne,
 };
 
-const spec = loadSpecModule();
+function normalise(wire: WireSpec): Spec {
+  const x = structuredClone(wire);
+  spec.normalizeSpec(x);
+  return x as Spec;
+}
 
 // A copy of a sample that a test may break.
 function broken(edit: (x: any) => void): unknown {
@@ -48,7 +52,7 @@ describe('assertV3Spec accepts what the R compiler emits', () => {
   });
 });
 
-describe('assertV3Spec rejects the empty top-level lists until renderValue() has replaced them', () => {
+describe('assertV3Spec rejects the empty top-level lists until normalizeSpec() has replaced them', () => {
   it('.__layers as []', () => {
     expect(() => spec.assertV3Spec(empty)).toThrow('missing .__layers object');
   });
@@ -107,11 +111,11 @@ describe('control group order', () => {
     const reordered = broken((s) => {
       s['.__panel'].sections = [{ id: 'summaries' }, { id: 'views' }];
     }) as typeof x;
-    expect(spec.controls.getControlGroupIdsOrdered(reordered)).toEqual(['summaries', 'views', 'filters']);
+    expect(spec.getControlGroupIdsOrdered(reordered)).toEqual(['summaries', 'views', 'filters']);
   });
 
   it('is the emitted order when there is no panel', () => {
     const x = normalise(legends);
-    expect(spec.controls.getControlGroupIdsOrdered(x)).toEqual(Object.keys(x['.__controls']));
+    expect(spec.getControlGroupIdsOrdered(x)).toEqual(Object.keys(x['.__controls']));
   });
 });

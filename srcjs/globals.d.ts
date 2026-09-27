@@ -1,7 +1,7 @@
 // Globals the page provides before the widget scripts run.
 
 interface HTMLWidgetInstance {
-  renderValue(x: unknown): void;
+  renderValue(x: unknown): void | Promise<void>;
   resize(width: number, height: number): void;
   destroy?(): void;
 }
@@ -27,7 +27,7 @@ declare global {
     setInputValue(name: string, value: unknown, opts?: { priority?: 'event' | 'deferred' }): void;
   }
 
-  var MAPLAMINA: any;
+  var MAPLAMINA: import('./namespace').Namespace;
   var Shiny: ShinyClient | undefined;
 }
 

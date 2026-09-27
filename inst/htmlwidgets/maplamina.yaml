@@ -15,13 +15,8 @@ dependencies:
   version: 0.0.1
   src: htmlwidgets
   script:
-  - core/ml-namespace.js
-  - core/ml-utils.js
-  - core/ml-spec.js
+  - maplamina-modules.js
   - layers/ml-layer-utils.js
-  - core/ml-assets.js
-  - core/ml-data.js
-  - core/ml-encodings.js
   - runtime/ml-runtime-transitions.js
   - components/ml-views.js
   - layers/ml-layer-props.js

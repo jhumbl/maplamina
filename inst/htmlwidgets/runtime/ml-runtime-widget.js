@@ -131,16 +131,7 @@
           try { destroyHud(el); } catch (_) {}
         }
 
-        try {
-          if (x && typeof x === 'object') {
-            const hasV3Keys = Object.keys(x).some(k => typeof k === 'string' && k.startsWith('.__'));
-            if (hasV3Keys) {
-              if (!x['.__layers'] || typeof x['.__layers'] !== 'object' || Array.isArray(x['.__layers'])) x['.__layers'] = {};
-              if (!x['.__components'] || typeof x['.__components'] !== 'object' || Array.isArray(x['.__components'])) x['.__components'] = {};
-              if (!x['.__controls'] || typeof x['.__controls'] !== 'object' || Array.isArray(x['.__controls'])) x['.__controls'] = {};
-            }
-          }
-        } catch (_) {}
+        mfSpec.normalizeSpec(x);
 
         if (!mfSpec || typeof mfSpec.assertV3Spec !== 'function') {
           throw new Error('[maplamina] Missing MAPLAMINA.spec.assertV3Spec; ensure ml-spec.js is loaded/updated before ml-runtime-widget.js');

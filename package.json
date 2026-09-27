@@ -4,6 +4,7 @@
   "description": "Browser runtime for the maplamina htmlwidget",
   "type": "module",
   "scripts": {
+    "build": "node build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:js": "tsc --noEmit -p tsconfig.checkjs.json",
     "test": "vitest run",
