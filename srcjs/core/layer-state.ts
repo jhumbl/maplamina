@@ -1,6 +1,7 @@
 // A layer as the runtime holds it: a clone of the spec layer that hydration writes decoded
 // arrays into.
 
+import type { GpuFiltering, GpuMeta } from '../filters/runtime';
 import type { LayerType, Units } from './spec-types';
 
 export type TypedArray = Float32Array | Uint32Array | Uint8Array;
@@ -172,18 +173,41 @@ export interface TemplateState {
   placeholders?: PlaceholderState[];
 }
 
+export interface TransitionEntry {
+  duration?: number;
+  delay?: number;
+  easing?: (t: number) => number;
+  onEnd?: () => void;
+  onInterrupt?: () => void;
+}
+
+// By deck.gl prop name; a bare number is a duration.
+export type TransitionsMap = Record<string, TransitionEntry | number>;
+
+// What the runtime assembly attaches to a layer before it is built.
+export interface RenderFields {
+  transitions?: TransitionsMap;
+  gpuFiltering?: GpuFiltering;
+  gpuMeta?: GpuMeta;
+  forceHidden?: boolean;
+}
+
 export interface LayerState {
   id: string | null;
   type: LayerType;
   group?: string | null;
   bbox?: readonly number[];
   coordinate_origin?: readonly number[] | null;
-  tooltip?: TemplateState;
-  popup?: TemplateState;
+  tooltip?: TemplateState | null;
+  popup?: TemplateState | null;
   dataStore?: DataStoreState;
   data_columns?: DataColumnsState;
   base_encodings?: EncodingsState;
   cfg?: LayerCfgState;
+  // Set on the two layers a marker is built from.
+  filterKey?: string | null;
+  show_controls?: boolean;
+  __render?: RenderFields;
   __warns?: string[];
 }
 

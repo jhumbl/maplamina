@@ -22,12 +22,21 @@ import {
   resolveRemainingViewsIdle
 } from './core/data';
 import { colorAccessorFrom, numericAccessorFrom } from './core/encodings';
+import type { LayerState } from './core/layer-state';
 import { ensureFiltersContainer, getElState, publishFilterState, seedSelectionSet } from './filters/core';
 import { ensureFilterUI } from './filters/filters';
 import { ensureRangeUI } from './filters/range';
 import { mount } from './filters/range-slider';
 import { buildFilterIndex, getGPUFilterContribution, initFiltersState } from './filters/runtime';
 import { AUTO_DROPDOWN_AT, ensureSelectUI } from './filters/select';
+import { buildScatterplotLayer } from './layers/circle';
+import { buildIconLayer } from './layers/icon';
+import { buildPathLayer } from './layers/line';
+import { buildMarkerLayer } from './layers/marker';
+import { buildPolygonLayer } from './layers/polygon';
+import { composeLayerProps, deckPropsTouchedByEncodingPatch, gpuMeta, originNearView } from './layers/props';
+import { layers } from './layers/registry';
+import { flattenLayers, getLayerBuildCache, mergeEncodings, swapOverlayLayers } from './layers/utils';
 import {
   assertV3Spec,
   getControlGroupIdsOrdered,
@@ -110,7 +119,13 @@ const modules = {
   filtersRuntime: { initFiltersState, buildFilterIndex, getGPUFilterContribution },
   rangeSlider: { mount },
   filterRange: { ensureRangeUI },
-  filters: { ensureFilterUI }
+  filters: { ensureFilterUI },
+  layerUtils: { mergeEncodings, getLayerBuildCache, flattenLayers, swapOverlayLayers },
+  layerProps: { composeLayerProps, originNearView, deckPropsTouchedByEncodingPatch, gpuMeta },
+  layerBuilders: {
+    buildScatterplotLayer, buildPathLayer, buildPolygonLayer, buildIconLayer, buildMarkerLayer
+  },
+  layers
 };
 
 export interface Namespace {
@@ -133,10 +148,15 @@ export interface Namespace {
   rangeSlider: typeof modules.rangeSlider;
   filterRange: typeof modules.filterRange;
   filters: typeof modules.filters;
-  layers: Map<string, unknown>;
+  layerUtils: typeof modules.layerUtils;
+  layerProps: typeof modules.layerProps;
+  layerBuilders: typeof modules.layerBuilders;
+  layers: typeof modules.layers;
   controls: Record<string, unknown>;
-  layerBuilders: Record<string, unknown>;
   runtime?: {
+    assembly?: {
+      readRenderField?(st: LayerState, key: string): unknown;
+    };
     widget?: {
       create?(el: HTMLElement, width: number, height: number): WidgetInstance;
     };
@@ -146,9 +166,7 @@ export interface Namespace {
 const root = (window.MAPLAMINA || {}) as Namespace;
 window.MAPLAMINA = root;
 
-root.layers = root.layers || new Map();
 root.controls = root.controls || {};
-root.layerBuilders = root.layerBuilders || {};
 
 function requireModule(name: string, from?: string): object {
   const mod = (root as unknown as Record<string, unknown>)[name];
