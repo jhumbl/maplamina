@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["srcjs/**/*", "inst/htmlwidgets/**/*.js"],
+  "exclude": ["inst/htmlwidgets/lib"]
+}
