@@ -9,8 +9,8 @@ import type { FilterIndex, FilterValue, FiltersState, RuntimeState, WidgetRuntim
 
 // A component as the code reads it. R emits `codes` on a select and `values`, `min` and `max`
 // on a range; the other fields are read as fallbacks.
-type SelectSource = SelectComponent & { readonly values?: Ref };
-type RangeSource = RangeComponent & {
+export type SelectSource = SelectComponent & { readonly values?: Ref };
+export type RangeSource = RangeComponent & {
   readonly codes?: Ref;
   readonly domain?: { readonly min: number; readonly max: number };
 };

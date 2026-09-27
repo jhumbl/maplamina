@@ -1,7 +1,14 @@
 // The widget's root element and what the runtime keeps on it.
 
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { RangeComponent, RangeFilterControl, SelectComponent, SelectFilterControl } from './spec-types';
+import type { LayerState } from './layer-state';
+import type {
+  Control,
+  RangeComponent,
+  RangeFilterControl,
+  SelectComponent,
+  SelectFilterControl
+} from './spec-types';
 
 // The selected values of a select, or the [lo, hi] of a range.
 export type FilterValue = Set<string> | [number, number];
@@ -38,14 +45,30 @@ export interface RuntimeState {
   filters?: FiltersState;
 }
 
+// A layer as the runtime keeps it between builds.
+export interface LayerEntry {
+  logical?: LayerState | null;
+  cache?: { lastRenderState?: LayerState | null };
+}
+
 export interface WidgetRuntime {
   state?: RuntimeState;
+  layers?: Map<string, LayerEntry>;
   _filterIndex?: FilterIndex | null;
   _filtersGroupIds?: string[];
   _defaultFiltersGroupId?: string | null;
+  setActiveView?(groupId: string, newView: string): void;
+  setFilter?(groupId: string, label: string, value: Set<string> | number[]): void;
+}
+
+// A control group as the panel mounted it: the node its renderer drew into and its spec.
+export interface MountedControl {
+  mountEl: HTMLElement | null;
+  controlSpec: Control | null | undefined;
 }
 
 export interface WidgetElement extends HTMLElement {
   __mfGetMap?: () => MapLibreMap | null;
   __mfRuntime?: WidgetRuntime | null;
+  __mlMountedControls?: Record<string, MountedControl>;
 }

@@ -4,6 +4,13 @@ import { resolveIcon } from './components/icons';
 import { applyVisibility, buildLegendCard } from './components/legends';
 import * as tooltips from './components/tooltips';
 import { applyOrderedViewOps, collectPrimeViewEncodingKeys, computeViewOpsByLayer } from './components/views';
+import { render as renderFilters } from './controls/filters';
+import { ensurePanelHost, ensureStandaloneGroup, removePanelHost, removeStandaloneGroup } from './controls/host';
+import { render as renderLegends } from './controls/legends';
+import { clear, sync, update } from './controls/panel';
+import { getHandler, register } from './controls/registry';
+import { render as renderSummaries, update as updateSummaries } from './controls/summaries';
+import { render as renderViews } from './controls/views';
 import {
   cancelIdlePrune,
   clearMemo,
@@ -23,6 +30,7 @@ import {
 } from './core/data';
 import { colorAccessorFrom, numericAccessorFrom } from './core/encodings';
 import type { LayerState } from './core/layer-state';
+import type { LayerEntry } from './core/widget';
 import { ensureFiltersContainer, getElState, publishFilterState, seedSelectionSet } from './filters/core';
 import { ensureFilterUI } from './filters/filters';
 import { ensureRangeUI } from './filters/range';
@@ -125,8 +133,22 @@ const modules = {
   layerBuilders: {
     buildScatterplotLayer, buildPathLayer, buildPolygonLayer, buildIconLayer, buildMarkerLayer
   },
-  layers
+  layers,
+  controls: {
+    host: { ensureStandaloneGroup, removeStandaloneGroup, ensurePanelHost, removePanelHost },
+    registry: { register, getHandler },
+    panel: { sync, update, clear },
+    views: { render: renderViews },
+    legends: { render: renderLegends },
+    summaries: { render: renderSummaries, update: updateSummaries },
+    filters: { render: renderFilters }
+  }
 };
+
+interface DockItemOptions {
+  className?: string;
+  order?: number;
+}
 
 export interface Namespace {
   core: {
@@ -152,10 +174,16 @@ export interface Namespace {
   layerProps: typeof modules.layerProps;
   layerBuilders: typeof modules.layerBuilders;
   layers: typeof modules.layers;
-  controls: Record<string, unknown>;
+  controls: typeof modules.controls;
+  dock?: {
+    ensureItem?(el: HTMLElement, pos: string, key: string, opts?: DockItemOptions): HTMLElement | null;
+    removeItem?(el: HTMLElement, pos: string, key: string): void;
+  };
   runtime?: {
     assembly?: {
       readRenderField?(st: LayerState, key: string): unknown;
+      getLogicalLayer?(entry: LayerEntry | null | undefined): LayerState | null;
+      getRenderState?(entry: LayerEntry | null | undefined): LayerState | null;
     };
     widget?: {
       create?(el: HTMLElement, width: number, height: number): WidgetInstance;
@@ -165,8 +193,6 @@ export interface Namespace {
 
 const root = (window.MAPLAMINA || {}) as Namespace;
 window.MAPLAMINA = root;
-
-root.controls = root.controls || {};
 
 function requireModule(name: string, from?: string): object {
   const mod = (root as unknown as Record<string, unknown>)[name];
