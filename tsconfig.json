@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["srcjs/**/*"]
+  "include": ["srcjs/**/*", "tests/unit/**/*.ts", "vitest.config.ts"]
 }

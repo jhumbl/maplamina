@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "typecheck:js": "tsc --noEmit -p tsconfig.checkjs.json"
+    "typecheck:js": "tsc --noEmit -p tsconfig.checkjs.json",
+    "test": "vitest run",
+    "samples": "Rscript tests/unit/make-spec-samples.R"
   },
   "devDependencies": {
     "@deck.gl/core": "9.1.14",
