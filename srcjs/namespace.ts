@@ -22,6 +22,12 @@ import {
   resolveRemainingViewsIdle
 } from './core/data';
 import { colorAccessorFrom, numericAccessorFrom } from './core/encodings';
+import { ensureFiltersContainer, getElState, publishFilterState, seedSelectionSet } from './filters/core';
+import { ensureFilterUI } from './filters/filters';
+import { ensureRangeUI } from './filters/range';
+import { mount } from './filters/range-slider';
+import { buildFilterIndex, getGPUFilterContribution, initFiltersState } from './filters/runtime';
+import { AUTO_DROPDOWN_AT, ensureSelectUI } from './filters/select';
 import {
   assertV3Spec,
   getControlGroupIdsOrdered,
@@ -98,7 +104,13 @@ const modules = {
     handleHover: tooltips.handleHover,
     handleOverlayClick: tooltips.handleOverlayClick
   },
-  legends: { applyVisibility, buildLegendCard }
+  legends: { applyVisibility, buildLegendCard },
+  filterCore: { getElState, ensureFiltersContainer, seedSelectionSet, publishFilterState },
+  filterSelect: { ensureSelectUI, AUTO_DROPDOWN_AT },
+  filtersRuntime: { initFiltersState, buildFilterIndex, getGPUFilterContribution },
+  rangeSlider: { mount },
+  filterRange: { ensureRangeUI },
+  filters: { ensureFilterUI }
 };
 
 export interface Namespace {
@@ -115,6 +127,12 @@ export interface Namespace {
   icons: typeof modules.icons;
   tooltips: typeof modules.tooltips;
   legends: typeof modules.legends;
+  filterCore: typeof modules.filterCore;
+  filterSelect: typeof modules.filterSelect;
+  filtersRuntime: typeof modules.filtersRuntime;
+  rangeSlider: typeof modules.rangeSlider;
+  filterRange: typeof modules.filterRange;
+  filters: typeof modules.filters;
   layers: Map<string, unknown>;
   controls: Record<string, unknown>;
   layerBuilders: Record<string, unknown>;
