@@ -18,7 +18,6 @@ dependencies:
   - maplamina-modules.js
   - layers/ml-layer-utils.js
   - runtime/ml-runtime-transitions.js
-  - components/ml-views.js
   - layers/ml-layer-props.js
   - layers/ml-layer-circle.js
   - layers/ml-layer-line.js
@@ -43,9 +42,6 @@ dependencies:
   - filters/ml-filters-range.js
   - filters/ml-filters.js
   - controls/ml-controls-filters.js
-  - components/ml-tooltips.js
-  - components/ml-icons.js
-  - components/ml-legends.js
   - runtime/ml-runtime-scheduler.js
   - runtime/ml-runtime-pipeline.js
   - runtime/ml-runtime-motion.js

@@ -1,7 +1,7 @@
 // A layer as the runtime holds it: a clone of the spec layer that hydration writes decoded
 // arrays into.
 
-import type { LayerType, Template } from './spec-types';
+import type { LayerType, Units } from './spec-types';
 
 export type TypedArray = Float32Array | Uint32Array | Uint8Array;
 export type RgbaTuple = [number, number, number, number];
@@ -122,17 +122,68 @@ export type NumericColumnKey = 'radius' | 'lineWidth' | 'size' | 'elevation';
 export type NumericEncodingKey = NumericColumnKey | 'opacity';
 export type ColorEncodingKey = 'fillColor' | 'lineColor';
 
+export interface LayerCfgState {
+  pickable?: boolean;
+  stroke?: boolean;
+  radiusUnits?: Units;
+  radiusMinPixels?: number;
+  radiusMaxPixels?: number;
+  lineWidthUnits?: Units;
+  lineWidthMinPixels?: number;
+  lineWidthMaxPixels?: number;
+  widthUnits?: Units;
+  widthMinPixels?: number;
+  widthMaxPixels?: number;
+  elevationScale?: number;
+  icon?: string;
+  iconAnchor?: [number, number];
+  iconSize?: number;
+  iconStroke?: string;
+  sizeUnits?: Units;
+  sizeMinPixels?: number;
+  sizeMaxPixels?: number;
+  mask?: boolean;
+  occlude?: boolean;
+  fillScale?: number;
+  strokeDarken?: number;
+}
+
+// A template placeholder; hydration writes the underscore fields.
+export interface PlaceholderState {
+  kind?: string;
+  name: string;
+  fmt?: string;
+  value?: RefNode | TypedArray;
+  values?: RefNode | TypedArray;
+  ref?: string | RefNode;
+  href?: string | RefNode;
+  codes?: RefNode | TypedArray;
+  dict?: string | string[] | { values?: string[] } | null;
+  _kind?: string;
+  _array?: TypedArray;
+  _codes?: TypedArray | null;
+  _dict?: string[];
+}
+
+export interface TemplateState {
+  type: 'template';
+  template: string;
+  html?: boolean;
+  placeholders?: PlaceholderState[];
+}
+
 export interface LayerState {
   id: string | null;
   type: LayerType;
   group?: string | null;
   bbox?: readonly number[];
   coordinate_origin?: readonly number[] | null;
-  tooltip?: Template;
-  popup?: Template;
+  tooltip?: TemplateState;
+  popup?: TemplateState;
   dataStore?: DataStoreState;
   data_columns?: DataColumnsState;
   base_encodings?: EncodingsState;
+  cfg?: LayerCfgState;
   __warns?: string[];
 }
 

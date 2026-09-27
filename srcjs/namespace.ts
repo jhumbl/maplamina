@@ -1,5 +1,9 @@
 // Publishes the modules on window.MAPLAMINA under the names the widget scripts read.
 
+import { resolveIcon } from './components/icons';
+import { applyVisibility, buildLegendCard } from './components/legends';
+import * as tooltips from './components/tooltips';
+import { applyOrderedViewOps, collectPrimeViewEncodingKeys, computeViewOpsByLayer } from './components/views';
 import {
   cancelIdlePrune,
   clearMemo,
@@ -80,7 +84,21 @@ const modules = {
     HYDRATE_GEOM, hydrateGeometryBySpec, getIndexers, resolveColumnsAndViews, resolveActiveOnly,
     resolveRemainingViewsIdle
   },
-  encodings: { colorAccessorFrom, numericAccessorFrom }
+  encodings: { colorAccessorFrom, numericAccessorFrom },
+  views: { collectPrimeViewEncodingKeys, applyOrderedViewOps, computeViewOpsByLayer },
+  icons: { resolveIcon },
+  tooltips: {
+    prime: tooltips.prime,
+    buildGetTemplate: tooltips.buildGetTemplate,
+    buildOnClickPopup: tooltips.buildOnClickPopup,
+    register: tooltips.register,
+    dispatch: tooltips.dispatch,
+    init: tooltips.init,
+    destroy: tooltips.destroy,
+    handleHover: tooltips.handleHover,
+    handleOverlayClick: tooltips.handleOverlayClick
+  },
+  legends: { applyVisibility, buildLegendCard }
 };
 
 export interface Namespace {
@@ -93,6 +111,10 @@ export interface Namespace {
   assets: typeof modules.assets;
   data: typeof modules.data;
   encodings: typeof modules.encodings;
+  views: typeof modules.views;
+  icons: typeof modules.icons;
+  tooltips: typeof modules.tooltips;
+  legends: typeof modules.legends;
   layers: Map<string, unknown>;
   controls: Record<string, unknown>;
   layerBuilders: Record<string, unknown>;

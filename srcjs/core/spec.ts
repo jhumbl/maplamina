@@ -1,4 +1,4 @@
-import type { Control, ControlType, Panel, Spec } from './spec-types';
+import type { Control, ControlType, Panel, Spec, WireMap } from './spec-types';
 import { isFiniteNumber, normText } from './utils';
 
 export type Bounds = [[number, number], [number, number]];
@@ -45,6 +45,11 @@ export function unionBboxFromSpec(x: Spec): Bounds | null {
 
 export function hashBbox(bb: Bounds | null | undefined): string {
   return bb ? (bb[0][0] + ',' + bb[0][1] + ',' + bb[1][0] + ',' + bb[1][1]) : '';
+}
+
+// A keyed list from the spec, read by key. An empty one arrives as [].
+export function wireMap<T>(m: WireMap<T> | null | undefined): Readonly<Record<string, T>> {
+  return (m || {}) as Readonly<Record<string, T>>;
 }
 
 // --- small object helpers ---
