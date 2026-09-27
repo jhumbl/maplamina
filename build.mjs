@@ -1,8 +1,8 @@
-// Builds the widget scripts in inst/htmlwidgets from srcjs.
+// Builds the widget script in inst/htmlwidgets from srcjs.
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 
-// The page loads deck.gl and MapLibre from lib/ before the widget scripts, so an import of
+// The page loads deck.gl and MapLibre from lib/ before the widget script, so an import of
 // an engine package resolves to the global that build defines.
 const ENGINE_GLOBALS = {
   '@deck.gl/core': 'deck',
@@ -30,11 +30,8 @@ const engineGlobals = {
 
 await build({
   absWorkingDir: fileURLToPath(new URL('.', import.meta.url)),
-  entryPoints: {
-    'maplamina-modules': 'srcjs/namespace.ts',
-    maplamina: 'srcjs/index.ts'
-  },
-  outdir: 'inst/htmlwidgets',
+  entryPoints: ['srcjs/index.ts'],
+  outfile: 'inst/htmlwidgets/maplamina.js',
   bundle: true,
   format: 'iife',
   target: 'es2022',

@@ -14,7 +14,5 @@ dependencies:
 - name: maplamina
   version: 0.0.1
   src: htmlwidgets
-  script:
-  - maplamina-modules.js
   stylesheet:
   - maplamina.css
