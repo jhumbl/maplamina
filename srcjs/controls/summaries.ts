@@ -6,6 +6,7 @@ import type { Control, Ref, Spec, SummariesComponent, SummariesControl, SummaryR
 import { formatNumber, isFiniteNumber, normText } from '../core/utils';
 import type { FiltersState, WidgetElement, WidgetRuntime } from '../core/widget';
 import type { RangeSource, SelectSource } from '../filters/runtime';
+import { getLogicalLayer, getRenderState, readRenderField } from '../runtime/assembly';
 import { register } from './registry';
 import type { ControlJob } from './registry';
 
@@ -236,22 +237,10 @@ async function computeLayerMask(
   x: Spec,
   layerId: string
 ): Promise<LayerMask> {
-  const root = globalThis.MAPLAMINA;
-  const runtimeAssembly = root.runtime && root.runtime.assembly;
-
   const entry = rt && rt.layers && typeof rt.layers.get === 'function' ? rt.layers.get(layerId) : null;
-  const getRenderState = runtimeAssembly && typeof runtimeAssembly.getRenderState === 'function'
-    ? runtimeAssembly.getRenderState
-    : null;
-  const getLogicalLayer = runtimeAssembly && typeof runtimeAssembly.getLogicalLayer === 'function'
-    ? runtimeAssembly.getLogicalLayer
-    : null;
-  const readRenderField = runtimeAssembly && typeof runtimeAssembly.readRenderField === 'function'
-    ? runtimeAssembly.readRenderField
-    : null;
 
-  const st = (getRenderState && entry ? getRenderState(entry) : null)
-    || (getLogicalLayer && entry ? getLogicalLayer(entry) : null)
+  const st = (entry ? getRenderState(entry) : null)
+    || (entry ? getLogicalLayer(entry) : null)
     || (x && x['.__layers'] ? x['.__layers'][layerId] as LayerState : null);
   if (!st || typeof st !== 'object') {
     return { st: null, n: 0, passCount: 0, mask: null, indexers: null };
@@ -266,7 +255,7 @@ async function computeLayerMask(
     : ((arr: ArrayLike<number> | null | undefined, p: number) => (Number.isFinite(p) ? (p >>> 0) : 0));
 
   // If layer is force-hidden (e.g. select dim has no overlapping values), nothing passes.
-  const forceHidden = !!readRenderField!(st, 'forceHidden');
+  const forceHidden = !!readRenderField(st, 'forceHidden');
   if (forceHidden) {
     const z = new Uint8Array(n);
     return { st, n, passCount: 0, mask: z, indexers };

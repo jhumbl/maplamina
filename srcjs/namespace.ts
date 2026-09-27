@@ -29,8 +29,6 @@ import {
   resolveRemainingViewsIdle
 } from './core/data';
 import { colorAccessorFrom, numericAccessorFrom } from './core/encodings';
-import type { LayerState } from './core/layer-state';
-import type { LayerEntry } from './core/widget';
 import { ensureFiltersContainer, getElState, publishFilterState, seedSelectionSet } from './filters/core';
 import { ensureFilterUI } from './filters/filters';
 import { ensureRangeUI } from './filters/range';
@@ -45,6 +43,40 @@ import { buildPolygonLayer } from './layers/polygon';
 import { composeLayerProps, deckPropsTouchedByEncodingPatch, gpuMeta, originNearView } from './layers/props';
 import { layers } from './layers/registry';
 import { flattenLayers, getLayerBuildCache, mergeEncodings, swapOverlayLayers } from './layers/utils';
+import { ensureRuntime, pickActiveViews } from './runtime/api';
+import { buildRenderArtifacts, getLogicalLayer, getRenderState, readRenderField } from './runtime/assembly';
+import { destroy as destroyDock, ensureGroup, ensureItem, removeItem } from './runtime/dock';
+import { destroy as destroyHud, ensureParts } from './runtime/hud';
+import { renderInitial } from './runtime/initial-render';
+import {
+  applyMapLibreControls,
+  clearDeferredFit,
+  clearMapLibreControls,
+  ensureMap,
+  ensureMapProjection,
+  ensureOverlay,
+  normProjection,
+  resetProjectionManager
+} from './runtime/map';
+import {
+  attach as attachMotion,
+  disableRuntimeTransitions,
+  injectMotionTransitions,
+  normalizeReason,
+  primeRuntimeTransitions,
+  syncJobTransitions,
+  transitionsForBuild
+} from './runtime/motion';
+import { attach as attachPipeline } from './runtime/pipeline';
+import { attach as attachScheduler } from './runtime/scheduler';
+import {
+  buildTransitionEntry,
+  disableTransitionEntry,
+  disableTransitionsForProps,
+  parseEasingKey,
+  primeTransitionsForProps
+} from './runtime/transitions';
+import { create } from './runtime/widget';
 import {
   assertV3Spec,
   getControlGroupIdsOrdered,
@@ -73,12 +105,6 @@ import {
   stablePairTA,
   widgetKey
 } from './core/utils';
-
-export interface WidgetInstance {
-  renderValue(x: unknown): Promise<void>;
-  resize(width: number, height: number): void;
-  destroy(): void;
-}
 
 const modules = {
   utils: {
@@ -142,13 +168,30 @@ const modules = {
     legends: { render: renderLegends },
     summaries: { render: renderSummaries, update: updateSummaries },
     filters: { render: renderFilters }
+  },
+  transitions: {
+    parseEasingKey, buildTransitionEntry, disableTransitionEntry, primeTransitionsForProps,
+    disableTransitionsForProps
+  },
+  dock: { ensureGroup, ensureItem, removeItem, destroy: destroyDock },
+  hud: { ensureParts, destroy: destroyHud },
+  runtimeInitialRender: { renderInitial },
+  runtime: {
+    map: {
+      applyMapLibreControls, clearMapLibreControls, normProjection, resetProjectionManager,
+      ensureMapProjection, clearDeferredFit, ensureMap, ensureOverlay
+    },
+    assembly: { readRenderField, getLogicalLayer, getRenderState, buildRenderArtifacts },
+    scheduler: { attach: attachScheduler },
+    pipeline: { attach: attachPipeline },
+    motion: {
+      attach: attachMotion, normalizeReason, transitionsForBuild, syncJobTransitions,
+      disableRuntimeTransitions, primeRuntimeTransitions, injectMotionTransitions
+    },
+    api: { pickActiveViews, ensureRuntime },
+    widget: { create }
   }
 };
-
-interface DockItemOptions {
-  className?: string;
-  order?: number;
-}
 
 export interface Namespace {
   core: {
@@ -175,20 +218,11 @@ export interface Namespace {
   layerBuilders: typeof modules.layerBuilders;
   layers: typeof modules.layers;
   controls: typeof modules.controls;
-  dock?: {
-    ensureItem?(el: HTMLElement, pos: string, key: string, opts?: DockItemOptions): HTMLElement | null;
-    removeItem?(el: HTMLElement, pos: string, key: string): void;
-  };
-  runtime?: {
-    assembly?: {
-      readRenderField?(st: LayerState, key: string): unknown;
-      getLogicalLayer?(entry: LayerEntry | null | undefined): LayerState | null;
-      getRenderState?(entry: LayerEntry | null | undefined): LayerState | null;
-    };
-    widget?: {
-      create?(el: HTMLElement, width: number, height: number): WidgetInstance;
-    };
-  };
+  transitions: typeof modules.transitions;
+  dock: typeof modules.dock;
+  hud: typeof modules.hud;
+  runtimeInitialRender: typeof modules.runtimeInitialRender;
+  runtime: typeof modules.runtime;
 }
 
 const root = (window.MAPLAMINA || {}) as Namespace;

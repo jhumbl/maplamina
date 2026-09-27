@@ -5,20 +5,18 @@ import type { DataFilterExtensionOptions, DataFilterExtensionProps } from '@deck
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { buildGetTemplate, buildOnClickPopup, prime, register } from '../components/tooltips';
 import type { WidgetPickingInfo } from '../components/tooltips';
-import type { EncodingPatch } from '../components/views';
 import type {
   ColorEncodingState,
-  EncodingsState,
   LayerState,
   NumericEncodingState,
   RefNode,
-  RenderFields,
   TransitionsMap,
   TypedArray
 } from '../core/layer-state';
 import type { LayerType } from '../core/spec-types';
 import { isFiniteNumber, normText, stablePairTA } from '../core/utils';
 import type { GpuMeta } from '../filters/runtime';
+import { readRenderField } from '../runtime/assembly';
 import type { BuildContext } from './utils';
 
 // deck.gl's types take luma.gl's parameter names; the builders pass WebGL's depthTest.
@@ -50,21 +48,8 @@ interface EncodingSource {
 
 type GpuCheck = { ok: true } | { ok: false; reason: string };
 
-function getRuntimeField<K extends keyof RenderFields>(st: LayerState, key: K): RenderFields[K] | null {
-  const root = globalThis.MAPLAMINA;
-  const asm = root && root.runtime && root.runtime.assembly;
-  if (asm && typeof asm.readRenderField === 'function') {
-    return asm.readRenderField(st, key) as RenderFields[K] | null;
-  }
-  if (!st || typeof st !== 'object') return null;
-  const render = (st.__render && typeof st.__render === 'object') ? st.__render : null;
-  if (!render) return null;
-  if (Object.prototype.hasOwnProperty.call(render, key)) return render[key];
-  return null;
-}
-
-export function gpuMeta(st: LayerState): GpuMeta {
-  const m = getRuntimeField(st, 'gpuMeta');
+export function gpuMeta(st: LayerState | null | undefined): GpuMeta {
+  const m = readRenderField(st, 'gpuMeta');
   if (!m || typeof m !== 'object') return { rangeDims: 0, categoryDims: 0 };
   const categoryDims = Math.min(4, Math.max(0, m.categoryDims | 0));
   const rangeDims = Math.min(4, Math.max(0, m.rangeDims | 0));
@@ -72,7 +57,7 @@ export function gpuMeta(st: LayerState): GpuMeta {
 }
 
 function validateGPUProps(st: LayerState, meta?: GpuMeta | null): GpuCheck {
-  const gpu = getRuntimeField(st, 'gpuFiltering');
+  const gpu = readRenderField(st, 'gpuFiltering');
   if (!gpu) return { ok: true };
 
   const m = meta || gpuMeta(st);
@@ -92,7 +77,7 @@ function validateGPUProps(st: LayerState, meta?: GpuMeta | null): GpuCheck {
 
 function attachGPUFiltering<P extends ComposedProps>(layerProps: P, st: LayerState): P {
   const meta = gpuMeta(st);
-  const gpu = getRuntimeField(st, 'gpuFiltering');
+  const gpu = readRenderField(st, 'gpuFiltering');
   if (!gpu) return layerProps;
 
   const categoryDims = Math.min(4, Math.max(0, meta.categoryDims | 0));
@@ -198,9 +183,10 @@ function buildUpdateTriggersFromEncodings(st: LayerState): UpdateTriggers {
   return t;
 }
 
+// encPatch is read for its keys only: an encoding patch, or the keys a view switch touches.
 export function deckPropsTouchedByEncodingPatch(
-  layerType: LayerType,
-  encPatch: EncodingPatch | EncodingsState | null | undefined
+  layerType: LayerType | null | undefined,
+  encPatch: object | null | undefined
 ): string[] {
   if (!encPatch || typeof encPatch !== 'object') return [];
   const keys = Object.keys(encPatch);
@@ -299,7 +285,7 @@ export function composeLayerProps<P extends object>(
 
   props.updateTriggers = Object.assign({}, coreUpdateTriggers, props.updateTriggers || {});
 
-  const runtimeTransitions = getRuntimeField(st, 'transitions');
+  const runtimeTransitions = readRenderField(st, 'transitions');
   if (runtimeTransitions && typeof runtimeTransitions === 'object') {
     const warmed: TransitionsMap = {};
     for (const k of Object.keys(runtimeTransitions)) {
@@ -338,7 +324,7 @@ export function composeLayerProps<P extends object>(
   } catch (_) {}
 
   attachGPUFiltering(props, st);
-  if (getRuntimeField(st, 'forceHidden')) props.visible = false;
+  if (readRenderField(st, 'forceHidden')) props.visible = false;
 
   return props;
 }

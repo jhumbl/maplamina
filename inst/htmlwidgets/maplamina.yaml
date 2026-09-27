@@ -16,17 +16,5 @@ dependencies:
   src: htmlwidgets
   script:
   - maplamina-modules.js
-  - runtime/ml-runtime-transitions.js
-  - runtime/ml-dock.js
-  - runtime/ml-runtime-map.js
-  - runtime/ml-hud.js
-  - runtime/ml-runtime-assembly.js
-  - runtime/ml-runtime-scheduler.js
-  - runtime/ml-runtime-pipeline.js
-  - runtime/ml-runtime-motion.js
-  - runtime/ml-runtime-api.js
-  - runtime/ml-runtime-initial-render.js
-  - runtime/ml-runtime-widget.js
-
   stylesheet:
   - maplamina.css

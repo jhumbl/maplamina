@@ -3,7 +3,7 @@ import type { WidgetElement, WidgetRuntime } from '../core/widget';
 
 // What the pipeline hands to an update: the job that asked for it.
 export interface ControlJob {
-  readonly reason?: string;
+  readonly reason?: string | null;
 }
 
 export type ControlRender = (
