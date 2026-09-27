@@ -1,7 +1,7 @@
-// Scenarios S1, S2, S8, T5, C5, C7, C8 from notes/regression-scenarios.md: pages rather than single widgets.
+// Scenarios S1, S2, S8, T5, C5, C6, C7, C8, C9 from notes/regression-scenarios.md: pages rather than single widgets.
 import { test, expect } from '@playwright/test';
 import {
-  openWidget, waitForWidgets, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
+  openWidget, waitForWidgets, fixtureUrl, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
   toggleSelectOption, selectOptionChecked, zoomOut, widgetBox, mapZoom, hoverTooltip, hideTooltip,
   clickPopup, popupBox, setFilter,
 } from '../lib/widget.mjs';
@@ -118,6 +118,17 @@ test('C5: the panel and a standalone control sit in the corners they were given'
   const standalone = await page.locator('.ml-control-standalone').first().boundingBox();
   expect(standalone.x + standalone.width / 2, 'standalone is on the right').toBeGreaterThan(midX);
   expect(standalone.y + standalone.height / 2, 'standalone is at the top').toBeLessThan(midY);
+  expect(errors).toEqual([]);
+});
+
+test('C6, C9: a relative panel icon resolves against the page and renders as a linked image', async ({ page }) => {
+  const { errors } = await openWidget(page, 'panel-icon-relative');
+  const found = await page.evaluate(() => {
+    const img = document.querySelector('.ml-panel-title-link .ml-panel-icon');
+    return { src: img.src, href: img.closest('a').href, loaded: img.complete && img.naturalWidth > 0 };
+  });
+  const beside = new URL('panel-icon.svg', fixtureUrl('panel-icon-relative')).href;
+  expect(found).toEqual({ src: beside, href: beside, loaded: true });
   expect(errors).toEqual([]);
 });
 

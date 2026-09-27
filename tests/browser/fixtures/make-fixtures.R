@@ -281,6 +281,17 @@ maplamina() |>
   add_panel(title = "Panel", position = "bottomright", sections = sections(section("views"))) |>
   save("panel-corners")
 
+# C6, C9: a panel icon given as a relative path; the file sits beside the page.
+writeLines(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="red"/></svg>',
+  file.path(out_dir, "panel-icon.svg")
+)
+maplamina(va) |>
+  add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 5) |>
+  add_views(view("small", radius = 5), view("big", radius = 12), duration = 1, bind = "views") |>
+  add_panel(title = "Panel", icon = "panel-icon.svg", sections = sections(section("views"))) |>
+  save("panel-icon-relative")
+
 # G12: an icon sized in meters shrinks when zooming out; one sized in pixels does not.
 im <- data.frame(lon = -0.02, lat = 51.5)
 ip <- data.frame(lon = 0.02, lat = 51.5)

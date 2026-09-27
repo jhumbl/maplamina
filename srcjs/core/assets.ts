@@ -1,44 +1,17 @@
 import type { Href, LayerState, RefNode, ResolvedArray, TypedArray } from './layer-state';
 import { pushWarn } from './utils';
 
-// Relative URLs resolve against core/ in the folder the built file is served from.
-let __DEP_BASE = '';
-try {
-  const scripts = document.getElementsByTagName('script');
-  for (let i = scripts.length - 1; i >= 0; --i) {
-    const s = scripts[i].src || '';
-    const m = s.match(/(.*\/)maplamina-modules\.js(?:\?.*)?$/);
-    if (m) { __DEP_BASE = m[1] + 'core/'; break; }
-  }
-} catch (_) {}
-
+// The URL string out of the shapes an href arrives in. A relative URL is returned as it is
+// and resolves against the page.
 export function depUrl(x: string): string;
 export function depUrl(x: unknown): unknown;
 export function depUrl(x: unknown): unknown {
-  const norm = (y: unknown): unknown => {
-    if (typeof y === "string") return y;
-    const o = y as { href?: string | { data?: unknown }; data?: unknown } | null | undefined;
-    if (o && typeof o === "object" && typeof o.href === "string") return o.href;
-    if (o && o.href && typeof o.href === "object" && typeof o.href.data === "string") return o.href.data;
-    if (o && typeof o.data === "string") return o.data;
-    return y;
-  };
-
-  const raw = norm(x);
-  if (!raw || typeof raw !== "string") return raw;
-
-  // Absolute-ish URLs we must not prefix
-  if (
-    raw.startsWith("data:") ||
-    raw.startsWith("blob:") ||
-    raw.startsWith("http://") ||
-    raw.startsWith("https://") ||
-    raw.startsWith("/")
-  ) {
-    return raw;
-  }
-
-  return (__DEP_BASE || "") + raw;
+  if (typeof x === "string") return x;
+  const o = x as { href?: string | { data?: unknown }; data?: unknown } | null | undefined;
+  if (o && typeof o === "object" && typeof o.href === "string") return o.href;
+  if (o && o.href && typeof o.href === "object" && typeof o.href.data === "string") return o.href.data;
+  if (o && typeof o.data === "string") return o.data;
+  return x;
 }
 
 const __ric: (cb: IdleRequestCallback) => number =
