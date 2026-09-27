@@ -66,16 +66,6 @@ export function create(el: WidgetElement, width: number, height: number): Widget
       height,
       map,
       overlay,
-      utils: MAPLAMINA.utils,
-      assets: MAPLAMINA.assets,
-      data: MAPLAMINA.data,
-      encodings: MAPLAMINA.encodings,
-      views: MAPLAMINA.views,
-      transitions: MAPLAMINA.transitions,
-      tooltips: MAPLAMINA.tooltips,
-      filters: MAPLAMINA.filters,
-      filterCore: MAPLAMINA.filterCore,
-      controls: MAPLAMINA.controls,
       cache: cacheRoot
     };
   }

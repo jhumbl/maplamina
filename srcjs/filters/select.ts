@@ -209,13 +209,8 @@ export function ensureSelectUI(
   const filtersBox = ensureFiltersContainer(el, bindId, panelMeta);
   if (!filtersBox) return;
 
-  // The threshold is read from the namespace so a page can change it.
-  const published = globalThis.MAPLAMINA && globalThis.MAPLAMINA.filterSelect;
-  const autoAt = (published && Number.isFinite(published.AUTO_DROPDOWN_AT))
-    ? published.AUTO_DROPDOWN_AT : AUTO_DROPDOWN_AT;
-
   const useDropdown = (sel.dropdown === true) ||
-                      (sel.dropdown == null && sel.dict.length >= autoAt);
+                      (sel.dropdown == null && sel.dict.length >= AUTO_DROPDOWN_AT);
 
   const onAnyChange = () => { if (typeof onChange === 'function') onChange(); };
 
