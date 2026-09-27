@@ -1,4 +1,4 @@
-// Scenarios S1, S2, T5, C5, C7, C8 from notes/regression-scenarios.md: pages rather than single widgets.
+// Scenarios S1, S2, S8, T5, C5, C7, C8 from notes/regression-scenarios.md: pages rather than single widgets.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, waitForWidgets, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
@@ -82,6 +82,16 @@ test('S1: a widget created in a hidden container fits its bounds once shown', as
   expect(c.x).toBeGreaterThan(box.left);
   expect(c.x).toBeLessThan(box.right);
   expect(isDrawnAt(await screenshot(page), c.x, c.y), 'centre circle drawn').toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('S8: the widget entry script loads and registers once', async ({ page }) => {
+  const { errors } = await openWidget(page, 'page-two-widgets', 2);
+  const found = await page.evaluate(() => ({
+    scripts: Array.from(document.scripts).filter((s) => /\/maplamina\.js$/.test(s.src)).length,
+    bindings: window.HTMLWidgets.widgets.filter((w) => w.name === 'maplamina').length,
+  }));
+  expect(found).toEqual({ scripts: 1, bindings: 1 });
   expect(errors).toEqual([]);
 });
 
