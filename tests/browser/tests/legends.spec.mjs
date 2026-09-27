@@ -107,10 +107,6 @@ test('C3: a standalone group whose legends are all hidden hides with them', asyn
 });
 
 test('C3: a panel section whose legends are all hidden hides with them', async ({ page }) => {
-  // Known failure: the section is given display none inline and the stylesheet sets
-  // .ml-panel-slot to display block with !important, so the section stays (P-26-33).
-  // Remove test.fail() once the section hides.
-  test.fail();
   const { errors, out } = await shellsByView(page, 'legends-panel', 'panel');
   expect(out).toEqual(SHELLS);
   expect(errors).toEqual([]);

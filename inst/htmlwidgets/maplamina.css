@@ -280,11 +280,6 @@ html, body {
   color: #475569 !important; /* slate-ish */
 }
 
-/* Slot wrapper: each component (views/filters/...) lives in its own slot */
-.ml-panel-slot {
-  display: block !important;
-}
-
 /* Generic separators between slots (works for any future component) */
 .ml-panel-slot + .ml-panel-slot {
   position: relative !important;
