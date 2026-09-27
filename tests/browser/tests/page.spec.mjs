@@ -1,4 +1,4 @@
-// Scenarios S1, S2, S8, T5, C5, C6, C7, C8, C9 from notes/regression-scenarios.md: pages rather than single widgets.
+// Scenarios S1, S2, S8, S9, T5, C5, C6, C7, C8, C9 from notes/regression-scenarios.md: pages rather than single widgets.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, waitForWidgets, fixtureUrl, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
@@ -92,6 +92,24 @@ test('S8: the widget entry script loads and registers once', async ({ page }) =>
     bindings: window.HTMLWidgets.widgets.filter((w) => w.name === 'maplamina').length,
   }));
   expect(found).toEqual({ scripts: 1, bindings: 1 });
+  expect(errors).toEqual([]);
+});
+
+test('S9: the page publishes controls.panel.sync on the global and nothing else', async ({ page }) => {
+  const { errors } = await openWidget(page, 'circles-views');
+  const found = await page.evaluate(() => {
+    const leaves = [];
+    const seen = new Set();
+    const walk = (v, path) => {
+      const names = (v && typeof v === 'object' && !seen.has(v)) ? Object.getOwnPropertyNames(v) : [];
+      if (!names.length) { leaves.push(`${path}: ${typeof v}`); return; }
+      seen.add(v);
+      for (const name of names) walk(v[name], path ? `${path}.${name}` : name);
+    };
+    walk(window.MAPLAMINA, '');
+    return leaves;
+  });
+  expect(found).toEqual(['controls.panel.sync: function']);
   expect(errors).toEqual([]);
 });
 

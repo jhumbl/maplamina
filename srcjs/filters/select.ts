@@ -7,7 +7,7 @@ import {
 } from './core';
 import type { PanelMeta, SelectUiSpec } from './core';
 
-export const AUTO_DROPDOWN_AT = 5;
+const AUTO_DROPDOWN_AT = 5;
 
 type FilterBox = HTMLElement & { __mfCleanup?: (() => void) | null };
 

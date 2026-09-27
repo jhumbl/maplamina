@@ -1,4 +1,4 @@
-// Globals the page provides before the widget scripts run.
+// Globals the widget script reads from the page, and the one it publishes.
 
 interface HTMLWidgetInstance {
   renderValue(x: unknown): void | Promise<void>;
@@ -13,11 +13,6 @@ interface HTMLWidgetDefinition {
 }
 
 declare global {
-  const deck: typeof import('@deck.gl/core') &
-    typeof import('@deck.gl/layers') &
-    typeof import('@deck.gl/extensions') &
-    typeof import('@deck.gl/mapbox');
-  const maplibregl: typeof import('maplibre-gl');
   const HTMLWidgets: {
     widget(definition: HTMLWidgetDefinition): void;
     shinyMode?: boolean;
@@ -27,7 +22,7 @@ declare global {
     setInputValue(name: string, value: unknown, opts?: { priority?: 'event' | 'deferred' }): void;
   }
 
-  var MAPLAMINA: import('./namespace').Namespace;
+  var MAPLAMINA: { controls: { panel: { sync: typeof import('./controls/panel').sync } } };
   var Shiny: ShinyClient | undefined;
 }
 
