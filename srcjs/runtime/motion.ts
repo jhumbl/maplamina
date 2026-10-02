@@ -38,7 +38,7 @@ function deckPropsTouchedByEncodingPatch(
   return [];
 }
 
-export function normalizeReason(reason: unknown): string | null {
+function normalizeReason(reason: unknown): string | null {
   return normText(reason) || null;
 }
 

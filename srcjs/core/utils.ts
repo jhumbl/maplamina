@@ -64,7 +64,7 @@ export function widgetKey(el: { readonly id?: string } | null | undefined): stri
 // ---- DOM-safe stable keys -------------------------------------------------
 // Produces a CSS-selector-safe id fragment for arbitrary strings (e.g. bind/group ids).
 // Always starts with a letter/underscore to be safe for querySelector('#...').
-export function hash32(x: unknown): number {
+function hash32(x: unknown): number {
   const str = String(x ?? '');
   let h = 2166136261 >>> 0; // FNV-1a
   for (let i = 0; i < str.length; i++) {

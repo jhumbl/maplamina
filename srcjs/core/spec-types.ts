@@ -392,8 +392,6 @@ export interface Components {
   readonly summaries: WireMap<SummariesComponent>;
 }
 
-export type ComponentBucket = keyof Components;
-
 // ---- controls ----
 
 interface ControlCommon {

@@ -8,7 +8,6 @@ import type { WidgetPickingInfo } from '../components/tooltips';
 import type {
   ColorEncodingState,
   LayerState,
-  NumericEncodingState,
   RefNode,
   TransitionsMap,
   TypedArray

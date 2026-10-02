@@ -322,7 +322,7 @@ export function register(el: Element | null | undefined, layerId: string, fn: To
   if (fn) reg.set(layerId, fn); else reg.delete(layerId);
 }
 
-export function dispatch(info: WidgetPickingInfo | null | undefined): TooltipContent | null {
+function dispatch(info: WidgetPickingInfo | null | undefined): TooltipContent | null {
   if (!info || !info.layer || !info.__mfContainer) return null;
   const fn = __TT_REG.get(info.__mfContainer)?.get(info.layer.id);
   return typeof fn === 'function' ? fn(info) : null;

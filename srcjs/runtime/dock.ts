@@ -57,7 +57,7 @@ function getCorner(el: WidgetElement, pos: unknown): HTMLElement | null {
   return container.querySelector<HTMLElement>(cornerSelector(p));
 }
 
-export function ensureGroup(el: WidgetElement, pos: unknown): HTMLElement | null {
+function ensureGroup(el: WidgetElement, pos: unknown): HTMLElement | null {
   const p = normalizePos(pos);
   const st = getState(el);
 

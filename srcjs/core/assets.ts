@@ -65,7 +65,7 @@ function decodeBase64DataUri(url: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-export async function fetchArray(
+async function fetchArray(
   href: Href | undefined,
   dtype: string | undefined,
   memoKey?: string | null

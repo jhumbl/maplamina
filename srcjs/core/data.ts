@@ -23,7 +23,7 @@ type GeomSpec = Readonly<Record<string, GeomGroup>>;
 type GeomTarget = RefNode & Record<string, unknown>;
 
 // --- Declarative geometry hydration spec -----------------------------------
-export const HYDRATE_GEOM: Readonly<Record<LayerType, GeomSpec>> = {
+const HYDRATE_GEOM: Readonly<Record<LayerType, GeomSpec>> = {
   circle: { position: { dtype: 'f32', sizeKey: 'size' } },
   icon:   { position: { dtype: 'f32', sizeKey: 'size' } },
   marker: { position: { dtype: 'f32', sizeKey: 'size' } },
@@ -59,7 +59,7 @@ function toTypedArray(arr: TypedArray | ArrayLike<number> | null | undefined, dt
   }
 }
 
-export async function hydrateGeometryBySpec(
+async function hydrateGeometryBySpec(
   st: LayerState,
   cols: DataColumnsState,
   spec: GeomSpec | undefined
@@ -157,7 +157,7 @@ function hasRef(node: RefNode): boolean {
     (values && (values.ref || values.href)));
 }
 
-export async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
+async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
   const cols = st.data_columns || {};
   const base = st.base_encodings = st.base_encodings || {};
 

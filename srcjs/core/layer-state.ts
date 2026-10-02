@@ -120,7 +120,6 @@ export interface EncodingsState {
 }
 
 export type NumericColumnKey = 'radius' | 'lineWidth' | 'size' | 'elevation';
-export type NumericEncodingKey = NumericColumnKey | 'opacity';
 export type ColorEncodingKey = 'fillColor' | 'lineColor';
 
 export interface LayerCfgState {
