@@ -102,7 +102,10 @@ export interface WidgetRuntime {
   setActiveView?(groupId: string, newView?: string): void;
   rebuildLayers?(layerIds: ScheduleOptions['layers']): Promise<void> | undefined;
   // With two arguments, a label and a value for the default filters group.
-  setFilter?(groupId: string, label: string | Set<string> | number[], value?: Set<string> | number[]): void;
+  setFilter?: {
+    (label: string, value: Set<string> | number[]): void;
+    (groupId: string, label: string, value: Set<string> | number[]): void;
+  };
   clearFilters?(groupId?: unknown): void;
 }
 

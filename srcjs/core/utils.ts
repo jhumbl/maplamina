@@ -4,6 +4,11 @@ export function isTA(v: unknown): v is TypedArray {
   return !!(v && typeof v === 'object' && ArrayBuffer.isView(v));
 }
 
+// Array.isArray() narrows a readonly array or a union to any[]; this keeps the element type.
+export function isArray(v: unknown): v is readonly unknown[] {
+  return Array.isArray(v);
+}
+
 export function isFiniteNumber(v: unknown): v is number {
   return Number.isFinite(v);
 }

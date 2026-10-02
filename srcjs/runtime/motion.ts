@@ -1,6 +1,6 @@
 import type { TransitionEntry, TransitionsMap } from '../core/layer-state';
 import type { LayerType } from '../core/spec-types';
-import { isFiniteNumber, normText } from '../core/utils';
+import { isArray, isFiniteNumber, normText } from '../core/utils';
 import type { WidgetRuntime } from '../core/widget';
 import { deckPropsTouchedByEncodingPatch as propsTouchedByPatch } from '../layers/props';
 import type { Invalidation, RenderJob } from './scheduler';
@@ -154,7 +154,7 @@ function clearRuntimeTransition(rt: WidgetRuntime, layerId: unknown, prop: strin
 export function disableRuntimeTransitions(rt: WidgetRuntime | null | undefined, layerIds: LayerIds): void {
   try {
     if (!rt) return;
-    const ids = Array.isArray(layerIds) ? layerIds : (layerIds ? [layerIds] : []);
+    const ids = isArray(layerIds) ? layerIds : (layerIds ? [layerIds] : []);
     for (const raw of ids) {
       const lid = normText(raw);
       if (!lid) continue;

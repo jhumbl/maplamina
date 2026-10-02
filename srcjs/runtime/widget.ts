@@ -166,7 +166,7 @@ export function create(el: WidgetElement, width: number, height: number): Widget
             const near = originNearView(o, map);
             if (near === o) return l;
             moved = true;
-            return l.clone({ coordinateOrigin: near as typeof o });
+            return l.clone({ coordinateOrigin: near as typeof o }) as Layer;
           });
           if (moved && overlay) { currentLayers = next; overlay.setProps({ layers: next }); }
         });

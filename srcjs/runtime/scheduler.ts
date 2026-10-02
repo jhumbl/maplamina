@@ -1,5 +1,5 @@
 import type { Spec } from '../core/spec-types';
-import { normText } from '../core/utils';
+import { isArray, normText } from '../core/utils';
 import type { WidgetRuntime } from '../core/widget';
 import type { MotionPolicy } from './motion';
 
@@ -15,21 +15,31 @@ export interface ScheduleOptions {
   reason?: string | null;
 }
 
-export interface Invalidation {
-  reasons?: string[];
-  initial?: boolean;
+// What a flush has to do, derived from the reasons it was scheduled with.
+interface FlushInvalidation {
+  reasons: string[];
   render: boolean;
   encodings: boolean;
-  filters?: boolean;
-  visibility?: boolean;
-  layers?: boolean;
-  rehydrate?: boolean;
-  controls?: boolean;
-  legends?: boolean;
-  tooltip?: boolean;
-  manual?: boolean;
+  filters: boolean;
+  visibility: boolean;
+  layers: boolean;
+  rehydrate: boolean;
+  controls: boolean;
+  legends: boolean;
+  tooltip: boolean;
+  manual: boolean;
   motionEligible: boolean;
 }
+
+// What the first render records on a layer entry.
+interface InitialInvalidation {
+  initial: true;
+  render: true;
+  encodings: true;
+  motionEligible: false;
+}
+
+export type Invalidation = FlushInvalidation | InitialInvalidation;
 
 // One flush of the scheduler: what was asked for since the last one.
 export interface RenderJob {
@@ -44,7 +54,7 @@ export interface RenderJob {
   allowMotionViews: boolean;
   reason: string | null;
   reasons: string[];
-  invalidation?: Invalidation;
+  invalidation?: FlushInvalidation;
   motionPolicy?: MotionPolicy;
 }
 
@@ -95,7 +105,7 @@ function normalizeReason(reason: unknown): string | null {
 }
 
 function pickPrimaryReason(reasons: readonly string[], fallback: unknown): string | null {
-  const set = Array.isArray(reasons) ? reasons.filter(Boolean) : [];
+  const set = isArray(reasons) ? reasons.filter(Boolean) : [];
   if (set.includes('views')) return 'views';
   if (set.includes('filters')) return 'filters';
   if (set.includes('filters-clear')) return 'filters-clear';
@@ -103,8 +113,8 @@ function pickPrimaryReason(reasons: readonly string[], fallback: unknown): strin
   return normalizeReason(fallback) || (set.length ? set[set.length - 1] : null);
 }
 
-function deriveInvalidation(job: RenderJob, reasons: readonly string[]): Invalidation {
-  const list = Array.isArray(reasons) ? reasons.filter(Boolean) : [];
+function deriveInvalidation(job: RenderJob, reasons: readonly string[]): FlushInvalidation {
+  const list = isArray(reasons) ? reasons.filter(Boolean) : [];
   const has = (x: string): boolean => list.includes(x);
   const rehydrate = !!(job && Array.isArray(job.rehydrate) && job.rehydrate.length);
   const layers = !!(job && Array.isArray(job.layers) && job.layers.length);
@@ -146,7 +156,7 @@ function schedAdd(set: Set<string>, ids: LayerIds | undefined, rt: WidgetRuntime
     return;
   }
 
-  const arr = Array.isArray(ids) ? ids : [ids];
+  const arr = isArray(ids) ? ids : [ids];
   for (const v of arr) {
     const lid = normText(v);
     if (lid) set.add(lid);

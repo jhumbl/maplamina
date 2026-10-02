@@ -1,10 +1,9 @@
 import type { computeViewOpsByLayer } from '../components/views';
 import { getControlGroupsByType, getControlSpec } from '../core/spec';
 import type { FilterControl, FiltersControl, RangeFilterControl, Spec } from '../core/spec-types';
-import { asArray, isFiniteNumber, normText } from '../core/utils';
+import { asArray, isArray, isFiniteNumber, normText } from '../core/utils';
 import type { FilterValue, FiltersState, RuntimeState, WidgetElement, WidgetRuntime } from '../core/widget';
 import type { initFiltersState } from '../filters/runtime';
-import type { LayerBuilder } from '../layers/registry';
 import { getLogicalLayer, getRenderState } from './assembly';
 import * as motion from './motion';
 import * as pipeline from './pipeline';
@@ -13,7 +12,7 @@ import * as scheduler from './scheduler';
 
 // What the widget hands to the runtime.
 export interface RuntimeDeps {
-  buildLayer?: (st: Parameters<LayerBuilder>[0]) => ReturnType<LayerBuilder>;
+  buildLayer?: WidgetRuntime['buildLayer'];
   computeViewOpsByLayerV3?: typeof computeViewOpsByLayer;
   initFiltersState?: typeof initFiltersState;
   pipelineDeps?: PipelineDeps;
@@ -142,7 +141,7 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
     if (typeof this.invalidate === 'function') return this.invalidate({ layers: layerIds, reason: 'rebuild' });
   };
 
-  rt.setFilter = function(groupId, label, value) {
+  rt.setFilter = function(groupId: string, label: string | Set<string> | number[], value?: Set<string> | number[]) {
     const x = this.specRef;
     if (!x) return;
 
@@ -186,12 +185,12 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
     if (ctlType === 'select') {
       if (storeVal == null || storeVal === '') storeVal = new Set();
       else if (storeVal instanceof Set) storeVal = new Set(Array.from(storeVal, v => String(v)).filter(v => v.length));
-      else if (Array.isArray(storeVal)) storeVal = new Set(storeVal.map(v => String(v)).filter(v => v.length));
+      else if (isArray(storeVal)) storeVal = new Set(storeVal.map(v => String(v)).filter(v => v.length));
       else storeVal = new Set([String(storeVal)]);
     } else if (ctlType === 'range') {
       let lo: number | null = null, hi: number | null = null;
-      if (Array.isArray(storeVal) && storeVal.length >= 2) {
-        lo = +storeVal[0]; hi = +storeVal[1];
+      if (isArray(storeVal) && storeVal.length >= 2) {
+        lo = +(storeVal[0] as number); hi = +(storeVal[1] as number);
       } else if (storeVal && typeof storeVal === 'object') {
         const o = storeVal as Record<string, number>;
         if ('min' in o && 'max' in o) { lo = +o.min; hi = +o.max; }
@@ -214,7 +213,7 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       storeVal = [lo, hi];
     } else {
       if (storeVal instanceof Set) storeVal = new Set(storeVal);
-      else if (Array.isArray(storeVal)) storeVal = storeVal.slice(0, 2);
+      else if (isArray(storeVal)) storeVal = storeVal.slice(0, 2);
     }
 
     const state = ensureGroupedState(this);

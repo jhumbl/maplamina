@@ -1,5 +1,5 @@
 import type { TransitionEntry, TransitionsMap } from '../core/layer-state';
-import { isFiniteNumber } from '../core/utils';
+import { isArray, isFiniteNumber } from '../core/utils';
 
 export type EasingFn = (t: number) => number;
 
@@ -97,7 +97,7 @@ export function primeTransitionsForProps(
 ): TransitionsMap | null {
   const t = (transitionsMap && typeof transitionsMap === 'object') ? transitionsMap : null;
   if (!t) return null;
-  const arr = Array.isArray(props) ? props : (props ? [props] : []);
+  const arr = isArray(props) ? props : (props ? [props] : []);
   for (const raw of arr) {
     const k = String(raw || '');
     if (!k) continue;
@@ -124,7 +124,7 @@ export function disableTransitionsForProps(
   if (!t) return null;
   const keys = (props == null)
     ? Object.keys(t)
-    : (Array.isArray(props) ? props.map(p => String(p || '')).filter(Boolean) : [String(props || '')].filter(Boolean));
+    : (isArray(props) ? props.map(p => String(p || '')).filter(Boolean) : [String(props || '')].filter(Boolean));
   for (const k of keys) {
     if (!k) continue;
     if (!Object.prototype.hasOwnProperty.call(t, k)) continue;

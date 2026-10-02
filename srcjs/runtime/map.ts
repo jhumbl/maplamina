@@ -12,7 +12,7 @@ import type { WidgetPickingInfo } from '../components/tooltips';
 import { normPlainObject, stableStringify } from '../core/spec';
 import type { Bounds } from '../core/spec';
 import type { Spec } from '../core/spec-types';
-import { normText, widgetKey } from '../core/utils';
+import { isArray, normText, widgetKey } from '../core/utils';
 import type { WidgetElement, WidgetRuntime } from '../core/widget';
 
 type Projection = 'mercator' | 'globe';
@@ -102,7 +102,7 @@ export function applyMapLibreControls(
 ): void {
   if (!map || !specObj) return;
   const mo: Partial<Spec['map_options']> = (specObj.map_options && typeof specObj.map_options === 'object') ? specObj.map_options : {};
-  const controls = Array.isArray(mo.controls) ? mo.controls : [];
+  const controls = isArray(mo.controls) ? mo.controls : [];
 
   if (!rt || typeof rt !== 'object') rt = {} as WidgetRuntime;
   if (!rt._maplibreControls || typeof rt._maplibreControls !== 'object') {
