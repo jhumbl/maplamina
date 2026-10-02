@@ -144,7 +144,7 @@ export function ensureItem(
   }
 
   // Flex order is handled by the group, but keep it anyway for clarity
-  try { item.style.order = String(orderNum); } catch (_) {}
+  item.style.order = String(orderNum);
   return item;
 }
 

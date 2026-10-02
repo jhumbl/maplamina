@@ -59,15 +59,13 @@ export function collectPrimeViewEncodingKeys(spec: Spec, ops: readonly ViewOp[] 
   if (!Array.isArray(ops) || !ops.length) return out;
   const comps = wireMap(spec && spec['.__components'] && spec['.__components'].views);
   for (const op of ops) {
-    try {
-      const comp = (op && op.cid) ? comps[op.cid] : null;
-      const views = (comp && comp.views && typeof comp.views === 'object') ? wireMap(comp.views) : null;
-      if (!views) continue;
-      for (const vn of Object.keys(views)) {
-        const enc = views[vn] && views[vn].encodings;
-        out = unionEncodingKeys(out, enc);
-      }
-    } catch (_) {}
+    const comp = (op && op.cid) ? comps[op.cid] : null;
+    const views = (comp && comp.views && typeof comp.views === 'object') ? wireMap(comp.views) : null;
+    if (!views) continue;
+    for (const vn of Object.keys(views)) {
+      const enc = views[vn] && views[vn].encodings;
+      out = unionEncodingKeys(out, enc);
+    }
   }
   return out;
 }
@@ -97,16 +95,14 @@ export function applyOrderedViewOps(
     for (const op of ops) {
       const patch = op && op.encPatch;
       let touch: EncodingKeys | null = null;
-      try {
-        const comp = (op && op.cid) ? comps[op.cid] : null;
-        const views = (comp && comp.views && typeof comp.views === 'object') ? wireMap(comp.views) : null;
-        const prevName = (op && op.groupId) ? normText(prevByGroup[op.groupId]) : null;
-        const prevEnc = (views && prevName && views[prevName] && views[prevName].encodings) || null;
-        const nextEnc = (patch && typeof patch === 'object')
-          ? patch
-          : (views && op && op.activeView && views[op.activeView] && views[op.activeView].encodings) || null;
-        touch = unionEncodingKeys(prevEnc, nextEnc);
-      } catch (_) {}
+      const comp = (op && op.cid) ? comps[op.cid] : null;
+      const views = (comp && comp.views && typeof comp.views === 'object') ? wireMap(comp.views) : null;
+      const prevName = (op && op.groupId) ? normText(prevByGroup[op.groupId]) : null;
+      const prevEnc = (views && prevName && views[prevName] && views[prevName].encodings) || null;
+      const nextEnc = (patch && typeof patch === 'object')
+        ? patch
+        : (views && op && op.activeView && views[op.activeView] && views[op.activeView].encodings) || null;
+      touch = unionEncodingKeys(prevEnc, nextEnc);
 
       if (onOp) {
         try { onOp(op, { patch, touch, layerId, state: out }); } catch (_) {}
@@ -163,7 +159,7 @@ export function computeViewOpsByLayer(
       if (out.activeByLayer.has(layerId)) {
         const prev = out.activeByLayer.get(layerId);
         if (prev && prev !== active) {
-          try { console.warn('[maplamina] Layer', layerId, 'is controlled by multiple views groups; last group wins (active:', active, ', prev:', prev, ').'); } catch (_) {}
+          console.warn('[maplamina] Layer', layerId, 'is controlled by multiple views groups; last group wins (active:', active, ', prev:', prev, ').');
         }
       }
       out.activeByLayer.set(layerId, active);

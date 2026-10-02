@@ -62,7 +62,7 @@ export function render(
   mountEl.appendChild(stack);
 
   // Stable hook for group-level hide/show (used by applyVisibility).
-  try { stack.dataset.mfLegendsGroup = gid; } catch (_) {}
+  stack.dataset.mfLegendsGroup = gid;
 
   const bucket = getLegendsBucket(spec);
 

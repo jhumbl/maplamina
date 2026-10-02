@@ -172,9 +172,7 @@ export function attach(rt: WidgetRuntime | null | undefined, deps?: PipelineDeps
       applyOverlayReplacements(replacements);
     }
 
-    try {
-      if (dirtyRehydrate.size && this._viewsPrev && typeof this._viewsPrev === 'object') this._viewsPrev = {};
-    } catch (_) {}
+    if (dirtyRehydrate.size && this._viewsPrev && typeof this._viewsPrev === 'object') this._viewsPrev = {};
 
     if (doLegends) {
       try { applyVisibility(el, x); } catch (_) {}

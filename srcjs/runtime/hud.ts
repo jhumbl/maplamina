@@ -28,7 +28,7 @@ export function ensureParts(el: WidgetElement | null | undefined): HudParts | nu
   }
 
   // Store a direct reference for cleanup (avoid querying the dock host).
-  try { el.__mfHudNode = hud; } catch (_) {}
+  el.__mfHudNode = hud;
 
   let summary = hud.querySelector<HTMLElement>('.ml-hud-summary');
   if (!summary) {
@@ -61,7 +61,7 @@ export function destroy(el: WidgetElement | null | undefined): void {
 
   // Prefer the explicit node reference captured in ensureParts().
   let hud: HTMLElement | null = null;
-  try { hud = el.__mfHudNode || null; } catch (_) {}
+  hud = el.__mfHudNode || null;
   if (!hud) {
     try { hud = el.querySelector<HTMLElement>('.ml-hud'); } catch (_) {}
   }
@@ -70,7 +70,7 @@ export function destroy(el: WidgetElement | null | undefined): void {
     try { hud.parentNode.removeChild(hud); } catch (_) {}
   }
 
-  try { el.__mfHudNode = null; } catch (_) {}
+  el.__mfHudNode = null;
 
   // Best-effort: if the dock host exists and is now empty, remove it.
   try {

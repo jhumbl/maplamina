@@ -164,17 +164,15 @@ function isDict(x: unknown): x is Dict {
 // An empty R list() arrives as []. The three top-level containers become objects before the
 // spec is validated.
 export function normalizeSpec(x: unknown): void {
-  try {
-    if (x && typeof x === 'object') {
-      const o = x as Dict;
-      const hasV3Keys = Object.keys(o).some(k => k.startsWith('.__'));
-      if (hasV3Keys) {
-        if (!isDict(o['.__layers'])) o['.__layers'] = {};
-        if (!isDict(o['.__components'])) o['.__components'] = {};
-        if (!isDict(o['.__controls'])) o['.__controls'] = {};
-      }
+  if (x && typeof x === 'object') {
+    const o = x as Dict;
+    const hasV3Keys = Object.keys(o).some(k => k.startsWith('.__'));
+    if (hasV3Keys) {
+      if (!isDict(o['.__layers'])) o['.__layers'] = {};
+      if (!isDict(o['.__components'])) o['.__components'] = {};
+      if (!isDict(o['.__controls'])) o['.__controls'] = {};
     }
-  } catch (_) {}
+  }
 }
 
 // Throws if the incoming spec is not in the expected shape.

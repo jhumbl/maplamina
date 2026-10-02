@@ -134,7 +134,7 @@ function ensureLocalState(mountEl: SummariesMount): SummariesLocal {
     : null;
   if (s) return s;
   const out: SummariesLocal = { seq: 0, nodes: new Map(), order: [] };
-  try { mountEl.__mlSummaries = out; } catch (_) {}
+  mountEl.__mlSummaries = out;
   return out;
 }
 

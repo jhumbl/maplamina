@@ -85,7 +85,7 @@ function attachGPUFiltering<P extends ComposedProps>(layerProps: P, st: LayerSta
 
   const valid = validateGPUProps(st, meta);
   if (!valid.ok) {
-    try { console.warn('[maplamina][gpu] disabling filtering for layer', st && st.id, 'reason:', valid.reason); } catch (_) {}
+    console.warn('[maplamina][gpu] disabling filtering for layer', st && st.id, 'reason:', valid.reason);
     return layerProps;
   }
 
@@ -96,7 +96,7 @@ function attachGPUFiltering<P extends ComposedProps>(layerProps: P, st: LayerSta
   const existing = Array.isArray(layerProps.extensions) ? layerProps.extensions.slice() : [];
   const hasDFE = existing.some(e => {
     if (!e) return false;
-    try { return e instanceof DataFilterExtension; } catch (_) {}
+    return e instanceof DataFilterExtension;
     return !!(e && e.constructor && e.constructor.name === 'DataFilterExtension');
   });
   if (!hasDFE) existing.push(new DataFilterExtension(extOpts));
@@ -314,9 +314,7 @@ export function composeLayerProps<P extends object>(
     const oc = buildOnClickPopup(st);
     if (oc) {
       props.onClick = function(info: WidgetPickingInfo) {
-        try {
-          if (info && !info.__mfContainer && ctx && ctx.el) info.__mfContainer = ctx.el;
-        } catch (_) {}
+        if (info && !info.__mfContainer && ctx && ctx.el) info.__mfContainer = ctx.el;
         return oc(info);
       };
     }

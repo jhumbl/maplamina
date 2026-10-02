@@ -71,7 +71,7 @@ function normMapCorner(pos: unknown): ControlPosition {
   if (p === 'bottomleft') return 'bottom-left';
   if (p === 'bottomright') return 'bottom-right';
   if (p) {
-    try { console.warn('[maplamina] Invalid map control position:', pos, '— falling back to top-right.'); } catch (_) {}
+    console.warn('[maplamina] Invalid map control position:', pos, '— falling back to top-right.');
   }
   return 'top-right';
 }
@@ -87,11 +87,11 @@ function buildMapLibreControl(type: unknown, options: unknown): IControl | null 
     if (t === 'fullscreen') return new FullscreenControl(opts);
     if (t === 'geolocate') return new GeolocateControl(opts);
   } catch (e) {
-    try { console.warn('[maplamina] Failed to create MapLibre control:', t, e); } catch (_) {}
+    console.warn('[maplamina] Failed to create MapLibre control:', t, e);
     return null;
   }
 
-  try { console.warn('[maplamina] Unknown map control type:', type, '(skipping)'); } catch (_) {}
+  console.warn('[maplamina] Unknown map control type:', type, '(skipping)');
   return null;
 }
 
@@ -138,12 +138,12 @@ export function applyMapLibreControls(
     const inst = buildMapLibreControl(type, options);
     if (inst) {
       try { map.addControl(inst, position); } catch (e) {
-        try { console.warn('[maplamina] Failed to add MapLibre control:', type, e); } catch (_) {}
+        console.warn('[maplamina] Failed to add MapLibre control:', type, e);
       }
       byType[type] = { instance: inst, sig };
       nextTypes.add(type);
     } else {
-      try { delete byType[type]; } catch (_) {}
+      delete byType[type];
     }
   }
 
@@ -153,7 +153,7 @@ export function applyMapLibreControls(
     if (prev && prev.instance) {
       try { map.removeControl(prev.instance); } catch (_) {}
     }
-    try { delete byType[t]; } catch (_) {}
+    delete byType[t];
   }
 }
 
@@ -169,7 +169,7 @@ export function clearMapLibreControls(
       try { map.removeControl(prev.instance); } catch (_) {}
     }
   }
-  try { rt._maplibreControls!.byType = {}; } catch (_) {}
+  rt._maplibreControls!.byType = {};
 }
 
 // --- Projection (map_options.projection) ---
@@ -184,7 +184,7 @@ export function resetProjectionManager(rt: WidgetRuntime | null | undefined): vo
   if (pm && pm.map && pm.handler && typeof pm.map.off === 'function') {
     try { pm.map.off('style.load', pm.handler); } catch (_) {}
   }
-  try { rt._projectionMgr = null; } catch (_) {}
+  rt._projectionMgr = null;
 }
 
 function applyProjectionFromManager(pm: ProjectionManager | null | undefined): void {
@@ -194,9 +194,9 @@ function applyProjectionFromManager(pm: ProjectionManager | null | undefined): v
   if (!m || typeof m.setProjection !== 'function') {
     if (pm && !pm._warnedNoSetProjection) {
       pm._warnedNoSetProjection = true;
-      try { console.warn('[maplamina] map.setProjection is not available; falling back to mercator.'); } catch (_) {}
+      console.warn('[maplamina] map.setProjection is not available; falling back to mercator.');
     }
-    if (pm && !pm.ready) { pm.ready = true; try { pm.resolve && pm.resolve(); } catch (_) {} }
+    if (pm && !pm.ready) { pm.ready = true; pm.resolve && pm.resolve(); }
     return;
   }
 
@@ -205,11 +205,11 @@ function applyProjectionFromManager(pm: ProjectionManager | null | undefined): v
   } catch (e) {
     if (pm && !pm._warnedApplyFail) {
       pm._warnedApplyFail = true;
-      try { console.warn('[maplamina] Failed to apply projection:', desired, e); } catch (_) {}
+      console.warn('[maplamina] Failed to apply projection:', desired, e);
     }
   }
 
-  if (pm && !pm.ready) { pm.ready = true; try { pm.resolve && pm.resolve(); } catch (_) {} }
+  if (pm && !pm.ready) { pm.ready = true; pm.resolve && pm.resolve(); }
 }
 
 export function ensureMapProjection(
@@ -321,7 +321,7 @@ function getDeferredFitMgr(
   let mgr = host._mfDeferredFitMgr;
   if (!mgr || typeof mgr !== 'object') {
     mgr = { ro: null, pendingBbox: null, pendingDoFit: null, pendingHash: null, appliedHash: null, _timer: null, warnNoRO: false };
-    try { host._mfDeferredFitMgr = mgr; } catch (_) {}
+    host._mfDeferredFitMgr = mgr;
   }
   return mgr;
 }
@@ -359,7 +359,7 @@ function armDeferredFit(
       mgr.pendingHash = null;
 
       if (mgr.ro) { try { mgr.ro.disconnect(); } catch (_) {} mgr.ro = null; }
-      if (mgr._timer) { try { clearTimeout(mgr._timer); } catch (_) {} mgr._timer = null; }
+      if (mgr._timer) { clearTimeout(mgr._timer); mgr._timer = null; }
     }
   };
 
@@ -394,7 +394,7 @@ function armDeferredFit(
   // Fallback poll when ResizeObserver isn't available.
   if (!mgr.warnNoRO) {
     mgr.warnNoRO = true;
-    try { console.warn('[maplamina] ResizeObserver unavailable; using polling to apply fitBounds.'); } catch (_) {}
+    console.warn('[maplamina] ResizeObserver unavailable; using polling to apply fitBounds.');
   }
 
   const poll = (): void => {
@@ -414,7 +414,7 @@ export function clearDeferredFit(
   const mgr = peekDeferredFitMgr(el, rt);
   if (!mgr) return;
   if (mgr.ro) { try { mgr.ro.disconnect(); } catch (_) {} mgr.ro = null; }
-  if (mgr._timer) { try { clearTimeout(mgr._timer); } catch (_) {} mgr._timer = null; }
+  if (mgr._timer) { clearTimeout(mgr._timer); mgr._timer = null; }
   mgr.pendingBbox = null;
   mgr.pendingDoFit = null;
   mgr.pendingHash = null;
@@ -434,10 +434,8 @@ export function ensureMap(args: EnsureMapOptions): { map: MapLibreMap; lastFitHa
   let lastFitHash = a.lastFitHash || null;
 
   // If a deferred fit already ran, treat that as the effective last-fit hash.
-  try {
-    const mgr = peekDeferredFitMgr(el, rt);
-    if (mgr && mgr.appliedHash && !lastFitHash) lastFitHash = mgr.appliedHash;
-  } catch (_) {}
+  const mgr = peekDeferredFitMgr(el, rt);
+  if (mgr && mgr.appliedHash && !lastFitHash) lastFitHash = mgr.appliedHash;
 
   if (map) {
     if (doFit !== false && initialBbox) {

@@ -125,9 +125,9 @@ function clearRuntimeTransition(rt: WidgetRuntime, layerId: unknown, prop: strin
     const tok = (rt._transitionTokens && rt._transitionTokens.get) ? rt._transitionTokens.get(lid) : null;
     if (!tok || tok[p] !== token) return;
 
-    try { delete tok[p]; } catch (_) {}
+    delete tok[p];
     if (!Object.keys(tok).length) {
-      try { rt._transitionTokens!.delete(lid); } catch (_) {}
+      rt._transitionTokens!.delete(lid);
     }
 
     const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
@@ -161,7 +161,7 @@ export function disableRuntimeTransitions(rt: WidgetRuntime | null | undefined, 
       const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
       if (!t || typeof t !== 'object') continue;
 
-      try { rt._transitionTokens && rt._transitionTokens.delete && rt._transitionTokens.delete(lid); } catch (_) {}
+      rt._transitionTokens && rt._transitionTokens.delete && rt._transitionTokens.delete(lid);
 
       try {
         disableTransitionsForProps(t);

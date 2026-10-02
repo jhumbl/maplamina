@@ -89,7 +89,7 @@ function applyRenderPatch(
 
   function setField<K extends keyof RenderFields>(key: K, value: RenderFields[K] | null | undefined): void {
     if (value == null || value === false) {
-      try { delete render![key]; } catch (_) {}
+      delete render![key];
       return;
     }
     render![key] = value;
@@ -100,7 +100,7 @@ function applyRenderPatch(
   if (Object.prototype.hasOwnProperty.call(p, 'gpuMeta')) setField('gpuMeta', p.gpuMeta);
   if (Object.prototype.hasOwnProperty.call(p, 'forceHidden')) {
     if (p.forceHidden) render.forceHidden = true;
-    else try { delete render.forceHidden; } catch (_) {}
+    else delete render.forceHidden;
   }
 
   return st;

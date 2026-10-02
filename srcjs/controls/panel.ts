@@ -191,9 +191,9 @@ function applyBodyClasses(
   if (typeId) {
     cls.push(`ml-panel-${typeId}`);
     cls.push(`ml-panel-type-${typeId}`);
-    try { bodyEl.dataset.mfControlType = typeRaw; } catch (_) {}
+    bodyEl.dataset.mfControlType = typeRaw;
   } else {
-    try { delete bodyEl.dataset.mfControlType; } catch (_) {}
+    delete bodyEl.dataset.mfControlType;
   }
   bodyEl.className = cls.join(' ');
 }
@@ -278,7 +278,7 @@ export function update(
       try {
         updater(rec.mountEl, el, x, rt, gid, controlSpec, job);
       } catch (e) {
-        try { console.error(e); } catch (_) {}
+        console.error(e);
       }
     }
   }
@@ -459,7 +459,7 @@ export function sync(el: WidgetElement, x: Spec): void {
   } catch (_) {}
 
   // Expose mounted groups for update() calls.
-  try { el.__mlMountedControls = mountedNow; } catch (_) {}
+  el.__mlMountedControls = mountedNow;
 }
 
 export function clear(el: WidgetElement): void {
@@ -482,5 +482,5 @@ export function clear(el: WidgetElement): void {
     });
   } catch (_) {}
 
-  try { el.__mlMountedControls = {}; } catch (_) {}
+  el.__mlMountedControls = {};
 }

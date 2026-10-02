@@ -348,7 +348,7 @@ function normalizeLegendSpec(input: LegendsComponent): LegendCardSpec {
 
   const hasLegend = (input.legend && typeof input.legend === 'object');
   if (!hasLegend) {
-    try { console.warn('[maplamina][legends] invalid legend component (missing .legend object):', input); } catch (_) {}
+    console.warn('[maplamina][legends] invalid legend component (missing .legend object):', input);
     return {};
   }
 

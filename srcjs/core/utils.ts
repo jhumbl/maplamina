@@ -18,11 +18,9 @@ export function escapeHtml(s: unknown): string {
 }
 
 export function pushWarn(st: WarnTarget, msg: unknown): void {
-  try {
-    st.__warns = st.__warns || [];
-    if (!st.__warns.includes(String(msg))) st.__warns.push(String(msg)); // de-dupe
-    if (console && console.warn) console.warn(`[maplamina][${st.id}] ${msg}`);
-  } catch (_) {}
+  st.__warns = st.__warns || [];
+  if (!st.__warns.includes(String(msg))) st.__warns.push(String(msg)); // de-dupe
+  if (console && console.warn) console.warn(`[maplamina][${st.id}] ${msg}`);
 }
 
 export function assertTA(
@@ -127,7 +125,7 @@ export function formatNumber(value: number, digits?: number | null): string {
   const key = Math.max(0, Math.min(12, d));
   const nf = numberFormatter(key);
   if (nf && typeof nf.format === 'function') {
-    try { return nf.format(value); } catch (_) {}
+    return nf.format(value);
   }
   try { return Number(value).toFixed(key); } catch (_) { return String(value); }
 }

@@ -150,9 +150,7 @@ function schedAdd(set: Set<string>, ids: LayerIds | undefined, rt: WidgetRuntime
 
   // ids === true => all known runtime layer ids
   if (ids === true) {
-    try {
-      for (const k of rt.layers.keys()) set.add(k);
-    } catch (_) {}
+    for (const k of rt.layers.keys()) set.add(k);
     return;
   }
 
@@ -234,7 +232,7 @@ export function attach(rt: WidgetRuntime | null | undefined): void {
           if (typeof this._flushSnapshot === 'function') return this._flushSnapshot(job);
         })
         .then(() => { if (done && done.resolve) done.resolve(); })
-        .catch((e) => { if (done && done.reject) done.reject(e); try { console.error(e); } catch (_) {} });
+        .catch((e) => { if (done && done.reject) done.reject(e); console.error(e); });
     });
 
     return ensureSched(this).next!.promise;

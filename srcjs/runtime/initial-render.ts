@@ -50,13 +50,11 @@ function readInitialTransitions(
     if (typeof transitionsForBuild === 'function') return transitionsForBuild(rt, layerId);
   } catch (_) {}
 
-  try {
-    const lid = String(layerId || '');
-    const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
-      ? rt._layerTransitions.get(lid)
-      : null;
-    return (t && typeof t === 'object' && Object.keys(t).length) ? t : null;
-  } catch (_) {}
+  const lid = String(layerId || '');
+  const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
+    ? rt._layerTransitions.get(lid)
+    : null;
+  return (t && typeof t === 'object' && Object.keys(t).length) ? t : null;
 
   return null;
 }
@@ -94,22 +92,20 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
   assertV3Spec(x, 'runtimeInitialRender.renderInitial');
 
   rt._renderEpoch = (rt._renderEpoch || 0) + 1;
-  try { rt._viewsPrev = {}; } catch (_) {}
+  rt._viewsPrev = {};
 
-  try {
-    const s = rt._sched;
-    if (s && s.raf) { cancelAnimationFrame(s.raf); s.raf = null; }
-    if (s && s.layers && typeof s.layers.clear === 'function') s.layers.clear();
-    if (s && s.rehydrate && typeof s.rehydrate.clear === 'function') s.rehydrate.clear();
-    if (s && s.reasons && typeof s.reasons.clear === 'function') s.reasons.clear();
-    if (s) {
-      s.legends = false;
-      s.controls = false;
-      s.tooltip = false;
-      s.next = null;
-      s.chain = Promise.resolve();
-    }
-  } catch (_) {}
+  const s = rt._sched;
+  if (s && s.raf) { cancelAnimationFrame(s.raf); s.raf = null; }
+  if (s && s.layers && typeof s.layers.clear === 'function') s.layers.clear();
+  if (s && s.rehydrate && typeof s.rehydrate.clear === 'function') s.rehydrate.clear();
+  if (s && s.reasons && typeof s.reasons.clear === 'function') s.reasons.clear();
+  if (s) {
+    s.legends = false;
+    s.controls = false;
+    s.tooltip = false;
+    s.next = null;
+    s.chain = Promise.resolve();
+  }
 
   try {
     if (rt.pruneTasks && rt.pruneTasks.size) {
@@ -118,7 +114,7 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
     }
   } catch (_) {}
 
-  try { rt.layers && rt.layers.clear && rt.layers.clear(); } catch (_) {}
+  rt.layers && rt.layers.clear && rt.layers.clear();
   rt.specRef = x;
 
   try {

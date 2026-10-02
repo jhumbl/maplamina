@@ -164,22 +164,20 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
 
     let ctlType: string | null = null;
     let ctlDef: FilterControl | null = null;
-    try {
-      const gspec = getControlSpec(x, gid);
-      if (gspec && normText(gspec.type) === 'filters') {
-        const group = gspec as FiltersControl;
-        const defs = (group.controls && typeof group.controls === 'object') ? group.controls : null;
-        if (defs) {
-          ctlDef = (defs[lab] && typeof defs[lab] === 'object') ? defs[lab] : null;
-          if (!ctlDef) {
-            for (const k of Object.keys(defs)) {
-              if (normText(k) === lab) { ctlDef = defs[k]; break; }
-            }
+    const gspec = getControlSpec(x, gid);
+    if (gspec && normText(gspec.type) === 'filters') {
+      const group = gspec as FiltersControl;
+      const defs = (group.controls && typeof group.controls === 'object') ? group.controls : null;
+      if (defs) {
+        ctlDef = (defs[lab] && typeof defs[lab] === 'object') ? defs[lab] : null;
+        if (!ctlDef) {
+          for (const k of Object.keys(defs)) {
+            if (normText(k) === lab) { ctlDef = defs[k]; break; }
           }
-          ctlType = ctlDef && ctlDef.type ? normText(ctlDef.type) : null;
         }
+        ctlType = ctlDef && ctlDef.type ? normText(ctlDef.type) : null;
       }
-    } catch (_) {}
+    }
 
     let storeVal = val;
     if (ctlType === 'select') {
@@ -270,7 +268,7 @@ function attachPipelineAndScheduler(rt: WidgetRuntime, deps: PipelineDeps): void
     pipeline.attach(rt, deps);
     scheduler.attach(rt);
   } catch (e) {
-    try { console.error(e); } catch (_) {}
+    console.error(e);
   }
 }
 

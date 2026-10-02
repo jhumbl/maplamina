@@ -73,7 +73,7 @@ export function buildTransitionEntry(
 export function disableTransitionEntry(entry: TransitionEntry | number | null | undefined): TransitionEntry {
   const e = normEntry(entry);
   e.duration = 0;
-  try { delete e.onEnd; delete e.onInterrupt; } catch (_) {}
+  delete e.onEnd; delete e.onInterrupt;
   return e;
 }
 

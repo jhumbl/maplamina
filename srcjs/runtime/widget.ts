@@ -151,7 +151,7 @@ export function create(el: WidgetElement, width: number, height: number): Widget
 
       const projReady = ensureMapProjection(map, rt, desiredProjection);
       if (desiredProjection === 'globe') {
-        try { await projReady; } catch (_) {}
+        await projReady;
       }
 
       overlay = ensureOverlay({ el, map, overlay });
@@ -233,8 +233,8 @@ export function create(el: WidgetElement, width: number, height: number): Widget
 
       if (el.__mfRuntime) { el.__mfRuntime.layers?.clear?.(); el.__mfRuntime = null; }
       clearMemo();
-      try { el.__mfCtxCache?.layerBuildCache?.clear?.(); } catch (_) {}
-      try { delete el.__mfCtxCache; } catch (_) {}
+      el.__mfCtxCache?.layerBuildCache?.clear?.();
+      delete el.__mfCtxCache;
       currentLayers = [];
       lastFitHash = null;
     }
