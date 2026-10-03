@@ -4,6 +4,7 @@ import type { Spec, WireSpec } from '../../srcjs/core/spec-types';
 import circlesConstant from './spec-samples/circles-constant';
 import circlesPerFeature from './spec-samples/circles-per-feature';
 import empty from './spec-samples/empty';
+import filtersTwoLayers from './spec-samples/filters-two-layers';
 import iconsMarkers from './spec-samples/icons-markers';
 import legends from './spec-samples/legends';
 import lengthOne from './spec-samples/length-one';
@@ -19,6 +20,7 @@ const samples: Record<string, WireSpec> = {
   'icons-markers': iconsMarkers,
   legends,
   'length-one': lengthOne,
+  'filters-two-layers': filtersTwoLayers,
 };
 
 function normalise(wire: WireSpec): Spec {
