@@ -358,7 +358,7 @@ function armDeferredFit(
       mgr.pendingDoFit = null;
       mgr.pendingHash = null;
 
-      if (mgr.ro) { try { mgr.ro.disconnect(); } catch (_) {} mgr.ro = null; }
+      if (mgr.ro) { mgr.ro.disconnect(); mgr.ro = null; }
       if (mgr._timer) { clearTimeout(mgr._timer); mgr._timer = null; }
     }
   };
@@ -413,7 +413,7 @@ export function clearDeferredFit(
 ): void {
   const mgr = peekDeferredFitMgr(el, rt);
   if (!mgr) return;
-  if (mgr.ro) { try { mgr.ro.disconnect(); } catch (_) {} mgr.ro = null; }
+  if (mgr.ro) { mgr.ro.disconnect(); mgr.ro = null; }
   if (mgr._timer) { clearTimeout(mgr._timer); mgr._timer = null; }
   mgr.pendingBbox = null;
   mgr.pendingDoFit = null;

@@ -63,20 +63,18 @@ export function destroy(el: WidgetElement | null | undefined): void {
   let hud: HTMLElement | null = null;
   hud = el.__mfHudNode || null;
   if (!hud) {
-    try { hud = el.querySelector<HTMLElement>('.ml-hud'); } catch (_) {}
+    hud = el.querySelector<HTMLElement>('.ml-hud');
   }
 
   if (hud && hud.parentNode) {
-    try { hud.parentNode.removeChild(hud); } catch (_) {}
+    hud.parentNode.removeChild(hud);
   }
 
   el.__mfHudNode = null;
 
   // Best-effort: if the dock host exists and is now empty, remove it.
-  try {
-    const host = el.querySelector('.ml-hud-host');
-    if (host && host.parentNode && !host.querySelector('.ml-hud')) {
-      host.parentNode.removeChild(host);
-    }
-  } catch (_) {}
+  const host = el.querySelector('.ml-hud-host');
+  if (host && host.parentNode && !host.querySelector('.ml-hud')) {
+    host.parentNode.removeChild(host);
+  }
 }

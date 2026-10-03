@@ -557,29 +557,27 @@ export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec
 
   // Hide empty legend containers so control-group shells don't linger when all
   // member legends are hidden by when/view logic.
-  try {
-    const stacks = el.querySelectorAll('.ml-legend-stack');
-    stacks.forEach(stack => {
-      // Only auto-hide containers that actually contain legend cards.
-      const cards = stack.querySelectorAll<HTMLElement>(':scope > .ml-legend');
-      if (!cards || cards.length === 0) return;
+  const stacks = el.querySelectorAll('.ml-legend-stack');
+  stacks.forEach(stack => {
+    // Only auto-hide containers that actually contain legend cards.
+    const cards = stack.querySelectorAll<HTMLElement>(':scope > .ml-legend');
+    if (!cards || cards.length === 0) return;
 
-      let anyVisible = false;
-      cards.forEach(card => {
-        if (anyVisible) return;
-        if (card && card.style && card.style.display !== 'none') anyVisible = true;
-      });
-
-      // Prefer hiding the outer control shell (panel slot or standalone dock item).
-      const wrapper =
-        stack.closest<HTMLElement>('.ml-panel-slot') ||
-        stack.closest<HTMLElement>('[data-mf-control-kind="standalone"]') ||
-        stack.closest<HTMLElement>('.ml-legends-host') ||
-        (stack as HTMLElement);
-
-      if (!wrapper || !wrapper.style) return;
-      // Avoid forcing a specific display type; remove inline override when visible.
-      wrapper.style.display = anyVisible ? '' : 'none';
+    let anyVisible = false;
+    cards.forEach(card => {
+      if (anyVisible) return;
+      if (card && card.style && card.style.display !== 'none') anyVisible = true;
     });
-  } catch (_) {}
+
+    // Prefer hiding the outer control shell (panel slot or standalone dock item).
+    const wrapper =
+      stack.closest<HTMLElement>('.ml-panel-slot') ||
+      stack.closest<HTMLElement>('[data-mf-control-kind="standalone"]') ||
+      stack.closest<HTMLElement>('.ml-legends-host') ||
+      (stack as HTMLElement);
+
+    if (!wrapper || !wrapper.style) return;
+    // Avoid forcing a specific display type; remove inline override when visible.
+    wrapper.style.display = anyVisible ? '' : 'none';
+  });
 }

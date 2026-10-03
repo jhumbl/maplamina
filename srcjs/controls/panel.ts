@@ -55,10 +55,10 @@ function ensureTitleIconLink(panelEl: HTMLElement | null, panelSpec: Panel | nul
   // If no icon URL, remove any previously created elements.
   if (!iconUrl) {
     const existingLink = titleEl.querySelector('.ml-panel-title-link');
-    if (existingLink) { try { existingLink.remove(); } catch (_) {} }
+    if (existingLink) existingLink.remove();
     const strayIcon = titleEl.querySelector('.ml-panel-icon');
     if (strayIcon && (!strayIcon.closest || !strayIcon.closest('.ml-panel-title-link'))) {
-      try { strayIcon.remove(); } catch (_) {}
+      strayIcon.remove();
     }
     return;
   }
@@ -370,7 +370,7 @@ export function sync(el: WidgetElement, x: Spec): void {
       for (const slot of existingSlots) {
         if (!slot || !slot.id) continue;
         if (!seenSlots.has(slot.id)) {
-          try { slot.remove(); } catch (_) {}
+          slot.remove();
         }
       }
     }
@@ -416,15 +416,13 @@ export function sync(el: WidgetElement, x: Spec): void {
 
       // Standalone controls should be "bare": no bind-id title, no description,
       // and no slot wrapper (which would trigger divider chrome).
-      try {
-        const title = container.querySelector(':scope > .ml-panel-title');
-        if (title) title.remove();
-        const desc = container.querySelector(':scope > .ml-panel-description');
-        if (desc) desc.remove();
+      const title = container.querySelector(':scope > .ml-panel-title');
+      if (title) title.remove();
+      const desc = container.querySelector(':scope > .ml-panel-description');
+      if (desc) desc.remove();
 
-        const slots = container.querySelectorAll(':scope > .ml-panel-slot');
-        slots && slots.forEach(s => { try { s.remove(); } catch (_) {} });
-      } catch (_) {}
+      const slots = container.querySelectorAll(':scope > .ml-panel-slot');
+      slots && slots.forEach(s => { s.remove(); });
 
       // Mount directly into a single body node.
       let body = container.querySelector<HTMLElement>(':scope > .ml-panel-slot-body');
@@ -446,17 +444,15 @@ export function sync(el: WidgetElement, x: Spec): void {
   }
 
   // Remove stale standalone nodes in the DOM (fallback path)
-  try {
-    const nodes = el.querySelectorAll<HTMLElement>('[data-mf-control-kind="standalone"]');
-    nodes && nodes.forEach(n => {
-      const gid = n.dataset.mfControlGroup;
-      if (!gid) return;
-      if (!standaloneGroups.includes(gid)) {
-        try { removeStandaloneAllCorners(el, gid); } catch (_) {}
-        try { n.remove(); } catch (_) {}
-      }
-    });
-  } catch (_) {}
+  const nodes = el.querySelectorAll<HTMLElement>('[data-mf-control-kind="standalone"]');
+  nodes && nodes.forEach(n => {
+    const gid = n.dataset.mfControlGroup;
+    if (!gid) return;
+    if (!standaloneGroups.includes(gid)) {
+      try { removeStandaloneAllCorners(el, gid); } catch (_) {}
+      n.remove();
+    }
+  });
 
   // Expose mounted groups for update() calls.
   el.__mlMountedControls = mountedNow;
@@ -469,18 +465,16 @@ export function clear(el: WidgetElement): void {
   }
 
   // Remove standalone hosts (best-effort via attributes)
-  try {
-    const nodes = el.querySelectorAll<HTMLElement>('[data-mf-control-kind="standalone"]');
-    nodes && nodes.forEach(n => {
-      const gid = n.dataset.mfControlGroup;
-      if (gid) {
-        for (const corner of ['topleft','topright','bottomright','bottomleft']) {
-          try { removeStandaloneGroup(el, gid, { corner }); } catch (_) {}
-        }
+  const nodes = el.querySelectorAll<HTMLElement>('[data-mf-control-kind="standalone"]');
+  nodes && nodes.forEach(n => {
+    const gid = n.dataset.mfControlGroup;
+    if (gid) {
+      for (const corner of ['topleft','topright','bottomright','bottomleft']) {
+        try { removeStandaloneGroup(el, gid, { corner }); } catch (_) {}
       }
-      try { n.remove(); } catch (_) {}
-    });
-  } catch (_) {}
+    }
+    n.remove();
+  });
 
   el.__mlMountedControls = {};
 }

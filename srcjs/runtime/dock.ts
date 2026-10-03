@@ -84,14 +84,12 @@ function ensureGroup(el: WidgetElement, pos: unknown): HTMLElement | null {
   }
 
   // Even if it already exists, ensure it stays in the intended spot.
-  try {
-    const isBottom = p === 'bottomleft' || p === 'bottomright';
-    if (isBottom) {
-      if (corner.firstChild !== group) corner.insertBefore(group, corner.firstChild);
-    } else {
-      if (corner.lastChild !== group) corner.appendChild(group);
-    }
-  } catch (_) {}
+  const isBottom = p === 'bottomleft' || p === 'bottomright';
+  if (isBottom) {
+    if (corner.firstChild !== group) corner.insertBefore(group, corner.firstChild);
+  } else {
+    if (corner.lastChild !== group) corner.appendChild(group);
+  }
 
   st.groups.set(p, group);
   return group;
@@ -160,7 +158,7 @@ export function removeItem(el: WidgetElement, pos: unknown, key: unknown): void 
   const item = container.querySelector(`[data-mf-dock-pos="${p}"][data-mf-dock-item="${k}"]`);
   if (item) {
     try { item.remove(); } catch (_) {
-      try { item.parentNode && item.parentNode.removeChild(item); } catch (_) {}
+      item.parentNode && item.parentNode.removeChild(item);
     }
   }
 
@@ -170,7 +168,7 @@ export function removeItem(el: WidgetElement, pos: unknown, key: unknown): void 
     const hasItems = Array.from(g.children as HTMLCollectionOf<HTMLElement>)
       .some(n => n && n.dataset && n.dataset.mfDockItem);
     if (!hasItems) {
-      try { g.remove(); } catch (_) {}
+      g.remove();
       getState(el).groups.delete(p);
     }
   }
@@ -182,7 +180,7 @@ export function destroy(el: WidgetElement | null | undefined): void {
   if (container && container.querySelectorAll) {
     const groups = container.querySelectorAll('[data-mf-dock-group]');
     groups.forEach(n => {
-      try { n.remove(); } catch (_) {}
+      n.remove();
     });
   }
 

@@ -91,12 +91,10 @@ function __findMapWidgetContainer(el: WidgetElement | null | undefined): WidgetE
   if (typeof el.__mfGetMap === 'function') return el;
 
   // MapLibre attaches .maplibregl-map to the widget container
-  try {
-    if (typeof el.closest === 'function') {
-      const c = el.closest<WidgetElement>('.maplibregl-map');
-      if (c && typeof c.__mfGetMap === 'function') return c;
-    }
-  } catch (_) {}
+  if (typeof el.closest === 'function') {
+    const c = el.closest<WidgetElement>('.maplibregl-map');
+    if (c && typeof c.__mfGetMap === 'function') return c;
+  }
 
   // Walk up DOM as a last resort (supports atypical container nesting)
   let p: WidgetElement | null = el.parentElement;

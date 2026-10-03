@@ -112,8 +112,8 @@ export function mount(container: HTMLElement, opts: RangeSliderOptions): RangeSl
 
   function endDrag(): void {
     if (pointerId != null) {
-      try { thLo.releasePointerCapture?.(pointerId); } catch(_) {}
-      try { thHi.releasePointerCapture?.(pointerId); } catch(_) {}
+      if (thLo.hasPointerCapture?.(pointerId)) thLo.releasePointerCapture?.(pointerId);
+      if (thHi.hasPointerCapture?.(pointerId)) thHi.releasePointerCapture?.(pointerId);
     }
     pointerId = null;
     wrap.classList.remove('ml-rngs--dragging');

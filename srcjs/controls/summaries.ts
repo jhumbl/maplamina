@@ -471,14 +471,12 @@ async function updateAsync(
   // Build missing node index if needed
   if (!local.nodes || typeof local.nodes.get !== 'function' || !local.nodes.size) {
     local.nodes = new Map();
-    try {
-      const nodes = mountEl.querySelectorAll<HTMLElement>('.ml-summary-row');
-      nodes && nodes.forEach(r => {
-        const label = normText(r.dataset.mfSummaryLabel);
-        const v = r.querySelector<HTMLElement>('.ml-summary-value');
-        if (label && v) local.nodes.set(label, v);
-      });
-    } catch (_) {}
+    const nodes = mountEl.querySelectorAll<HTMLElement>('.ml-summary-row');
+    nodes && nodes.forEach(r => {
+      const label = normText(r.dataset.mfSummaryLabel);
+      const v = r.querySelector<HTMLElement>('.ml-summary-value');
+      if (label && v) local.nodes.set(label, v);
+    });
   }
 
   // Cache per-layer masks within this update
