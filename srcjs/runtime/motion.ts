@@ -1,4 +1,4 @@
-import type { TransitionEntry, TransitionsMap } from '../core/layer-state';
+import type { TransitionsMap } from '../core/layer-state';
 import type { LayerType } from '../core/spec-types';
 import { isArray, isFiniteNumber, normText } from '../core/utils';
 import type { WidgetRuntime } from '../core/widget';
@@ -8,7 +8,6 @@ import {
   buildTransitionEntry,
   disableTransitionEntry,
   disableTransitionsForProps,
-  parseEasingKey,
   primeTransitionsForProps
 } from './transitions';
 import type { MotionInput } from './transitions';
@@ -32,10 +31,7 @@ function deckPropsTouchedByEncodingPatch(
   layerType: LayerType | null | undefined,
   encPatch: object | null | undefined
 ): string[] {
-  try {
-    return propsTouchedByPatch(layerType, encPatch) || [];
-  } catch (_) {}
-  return [];
+  return propsTouchedByPatch(layerType, encPatch) || [];
 }
 
 function normalizeReason(reason: unknown): string | null {
@@ -117,57 +113,46 @@ function nextTransitionToken(rt: WidgetRuntime | null | undefined): number {
 }
 
 function clearRuntimeTransition(rt: WidgetRuntime, layerId: unknown, prop: string, token: number): void {
-  try {
-    const lid = normText(layerId);
-    const p = String(prop || '');
-    if (!lid || !p) return;
+  const lid = normText(layerId);
+  const p = String(prop || '');
+  if (!lid || !p) return;
 
-    const tok = (rt._transitionTokens && rt._transitionTokens.get) ? rt._transitionTokens.get(lid) : null;
-    if (!tok || tok[p] !== token) return;
+  const tok = (rt._transitionTokens && rt._transitionTokens.get) ? rt._transitionTokens.get(lid) : null;
+  if (!tok || tok[p] !== token) return;
 
-    delete tok[p];
-    if (!Object.keys(tok).length) {
-      rt._transitionTokens!.delete(lid);
-    }
+  delete tok[p];
+  if (!Object.keys(tok).length) {
+    rt._transitionTokens!.delete(lid);
+  }
 
-    const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
-    if (!t || !Object.prototype.hasOwnProperty.call(t, p)) return;
+  const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
+  if (!t || !Object.prototype.hasOwnProperty.call(t, p)) return;
 
-    const prev = t[p];
-    const prevDur =
-      (prev && typeof prev === 'object' && Number.isFinite(+prev.duration!)) ? +prev.duration!
-      : (isFiniteNumber(prev) ? +prev : 0);
-    const prevHadCb = !!(prev && typeof prev === 'object' && (typeof prev.onEnd === 'function' || typeof prev.onInterrupt === 'function'));
-    const alreadyDisabled = (prevDur <= 0) && !prevHadCb;
+  const prev = t[p];
+  const prevDur =
+    (prev && typeof prev === 'object' && Number.isFinite(+prev.duration!)) ? +prev.duration!
+    : (isFiniteNumber(prev) ? +prev : 0);
+  const prevHadCb = !!(prev && typeof prev === 'object' && (typeof prev.onEnd === 'function' || typeof prev.onInterrupt === 'function'));
+  const alreadyDisabled = (prevDur <= 0) && !prevHadCb;
 
-    if (!alreadyDisabled) {
-      let disabled: TransitionEntry | null = null;
-      try {
-        disabled = disableTransitionEntry(prev);
-      } catch (_) {}
-      if (!disabled) disabled = { duration: 0 };
-      t[p] = disabled;
-    }
-  } catch (_) {}
+  if (!alreadyDisabled) {
+    t[p] = disableTransitionEntry(prev);
+  }
 }
 
 export function disableRuntimeTransitions(rt: WidgetRuntime | null | undefined, layerIds: LayerIds): void {
-  try {
-    if (!rt) return;
-    const ids = isArray(layerIds) ? layerIds : (layerIds ? [layerIds] : []);
-    for (const raw of ids) {
-      const lid = normText(raw);
-      if (!lid) continue;
-      const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
-      if (!t || typeof t !== 'object') continue;
+  if (!rt) return;
+  const ids = isArray(layerIds) ? layerIds : (layerIds ? [layerIds] : []);
+  for (const raw of ids) {
+    const lid = normText(raw);
+    if (!lid) continue;
+    const t = (rt._layerTransitions && rt._layerTransitions.get) ? rt._layerTransitions.get(lid) : null;
+    if (!t || typeof t !== 'object') continue;
 
-      rt._transitionTokens && rt._transitionTokens.delete && rt._transitionTokens.delete(lid);
+    rt._transitionTokens && rt._transitionTokens.delete && rt._transitionTokens.delete(lid);
 
-      try {
-        disableTransitionsForProps(t);
-      } catch (_) {}
-    }
-  } catch (_) {}
+    disableTransitionsForProps(t);
+  }
 }
 
 export function primeRuntimeTransitions(
@@ -182,26 +167,7 @@ export function primeRuntimeTransitions(
   const t = ensureLayerTransitions(rt, layerId);
   if (!t) return;
 
-  try {
-    primeTransitionsForProps(t, touched, null);
-    return;
-  } catch (_) {}
-
-  for (const p of touched) {
-    const prev = t[p];
-    const prevDur = (prev && typeof prev === 'object' && Number.isFinite(+prev.duration!)) ? +prev.duration!
-                  : (isFiniteNumber(prev) ? +prev : 0);
-    if (prevDur > 0) continue;
-    if (prev && typeof prev === 'object') {
-      let disabled: TransitionEntry | null = null;
-      try {
-        disabled = disableTransitionEntry(prev);
-      } catch (_) {}
-      t[p] = disabled || { duration: 0 };
-      continue;
-    }
-    t[p] = { duration: 0 };
-  }
+  primeTransitionsForProps(t, touched, null);
 }
 
 export function injectMotionTransitions(
@@ -235,18 +201,7 @@ export function injectMotionTransitions(
     const onEnd = (): void => clearRuntimeTransition(rt, layerId, p, token);
     const onInterrupt = (): void => clearRuntimeTransition(rt, layerId, p, token);
 
-    let entry: TransitionEntry | null = null;
-    try {
-      entry = buildTransitionEntry({ duration, easing: easingKey }, { onEnd, onInterrupt });
-    } catch (_) {}
-
-    if (!entry) {
-      let easing: ReturnType<typeof parseEasingKey> | null = null;
-      try { easing = parseEasingKey(easingKey); } catch (_) {}
-      entry = Object.assign({ duration, onEnd, onInterrupt }, (typeof easing === 'function') ? { easing } : null);
-    }
-
-    t[p] = entry;
+    t[p] = buildTransitionEntry({ duration, easing: easingKey }, { onEnd, onInterrupt });
   }
 }
 

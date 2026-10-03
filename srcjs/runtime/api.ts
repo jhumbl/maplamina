@@ -281,9 +281,7 @@ export function ensureRuntime(el: WidgetElement | null | undefined, deps?: Runti
     rt._mfApiDeps = depObj;
     if (typeof depObj.buildLayer === 'function') rt.buildLayer = depObj.buildLayer;
 
-    try {
-      motion.attach(rt);
-    } catch (_) {}
+    motion.attach(rt);
 
     attachPipelineAndScheduler(rt, depObj.pipelineDeps || depObj);
     attachRuntimeMethods(rt);
@@ -299,9 +297,7 @@ export function ensureRuntime(el: WidgetElement | null | undefined, deps?: Runti
     _mfApiDeps: depObj
   };
 
-  try {
-    motion.attach(rt);
-  } catch (_) {}
+  motion.attach(rt);
 
   if (typeof depObj.buildLayer === 'function') rt.buildLayer = depObj.buildLayer;
 

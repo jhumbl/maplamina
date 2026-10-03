@@ -46,16 +46,7 @@ function readInitialTransitions(
   layerId: string,
   transitionsForBuild: typeof motion.transitionsForBuild
 ): TransitionsMap | null {
-  try {
-    if (typeof transitionsForBuild === 'function') return transitionsForBuild(rt, layerId);
-  } catch (_) {}
-
-  const lid = String(layerId || '');
-  const t = (rt && rt._layerTransitions && typeof rt._layerTransitions.get === 'function')
-    ? rt._layerTransitions.get(lid)
-    : null;
-  return (t && typeof t === 'object' && Object.keys(t).length) ? t : null;
-
+  if (typeof transitionsForBuild === 'function') return transitionsForBuild(rt, layerId);
   return null;
 }
 
