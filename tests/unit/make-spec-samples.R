@@ -166,3 +166,24 @@ maplamina() |>
   add_circles(pts_b, id = "b") |>
   add_filters(filter_select(~g), filter_range(~v), bind = "filters") |>
   save("filters-two-layers")
+
+# Two layers under one set of summaries, NA in both columns; a range on the first only.
+pts_na <- data.frame(lon = c(-0.02, 0, 0.02), lat = c(51.5, 51.5, 51.5), v = c(-1, NA, 1))
+pts_nb <- data.frame(lon = c(0.04, 0.05), lat = c(51.5, 51.5), v = c(2, NA))
+maplamina() |>
+  add_circles(pts_na, id = "a") |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(
+    summary_count(label = "n"), summary_count(~v, label = "known"), summary_sum(~v, label = "sum"),
+    summary_mean(~v, label = "mean", digits = 2), summary_min(~v, label = "min"),
+    summary_max(~v, label = "max"),
+    bind = "summaries"
+  ) |>
+  add_circles(pts_nb, id = "b") |>
+  add_summaries(
+    summary_count(label = "n"), summary_count(~v, label = "known"), summary_sum(~v, label = "sum"),
+    summary_mean(~v, label = "mean", digits = 2), summary_min(~v, label = "min"),
+    summary_max(~v, label = "max"),
+    bind = "summaries"
+  ) |>
+  save("summaries-na")
