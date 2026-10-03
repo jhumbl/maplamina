@@ -118,4 +118,127 @@ describe('control group order', () => {
     const x = normalise(legends);
     expect(spec.getControlGroupIdsOrdered(x)).toEqual(Object.keys(x['.__controls']));
   });
+
+  // R emits section ids that are control group keys; these three shapes are written by hand.
+  it('skips a section naming no group, and a group named twice comes once', () => {
+    const x = broken((s) => {
+      s['.__panel'].sections = [{ id: 'nope' }, { id: 'summaries' }, { id: 'summaries' }];
+    }) as Spec;
+    expect(spec.getControlGroupIdsOrdered(x)).toEqual(['summaries', 'views', 'filters']);
+  });
+
+  it('matches a section id after trimming', () => {
+    const x = broken((s) => {
+      s['.__panel'].sections = [{ id: ' filters ' }];
+    }) as Spec;
+    expect(spec.getControlGroupIdsOrdered(x)).toEqual(['filters', 'views', 'summaries']);
+  });
+
+  it('lists the groups of one type in that order', () => {
+    const x = broken((s) => {
+      s['.__controls'].filters2 = structuredClone(s['.__controls'].filters);
+      s['.__panel'].sections = [{ id: 'filters2' }, { id: 'views' }];
+    }) as Spec;
+    const groups = spec.getControlGroupsByType(x, 'filters');
+    expect(groups.map((g) => g.groupId)).toEqual(['filters2', 'filters']);
+    expect(groups[1].spec).toBe(x['.__controls'].filters);
+    expect(spec.getControlGroupsByType(x, 'legends')).toEqual([]);
+  });
+});
+
+describe('control and panel lookup', () => {
+  it('finds a control group by id, trimmed, and gives null for an absent one', () => {
+    const x = normalise(polygonsComponents);
+    expect(spec.getControlSpec(x, 'views')).toBe(x['.__controls'].views);
+    expect(spec.getControlSpec(x, ' views ')).toBe(x['.__controls'].views);
+    expect(spec.getControlSpec(x, 'nope')).toBeNull();
+    expect(spec.getControlSpec(x, null)).toBeNull();
+  });
+
+  it('gives the panel, or null when the spec has none', () => {
+    const x = normalise(polygonsComponents);
+    expect(spec.getPanelSpec(x)).toBe(x['.__panel']);
+    expect(spec.getPanelSpec(normalise(legends))).toBeNull();
+  });
+});
+
+describe('normalizeSpec', () => {
+  it('replaces the empty top-level lists of a map with no layers and keeps its empty buckets', () => {
+    expect(empty['.__layers']).toEqual([]);
+    expect(empty['.__controls']).toEqual([]);
+    const x = normalise(empty);
+    expect(x['.__layers']).toEqual({});
+    expect(x['.__components'].select).toEqual([]);
+    expect(x['.__controls']).toEqual({});
+  });
+
+  it('keeps the containers a spec already has', () => {
+    const wire = structuredClone(polygonsComponents) as WireSpec;
+    const layers = wire['.__layers'];
+    const controls = wire['.__controls'];
+    spec.normalizeSpec(wire);
+    expect(wire['.__layers']).toBe(layers);
+    expect(wire['.__controls']).toBe(controls);
+  });
+
+  it('leaves an object with no spec keys alone', () => {
+    const o = { a: 1 };
+    spec.normalizeSpec(o);
+    expect(o).toEqual({ a: 1 });
+  });
+});
+
+describe('keyed lists and option objects', () => {
+  it('wireMap reads an empty list as no keys', () => {
+    expect(Object.keys(spec.wireMap([]))).toEqual([]);
+    expect(spec.wireMap(null)).toEqual({});
+    const selects = normalise(polygonsComponents)['.__components'].select;
+    expect(spec.wireMap(selects)).toBe(selects);
+  });
+
+  it('normPlainObject keeps an object and replaces anything else', () => {
+    const o = { showCompass: false };
+    expect(spec.normPlainObject(o)).toBe(o);
+    expect(spec.normPlainObject([])).toEqual({});
+    expect(spec.normPlainObject(null)).toEqual({});
+    expect(spec.normPlainObject('x')).toEqual({});
+  });
+
+  it('stableStringify does not depend on key order', () => {
+    const a = { unit: 'metric', maxWidth: 80, nested: { b: [1, 'x', true], a: null } };
+    const b = { nested: { a: null, b: [1, 'x', true] }, maxWidth: 80, unit: 'metric' };
+    expect(spec.stableStringify(a)).toBe(spec.stableStringify(b));
+    expect(spec.stableStringify(a)).toBe('{"maxWidth":80,"nested":{"a":null,"b":[1,"x",true]},"unit":"metric"}');
+    expect(spec.stableStringify({ maxWidth: 81, unit: 'metric' })).not.toBe(spec.stableStringify({ maxWidth: 80, unit: 'metric' }));
+  });
+
+  it('stableStringify writes a missing or non-finite value as null', () => {
+    expect(spec.stableStringify(undefined)).toBe('null');
+    expect(spec.stableStringify(NaN)).toBe('null');
+    expect(spec.stableStringify({})).toBe('{}');
+  });
+});
+
+describe('bounds', () => {
+  it('is the layer bbox for one layer', () => {
+    const x = normalise(polygonsComponents);
+    const [x0, y0, x1, y1] = x['.__layers'].polygon1.bbox;
+    expect(spec.unionBboxFromSpec(x)).toEqual([[x0, y0], [x1, y1]]);
+  });
+
+  it('is the union over layers', () => {
+    const x = normalise(iconsMarkers);
+    const ids = Object.keys(x['.__layers']);
+    expect(ids.length).toBe(2);
+    const [x0, y0, x1, y1] = x['.__layers'][ids[0]].bbox;
+    const moved = structuredClone(x) as any;
+    moved['.__layers'][ids[1]].bbox = [x0 - 1, y0 + 0.001, x1 - 1, y1 + 2];
+    expect(spec.unionBboxFromSpec(moved)).toEqual([[x0 - 1, y0], [x1, y1 + 2]]);
+  });
+
+  it('is null with no layers, and hashes to an empty string', () => {
+    expect(spec.unionBboxFromSpec(normalise(empty))).toBeNull();
+    expect(spec.hashBbox(null)).toBe('');
+    expect(spec.hashBbox([[-1, 2], [3.5, 4]])).toBe('-1,2,3.5,4');
+  });
 });
