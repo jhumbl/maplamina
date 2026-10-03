@@ -7,9 +7,7 @@ export function depUrl(x: string): string;
 export function depUrl(x: unknown): unknown;
 export function depUrl(x: unknown): unknown {
   if (typeof x === "string") return x;
-  const o = x as { href?: string | { data?: unknown }; data?: unknown } | null | undefined;
-  if (o && typeof o === "object" && typeof o.href === "string") return o.href;
-  if (o && o.href && typeof o.href === "object" && typeof o.href.data === "string") return o.href.data;
+  const o = x as { data?: unknown } | null | undefined;
   if (o && typeof o.data === "string") return o.data;
   return x;
 }

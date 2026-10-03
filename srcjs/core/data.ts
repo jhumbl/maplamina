@@ -171,12 +171,6 @@ async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
 
     if (src.array && ArrayBuffer.isView(src.array)) return;
 
-    if (Array.isArray(src.values)) {
-      src.array = toTypedArray(src.values, dtype);
-      delete src.values;
-      return;
-    }
-
     if (hasRef(src)) {
       const o = await resolveRefOrHref(st, src);
       if (!o) return;
@@ -192,7 +186,7 @@ async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
       return;
     }
 
-    const d = await resolveRefOrHref(st, obj.dict_rgba || obj.dict);
+    const d = await resolveRefOrHref(st, obj.dict_rgba);
     const c = await resolveRefOrHref(st, obj.codes);
     obj.dict_array  = obj.dict_array  || (d && (isTA(d.array) ? d.array : new Uint8Array(d.array)));
     obj.codes_array = obj.codes_array || (c && (isTA(c.array) ? c.array : new Uint32Array(c.array)));
@@ -218,10 +212,6 @@ async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
   ): Promise<void> {
     const e = base[name];
     if (!e) return;
-    if (e.value && isTA(e.value)) {
-      e.value_array = e.value;
-      return;
-    }
     if (e.value_array && ArrayBuffer.isView(e.value_array)) return;
     if (e.value == null || typeof e.value !== 'object') return;
     const o = await resolveRefOrHref(st, e.value);
@@ -239,7 +229,7 @@ async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
   async function hydrateBaseColor(name: ColorEncodingKey): Promise<void> {
     const e = base[name];
     if (!e || e.encoding !== 'dict') return;
-    const d = await resolveRefOrHref(st, e.dict_rgba || e.dict);
+    const d = await resolveRefOrHref(st, e.dict_rgba);
     const c = await resolveRefOrHref(st, e.codes);
     e.dict_array  = toTypedArray(d && d.array, 'u8');
     e.codes_array = toTypedArray(c && c.array, 'u32');

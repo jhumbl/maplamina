@@ -5,13 +5,6 @@ export type Bounds = [[number, number], [number, number]];
 
 type Dict = Record<string, unknown>;
 
-interface BboxObject {
-  readonly xmin: unknown;
-  readonly ymin: unknown;
-  readonly xmax: unknown;
-  readonly ymax: unknown;
-}
-
 // --- bbox utils (abs lon/lat coming from R) ---
 export function unionBboxFromSpec(x: Spec): Bounds | null {
   const specs = x && x['.__layers'] || {};
@@ -24,13 +17,6 @@ export function unionBboxFromSpec(x: Spec): Bounds | null {
     if (Array.isArray(b) && b.length === 4) {
       const [x0, y0, x1, y1]: unknown[] = b;
       if (isFiniteNumber(x0) && isFiniteNumber(y0) && isFiniteNumber(x1) && isFiniteNumber(y1)) {
-        if (x0 < minX) minX = x0; if (y0 < minY) minY = y0;
-        if (x1 > maxX) maxX = x1; if (y1 > maxY) maxY = y1;
-      }
-    } else if (b && typeof b === 'object') {
-      const o = b as BboxObject;
-      const x0 = +(o.xmin as number), y0 = +(o.ymin as number), x1 = +(o.xmax as number), y1 = +(o.ymax as number);
-      if (Number.isFinite(x0) && Number.isFinite(y0) && Number.isFinite(x1) && Number.isFinite(y1)) {
         if (x0 < minX) minX = x0; if (y0 < minY) minY = y0;
         if (x1 > maxX) maxX = x1; if (y1 > maxY) maxY = y1;
       }

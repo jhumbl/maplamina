@@ -95,7 +95,7 @@ export interface DataColumnsState {
 }
 
 export interface NumericEncodingState {
-  value?: number | RefNode | TypedArray | null;
+  value?: number | RefNode | null;
   value_array?: TypedArray | null;
 }
 

@@ -30,9 +30,9 @@ interface PolygonBucket {
 export function buildPolygonLayer(st: LayerState, ctx: BuildContext): PolygonLayer | null {
   const P: Partial<PolygonColumnState> = st?.data_columns?.polygon || {};
 
-  const positions    = P.positions_array || (P.positions && P.positions.array);
-  const ringStarts   = P.ring_starts_array || (P.ring_starts && P.ring_starts.array);
-  const polyStarts   = P.poly_starts_array || (P.poly_starts && P.poly_starts.array);
+  const positions    = P.positions_array;
+  const ringStarts   = P.ring_starts_array;
+  const polyStarts   = P.poly_starts_array;
   const positionSize = P.size || 2;
 
   const okPos = assertTA(st, positions,  'polygon.positions_array',   'skip');
