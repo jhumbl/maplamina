@@ -23,15 +23,9 @@ export type LayerParameters = LayerProps['parameters'];
 
 type UpdateTriggers = Record<string, unknown>;
 
-interface SubLayerPatch {
-  updateTriggers?: UpdateTriggers;
-  transitions?: TransitionsMap;
-}
-
 // What composeLayerProps() sets on top of the props a builder supplies.
 export type ComposedProps = LayerProps & DataFilterExtensionProps & {
   updateTriggers: UpdateTriggers;
-  subLayerProps?: Record<string, SubLayerPatch>;
 };
 
 // An encoding as the update triggers read it, numeric or colour.
@@ -219,37 +213,6 @@ export function deckPropsTouchedByEncodingPatch(
   return Array.from(out);
 }
 
-function ensurePolygonSubLayerProps(st: LayerState, props: ComposedProps): void {
-  if (!st || st.type !== 'polygon') return;
-
-  const slp = props.subLayerProps || (props.subLayerProps = {});
-  const fill = slp['polygon-fill'] || (slp['polygon-fill'] = {});
-  const stroke = slp['polygon-stroke'] || (slp['polygon-stroke'] = {});
-
-  const ut = props.updateTriggers || {};
-  const tr = props.transitions || {};
-
-  fill.updateTriggers = Object.assign({}, fill.updateTriggers || {}, {
-    ...(ut.getFillColor ? { getFillColor: ut.getFillColor } : null)
-  });
-  if (tr.getFillColor) {
-    fill.transitions = Object.assign({}, fill.transitions || {}, {
-      getFillColor: tr.getFillColor
-    });
-  }
-
-  stroke.updateTriggers = Object.assign({}, stroke.updateTriggers || {}, {
-    ...(ut.getLineColor ? { getColor: ut.getLineColor } : null),
-    ...(ut.getLineWidth ? { getWidth: ut.getLineWidth } : null)
-  });
-  if (tr.getLineColor || tr.getLineWidth) {
-    stroke.transitions = Object.assign({}, stroke.transitions || {}, {
-      ...(tr.getLineColor ? { getColor: tr.getLineColor } : null),
-      ...(tr.getLineWidth ? { getWidth: tr.getLineWidth } : null)
-    });
-  }
-}
-
 // deck normalises the viewport longitude into [-180, 180); an offsets origin near the
 // dateline is moved to the world copy nearest the viewport so its deltas stay in view.
 export function originNearView(
@@ -301,8 +264,6 @@ export function composeLayerProps<P extends object>(
       props.transitions = Object.assign({}, props.transitions || {}, warmed);
     }
   }
-
-  ensurePolygonSubLayerProps(st, props);
 
   try {
     prime(st);
