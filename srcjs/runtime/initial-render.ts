@@ -107,21 +107,17 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
     s.chain = Promise.resolve();
   }
 
-  try {
-    if (rt.pruneTasks && rt.pruneTasks.size) {
-      for (const id of rt.pruneTasks) cancelIdlePrune(id);
-      rt.pruneTasks.clear();
-    }
-  } catch (_) {}
+  if (rt.pruneTasks && rt.pruneTasks.size) {
+    for (const id of rt.pruneTasks) cancelIdlePrune(id);
+    rt.pruneTasks.clear();
+  }
 
   rt.layers && rt.layers.clear && rt.layers.clear();
   rt.specRef = x;
 
-  try {
-    if (mfRuntimeMap && typeof mfRuntimeMap.applyMapLibreControls === 'function') {
-      mfRuntimeMap.applyMapLibreControls(map, x, rt);
-    }
-  } catch (_) {}
+  if (mfRuntimeMap && typeof mfRuntimeMap.applyMapLibreControls === 'function') {
+    mfRuntimeMap.applyMapLibreControls(map, x, rt);
+  }
 
   const t0 = (opts.t0 != null) ? opts.t0 : now();
   const activeViews = (typeof pickActiveViews === 'function') ? pickActiveViews(rt, x) : {};

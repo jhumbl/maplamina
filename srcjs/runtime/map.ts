@@ -241,7 +241,7 @@ export function ensureMapProjection(
     next.promise = new Promise((resolve) => { next.resolve = resolve; });
 
     next.handler = () => {
-      try { applyProjectionFromManager(next); } catch (_) {}
+      applyProjectionFromManager(next);
     };
 
     rt._projectionMgr = next;
@@ -371,7 +371,7 @@ function armDeferredFit(
 
   if (typeof ResizeObserver === 'function') {
     try {
-      mgr.ro = new ResizeObserver(() => { try { attempt(); } catch (_) {} });
+      mgr.ro = new ResizeObserver(() => { attempt(); });
       mgr.ro.observe(el);
     } catch (_) {
       mgr.ro = null;

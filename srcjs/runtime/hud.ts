@@ -14,9 +14,7 @@ export function ensureParts(el: WidgetElement | null | undefined): HudParts | nu
   if (!el) return null;
 
   let host: HTMLElement | null = null;
-  try {
-    host = ensureItem(el, 'bottomright', 'hud', { className: 'ml-hud-host', order: 90 });
-  } catch (_) {}
+  host = ensureItem(el, 'bottomright', 'hud', { className: 'ml-hud-host', order: 90 });
 
   const mount = host || el;
 

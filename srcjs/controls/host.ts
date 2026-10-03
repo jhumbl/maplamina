@@ -25,7 +25,7 @@ function ensureDockItem(
 }
 
 function removeDockItem(el: HTMLElement, corner: string, key: string): void {
-  try { removeItem(el, corner, key); } catch (_) {}
+  removeItem(el, corner, key);
 }
 
 function standaloneKey(groupId: string): string {

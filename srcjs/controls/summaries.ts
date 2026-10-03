@@ -211,12 +211,10 @@ export function render(
 
   // If a runtime is present, do an immediate best-effort update.
   // (Pipeline will also call update() on the next scheduled flush.)
-  try {
-    const rt = el && el.__mfRuntime;
-    if (rt) {
-      update(mountEl, el, x, rt, gid, summaries, { reason: 'mount' });
-    }
-  } catch (_) {}
+  const rt = el && el.__mfRuntime;
+  if (rt) {
+    update(mountEl, el, x, rt, gid, summaries, { reason: 'mount' });
+  }
 }
 
 function renderValue(rowSpec: Partial<SummaryRow>, value: SummaryValue): string {

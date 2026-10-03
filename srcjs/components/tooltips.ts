@@ -108,7 +108,7 @@ function __findMapWidgetContainer(el: WidgetElement | null | undefined): WidgetE
 function __getMapFromContainer(container: WidgetElement | null | undefined): MapLibreMap | null {
   const wc = __findMapWidgetContainer(container);
   if (wc && typeof wc.__mfGetMap === 'function') {
-    try { return wc.__mfGetMap(); } catch (_) {}
+    return wc.__mfGetMap();
   }
   return null;
 }
@@ -365,7 +365,7 @@ export function destroy(el: WidgetElement): void {
   // Close popup if open
   const cleanup = POPUP_CLEANUP.get(container);
   if (typeof cleanup === 'function') {
-    try { cleanup(); } catch(_) {}
+    cleanup();
     POPUP_CLEANUP.delete(container);
   }
 
@@ -466,11 +466,11 @@ export function buildOnClickPopup(st: LayerState): ((info: WidgetPickingInfo | n
 
     // Cleanup any previous popup FIRST (prevents second-click no-show)
     const prevStable = POPUP_CLEANUP.get(container);
-    if (typeof prevStable === 'function') { try { prevStable(); } catch(_) {} POPUP_CLEANUP.delete(container); }
+    if (typeof prevStable === 'function') { prevStable(); POPUP_CLEANUP.delete(container); }
     else {
       const legacyKey = containerFromInfo(info); // overlay canvas parent when picked
       const prevLegacy = POPUP_CLEANUP.get(legacyKey);
-      if (typeof prevLegacy === 'function') { try { prevLegacy(); } catch(_) {} POPUP_CLEANUP.delete(legacyKey); }
+      if (typeof prevLegacy === 'function') { prevLegacy(); POPUP_CLEANUP.delete(legacyKey); }
     }
 
     // Create panel

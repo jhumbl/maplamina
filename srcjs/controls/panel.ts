@@ -299,13 +299,13 @@ function removeStandaloneOtherCorners(el: HTMLElement, groupId: string, keepCorn
   const keep = normalizeCorner(keepCorner, 'topleft');
   for (const c of ALL_CORNERS) {
     if (c === keep) continue;
-    try { removeStandaloneGroup(el, groupId, { corner: c }); } catch (_) {}
+    removeStandaloneGroup(el, groupId, { corner: c });
   }
 }
 
 function removeStandaloneAllCorners(el: HTMLElement, groupId: string): void {
   for (const c of ALL_CORNERS) {
-    try { removeStandaloneGroup(el, groupId, { corner: c }); } catch (_) {}
+    removeStandaloneGroup(el, groupId, { corner: c });
   }
 }
 
@@ -377,12 +377,12 @@ export function sync(el: WidgetElement, x: Spec): void {
 
     // Suppress standalone for panel-mounted groups (remove in all corners)
     for (const gid of panelGroups) {
-      try { removeStandaloneAllCorners(el, gid); } catch (_) {}
+      removeStandaloneAllCorners(el, gid);
     }
   } else {
     // No panel requested: remove panel host in all corners (best effort)
     for (const corner of ['topleft','topright','bottomright','bottomleft']) {
-      try { removePanelHost(el, { corner, key: 'controls-panel' }); } catch (_) {}
+      removePanelHost(el, { corner, key: 'controls-panel' });
     }
   }
 
@@ -400,7 +400,7 @@ export function sync(el: WidgetElement, x: Spec): void {
     const desiredCorner = normalizeCorner(controlSpec.position, defaultStandaloneCorner);
 
     // Avoid duplicates across corners: keep only the desired corner.
-    try { removeStandaloneOtherCorners(el, gid, desiredCorner); } catch (_) {}
+    removeStandaloneOtherCorners(el, gid, desiredCorner);
 
     const idx = Number.isFinite(cornerCount[desiredCorner]) ? cornerCount[desiredCorner] : 0;
     cornerCount[desiredCorner] = idx + 1;
@@ -449,7 +449,7 @@ export function sync(el: WidgetElement, x: Spec): void {
     const gid = n.dataset.mfControlGroup;
     if (!gid) return;
     if (!standaloneGroups.includes(gid)) {
-      try { removeStandaloneAllCorners(el, gid); } catch (_) {}
+      removeStandaloneAllCorners(el, gid);
       n.remove();
     }
   });
@@ -461,7 +461,7 @@ export function sync(el: WidgetElement, x: Spec): void {
 export function clear(el: WidgetElement): void {
   // Remove the panel host in all corners (best effort)
   for (const corner of ['topleft','topright','bottomright','bottomleft']) {
-    try { removePanelHost(el, { corner, key: 'controls-panel' }); } catch (_) {}
+    removePanelHost(el, { corner, key: 'controls-panel' });
   }
 
   // Remove standalone hosts (best-effort via attributes)
@@ -470,7 +470,7 @@ export function clear(el: WidgetElement): void {
     const gid = n.dataset.mfControlGroup;
     if (gid) {
       for (const corner of ['topleft','topright','bottomright','bottomleft']) {
-        try { removeStandaloneGroup(el, gid, { corner }); } catch (_) {}
+        removeStandaloneGroup(el, gid, { corner });
       }
     }
     n.remove();

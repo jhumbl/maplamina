@@ -101,11 +101,11 @@ export function create(el: WidgetElement, width: number, height: number): Widget
   return {
     // x is the spec as R emits it; normalizeSpec() replaces its empty top-level lists in place.
     renderValue: async function(x: Spec) {
-      try { destroyTooltips(el); } catch (_) {}
+      destroyTooltips(el);
 
       const showHud = x?.map_options?.hud === true;
       if (!showHud) {
-        try { destroyHud(el); } catch (_) {}
+        destroyHud(el);
       }
 
       normalizeSpec(x);
@@ -117,23 +117,21 @@ export function create(el: WidgetElement, width: number, height: number): Widget
       const desiredProjection = normProjection(x.map_options?.projection);
       const rt = ensureRuntime(el, runtimeDeps());
 
-      try {
-        const prevProjection = (rt && rt._projectionMgr) ? normProjection(rt._projectionMgr.desired) : null;
-        if (map && prevProjection && prevProjection !== desiredProjection) {
-          try { mfRuntimeMap.clearDeferredFit(rt, el); } catch (_) {}
-          if (overlay) {
-            try { overlay.setProps({ layers: [] }); } catch (_) {}
-            try { map && map.removeControl(overlay); } catch (_) {}
-            overlay = null;
-          }
-          currentLayers = [];
-          try { clearMapLibreControls(map, rt); } catch (_) {}
-          try { resetProjectionManager(rt); } catch (_) {}
-          try { map.remove(); } catch (_) {}
-          map = null;
-          lastFitHash = null;
+      const prevProjection = (rt && rt._projectionMgr) ? normProjection(rt._projectionMgr.desired) : null;
+      if (map && prevProjection && prevProjection !== desiredProjection) {
+        mfRuntimeMap.clearDeferredFit(rt, el);
+        if (overlay) {
+          try { overlay.setProps({ layers: [] }); } catch (_) {}
+          try { map && map.removeControl(overlay); } catch (_) {}
+          overlay = null;
         }
-      } catch (_) {}
+        currentLayers = [];
+        clearMapLibreControls(map, rt);
+        resetProjectionManager(rt);
+        try { map.remove(); } catch (_) {}
+        map = null;
+        lastFitHash = null;
+      }
 
       const em = ensureMap({
         el,
@@ -202,12 +200,12 @@ export function create(el: WidgetElement, width: number, height: number): Widget
     },
 
     destroy: function() {
-      try { destroyTooltips(el); } catch (_) {}
-      try { destroyHud(el); } catch (_) {}
-      try { clearPanel(el); } catch (_) {}
+      destroyTooltips(el);
+      destroyHud(el);
+      clearPanel(el);
 
       const rt = el.__mfRuntime;
-      try { mfRuntimeMap.clearDeferredFit(rt, el); } catch (_) {}
+      mfRuntimeMap.clearDeferredFit(rt, el);
       if (rt && rt.pruneTasks && rt.pruneTasks.size) {
         for (const id of rt.pruneTasks) cancelIdlePrune(id);
         rt.pruneTasks.clear();
@@ -219,12 +217,10 @@ export function create(el: WidgetElement, width: number, height: number): Widget
         overlay = null;
       }
 
-      try {
-        destroyDock(el);
-      } catch (_) {}
+      destroyDock(el);
 
-      try { clearMapLibreControls(map, el.__mfRuntime); } catch (_) {}
-      try { resetProjectionManager(el.__mfRuntime); } catch (_) {}
+      clearMapLibreControls(map, el.__mfRuntime);
+      resetProjectionManager(el.__mfRuntime);
 
       if (map) {
         try { map.remove(); } catch (_) {}

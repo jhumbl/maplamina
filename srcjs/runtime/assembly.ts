@@ -247,7 +247,7 @@ export async function buildRenderArtifacts(opts: RenderArtifactsOptions): Promis
 
   const prune = (opts && opts.pruneEmbeddedBlobs) || pruneEmbeddedBlobs;
   if (out.logicalChanged && typeof prune === 'function') {
-    try { prune(out.logical); } catch (_) {}
+    prune(out.logical);
   }
   if (out.renderState) {
     resolveRemainingViewsIdle(out.renderState);
