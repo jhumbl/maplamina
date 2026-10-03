@@ -131,30 +131,26 @@ export function applyMapLibreControls(
       continue;
     }
 
-    if (prev && prev.instance) {
-      // onRemove() throws on a control whose addControl() failed.
-      try { map.removeControl(prev.instance); } catch (_) {}
-    }
+    if (prev && prev.instance) map.removeControl(prev.instance);
+    delete byType[type];
 
+    // An instance is stored only once it is on the map; onRemove() throws on one that is not.
     const inst = buildMapLibreControl(type, options);
     if (inst) {
-      try { map.addControl(inst, position); } catch (e) {
+      try {
+        map.addControl(inst, position);
+        byType[type] = { instance: inst, sig };
+        nextTypes.add(type);
+      } catch (e) {
         console.warn('[maplamina] Failed to add MapLibre control:', type, e);
       }
-      byType[type] = { instance: inst, sig };
-      nextTypes.add(type);
-    } else {
-      delete byType[type];
     }
   }
 
   for (const t of Object.keys(byType)) {
     if (nextTypes.has(t)) continue;
     const prev = byType[t];
-    if (prev && prev.instance) {
-      // onRemove() throws on a control whose addControl() failed.
-      try { map.removeControl(prev.instance); } catch (_) {}
-    }
+    if (prev && prev.instance) map.removeControl(prev.instance);
     delete byType[t];
   }
 }
@@ -167,10 +163,7 @@ export function clearMapLibreControls(
   if (!map || !bag || typeof bag !== 'object') return;
   for (const t of Object.keys(bag)) {
     const prev = bag[t];
-    if (prev && prev.instance) {
-      // onRemove() throws on a control whose addControl() failed.
-      try { map.removeControl(prev.instance); } catch (_) {}
-    }
+    if (prev && prev.instance) map.removeControl(prev.instance);
   }
   rt._maplibreControls!.byType = {};
 }

@@ -55,6 +55,36 @@ export function normText(x: unknown): string {
   return String(x).trim();
 }
 
+// Keys of a keyed map in authored order: the order list first, a name matching exactly or
+// after trimming, then the keys it does not name in insertion order.
+export function authoredOrder(rows: Readonly<Record<string, unknown>>, orderRaw: unknown): string[] {
+  const keys = Object.keys(rows || {});
+  if (!keys.length) return [];
+
+  const byNorm = new Map<string, string>();
+  for (const k of keys) byNorm.set(normText(k), k);
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const push = (k: string | undefined): void => {
+    if (!k) return;
+    if (seen.has(k)) return;
+    if (!Object.prototype.hasOwnProperty.call(rows, k)) return;
+    seen.add(k);
+    out.push(k);
+  };
+
+  if (Array.isArray(orderRaw) && orderRaw.length) {
+    for (const raw of orderRaw) {
+      const s = String(raw == null ? '' : raw);
+      push(Object.prototype.hasOwnProperty.call(rows, s) ? s : byNorm.get(normText(s)));
+    }
+  }
+
+  for (const k of keys) push(k);
+  return out;
+}
+
 export function safeId(x: unknown): string {
   return normText(x).replace(/[^A-Za-z0-9_-]+/g, '_');
 }

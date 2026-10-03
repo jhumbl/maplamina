@@ -1,13 +1,7 @@
 import { applyVisibility, buildLegendCard } from '../components/legends';
 import type { Components, Control, LegendsComponent, LegendsControl, Spec } from '../core/spec-types';
-import { asArray, normText as normTextBase } from '../core/utils';
+import { asArray, normText } from '../core/utils';
 import type { WidgetElement } from '../core/widget';
-
-const normText = (x: unknown): string => String(normTextBase(x) ?? '').trim();
-
-function getControlsRoot(spec: Spec): Spec['.__controls'] {
-  return (spec && spec['.__controls']) || {};
-}
 
 function getComponentsRoot(spec: Spec): Partial<Components> {
   return (spec && spec['.__components']) || {};
@@ -30,8 +24,7 @@ export function render(
   if (!mountEl) return;
 
   const gid = normText(groupId);
-  const controlsRoot = getControlsRoot(spec);
-  const ctl = controlSpec || (gid ? controlsRoot[gid] : null);
+  const ctl = controlSpec;
 
   if (!ctl || typeof ctl !== 'object') {
     mountEl.textContent = '';

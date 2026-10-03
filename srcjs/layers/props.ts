@@ -88,10 +88,7 @@ function attachGPUFiltering<P extends ComposedProps>(layerProps: P, st: LayerSta
   if (rangeDims > 0) extOpts.filterSize = rangeDims as DataFilterExtensionOptions['filterSize'];
 
   const existing = Array.isArray(layerProps.extensions) ? layerProps.extensions.slice() : [];
-  const hasDFE = existing.some(e => {
-    if (!e) return false;
-    return e instanceof DataFilterExtension;
-  });
+  const hasDFE = existing.some(e => e instanceof DataFilterExtension);
   if (!hasDFE) existing.push(new DataFilterExtension(extOpts));
   layerProps.extensions = existing;
   layerProps.filterEnabled = true;

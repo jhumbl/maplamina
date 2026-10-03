@@ -3,22 +3,12 @@ import {
   ensureFiltersContainer,
   getElState,
   publishFilterState,
+  runCleanup,
   seedSelectionSet
 } from './core';
-import type { PanelMeta, SelectUiSpec } from './core';
+import type { FilterBox, PanelMeta, SelectUiSpec } from './core';
 
 const AUTO_DROPDOWN_AT = 5;
-
-type FilterBox = HTMLElement & { __mfCleanup?: (() => void) | null };
-
-// Ensure per-control global listeners/observers are cleaned up between re-renders.
-function runCleanup(box: FilterBox | null): void {
-  if (!box) return;
-  if (typeof box.__mfCleanup === 'function') {
-    try { box.__mfCleanup(); } catch (e) { console.error(e); }
-  }
-  box.__mfCleanup = null;
-}
 
 function safeLabel(label: unknown, fallback: unknown): string {
   const raw = (label != null) ? label : fallback;

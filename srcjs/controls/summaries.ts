@@ -3,7 +3,7 @@ import { getIndexers } from '../core/data';
 import type { Indexers } from '../core/data';
 import type { LayerState, ResolvedArray } from '../core/layer-state';
 import type { Control, RangeComponent, Ref, SelectComponent, Spec, SummariesComponent, SummariesControl, SummaryRow } from '../core/spec-types';
-import { formatNumber, isFiniteNumber, normText } from '../core/utils';
+import { authoredOrder, formatNumber, isFiniteNumber, normText } from '../core/utils';
 import type { FiltersState, WidgetElement, WidgetRuntime } from '../core/widget';
 import { getLogicalLayer, getRenderState, readRenderField } from '../runtime/assembly';
 import type { ControlJob } from './registry';
@@ -98,34 +98,6 @@ function countRows(n: number, mask: Uint8Array | null, indexers: Indexers | null
   return c;
 }
 
-function buildRowOrder(rows: Readonly<Record<string, unknown>>, orderRaw: unknown): string[] {
-  const keys = Object.keys(rows || {});
-  if (!keys.length) return [];
-
-  const byNorm = new Map<string, string>();
-  for (const k of keys) byNorm.set(normText(k), k);
-
-  const seen = new Set<string>();
-  const out: string[] = [];
-  const push = (k: string | undefined): void => {
-    if (!k) return;
-    if (seen.has(k)) return;
-    if (!Object.prototype.hasOwnProperty.call(rows, k)) return;
-    seen.add(k);
-    out.push(k);
-  };
-
-  if (Array.isArray(orderRaw) && orderRaw.length) {
-    for (const raw of orderRaw) {
-      const s = String(raw == null ? '' : raw);
-      push(Object.prototype.hasOwnProperty.call(rows, s) ? s : byNorm.get(normText(s)));
-    }
-  }
-
-  for (const k of keys) push(k);
-  return out;
-}
-
 function ensureLocalState(mountEl: SummariesMount): SummariesLocal {
   const s = (mountEl && mountEl.__mlSummaries && typeof mountEl.__mlSummaries === 'object')
     ? mountEl.__mlSummaries
@@ -146,7 +118,7 @@ export function render(
   if (!mountEl) return;
 
   const gid = (groupId != null) ? String(groupId) : 'summaries';
-  const ctl = controlSpec || (x && x['.__controls'] && x['.__controls'][gid]);
+  const ctl = controlSpec;
   if (!ctl || typeof ctl !== 'object' || String(ctl.type) !== 'summaries') {
     clearNode(mountEl);
     return;
@@ -172,7 +144,7 @@ export function render(
   }
 
   // Respect authored order from the compiled spec.
-  const order = buildRowOrder(rows, summaries.order);
+  const order = authoredOrder(rows, summaries.order);
   local.order = order.slice();
 
   const box = document.createElement('div');
@@ -444,18 +416,16 @@ async function updateAsync(
   mountEl: SummariesMount | null,
   x: Spec,
   rt: WidgetRuntime | null | undefined,
-  groupId: string | null | undefined,
   controlSpec: Control | null | undefined
 ): Promise<void> {
   if (!mountEl || !x || !rt) return;
 
-  const gid = (groupId != null) ? String(groupId) : 'summaries';
-  const ctl = controlSpec || (x && x['.__controls'] && x['.__controls'][gid]);
+  const ctl = controlSpec;
   if (!ctl || typeof ctl !== 'object' || String(ctl.type) !== 'summaries') return;
   const summaries = ctl as SummariesControl;
 
   const rows = (summaries.rows && typeof summaries.rows === 'object') ? summaries.rows : {};
-  const order = buildRowOrder(rows, summaries.order);
+  const order = authoredOrder(rows, summaries.order);
 
   const local = ensureLocalState(mountEl);
   const seq = ++local.seq;
@@ -600,5 +570,5 @@ export function update(
   job?: ControlJob | null
 ): void {
   // Fire-and-forget async update; pipeline does not await.
-  void updateAsync(mountEl, x, rt, groupId, controlSpec);
+  void updateAsync(mountEl, x, rt, controlSpec);
 }

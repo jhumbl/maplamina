@@ -1,4 +1,4 @@
-import { wireMap } from '../core/spec';
+import { getControlGroupIdsOrdered, wireMap } from '../core/spec';
 import type {
   Control,
   Corner,
@@ -396,12 +396,6 @@ export function buildLegendCard(component: LegendsComponent): HTMLDivElement {
   return card;
 }
 
-interface SectionLike {
-  readonly id?: string | null;
-  readonly bind?: string | null;
-  readonly name?: string | null;
-}
-
 type ViewsLikeControl = Control & {
   readonly view_names?: OneOrMany<string>;
   readonly default?: unknown;
@@ -423,7 +417,7 @@ export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec
   // This avoids relying on any derived fields being written onto spec['.__layers'].
   let activeByLayer = new Map<string, string>();
   const activeByGroup: Record<string, string> = {};
-  const orderedIds = getOrderedControlGroupIds(spec, controls || {});
+  const orderedIds = getControlGroupIdsOrdered(spec);
   for (const gidRaw of orderedIds) {
     const gid = normText(gidRaw);
     const ctl = controls ? controls[gidRaw] : null;
@@ -447,32 +441,6 @@ export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec
     activeByLayer = ops.activeByLayer;
   }
 
-  function getOrderedControlGroupIds(spec: Spec, controlsObj: object | null | undefined): string[] {
-    const controls = controlsObj || {};
-
-    const panel: { readonly sections?: readonly SectionLike[] } = (spec && spec['.__panel']) || {};
-    const sections = Array.isArray(panel.sections) ? panel.sections : [];
-
-    const out: string[] = [];
-    const seen = new Set<string>();
-
-    for (const s of sections) {
-      if (!s || typeof s !== 'object') continue;
-      const sid = normText(s.id != null ? s.id : (s.bind != null ? s.bind : (s.name != null ? s.name : '')));
-      if (!sid || seen.has(sid)) continue;
-      if (Object.prototype.hasOwnProperty.call(controls, sid)) { out.push(sid); seen.add(sid); }
-    }
-
-    // Insertion order fallback
-    for (const k of Object.keys(controls)) {
-      const sid = normText(k);
-      if (!sid || seen.has(sid)) continue;
-      out.push(sid); seen.add(sid);
-    }
-
-    return out;
-  }
-
   const asViewList = (x: unknown): string[] | null => {
     if (x == null) return null;
     if (Array.isArray(x)) {
@@ -489,7 +457,7 @@ export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec
     // but when.layer is not.
     const groups: { gid: string; ctl: ViewsLikeControl }[] = [];
 
-    const orderedIds = getOrderedControlGroupIds(spec, controls || {});
+    const orderedIds = getControlGroupIdsOrdered(spec);
     for (const gidRaw of orderedIds) {
       const gid = normText(gidRaw);
       const ctl = controls ? controls[gidRaw] : null;

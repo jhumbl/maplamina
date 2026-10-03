@@ -30,6 +30,17 @@ export interface GroupUiState {
 export type UiState = Record<string, GroupUiState>;
 
 const UISTATE = new WeakMap<HTMLElement, UiState>();
+export type FilterBox = HTMLElement & { __mfCleanup?: (() => void) | null };
+
+// Ensure per-control listeners/observers are cleaned up between re-renders.
+export function runCleanup(box: FilterBox | null): void {
+  if (!box) return;
+  if (typeof box.__mfCleanup === 'function') {
+    try { box.__mfCleanup(); } catch (e) { console.error(e); }
+  }
+  box.__mfCleanup = null;
+}
+
 export function getElState(el: HTMLElement): UiState { let s = UISTATE.get(el); if (!s) { s = {}; UISTATE.set(el, s); } return s; }
 
 // Callers provide a concrete mount node (panel section body or standalone container)

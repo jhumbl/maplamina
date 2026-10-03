@@ -46,7 +46,6 @@ export function mergeEncodings(
 }
 
 function layerCacheKey(st: LayerState): string {
-  if (!st || typeof st !== 'object') return '__layer__';
   return st.id || '__layer__';
 }
 

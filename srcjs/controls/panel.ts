@@ -376,7 +376,7 @@ export function sync(el: WidgetElement, x: Spec): void {
     }
   } else {
     // No panel requested: remove panel host in all corners (best effort)
-    for (const corner of ['topleft','topright','bottomright','bottomleft']) {
+    for (const corner of ALL_CORNERS) {
       removePanelHost(el, { corner, key: 'controls-panel' });
     }
   }
@@ -455,7 +455,7 @@ export function sync(el: WidgetElement, x: Spec): void {
 
 export function clear(el: WidgetElement): void {
   // Remove the panel host in all corners (best effort)
-  for (const corner of ['topleft','topright','bottomright','bottomleft']) {
+  for (const corner of ALL_CORNERS) {
     removePanelHost(el, { corner, key: 'controls-panel' });
   }
 
@@ -463,11 +463,7 @@ export function clear(el: WidgetElement): void {
   const nodes = el.querySelectorAll<HTMLElement>('[data-mf-control-kind="standalone"]');
   nodes && nodes.forEach(n => {
     const gid = n.dataset.mfControlGroup;
-    if (gid) {
-      for (const corner of ['topleft','topright','bottomright','bottomleft']) {
-        removeStandaloneGroup(el, gid, { corner });
-      }
-    }
+    if (gid) removeStandaloneAllCorners(el, gid);
     n.remove();
   });
 

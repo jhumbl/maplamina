@@ -2,7 +2,7 @@
 // the select and range UI in srcjs/filters.
 
 import type { Control, FiltersControl, RangeFilterControl, SelectFilterControl, Spec } from '../core/spec-types';
-import { domKey, normText } from '../core/utils';
+import { authoredOrder, domKey } from '../core/utils';
 import type { FilterValue, WidgetElement } from '../core/widget';
 import { getElState } from '../filters/core';
 import type { PanelMeta } from '../filters/core';
@@ -25,7 +25,7 @@ export function render(
 
   const gid = (groupId != null) ? String(groupId) : 'filters';
 
-  const ctl = controlSpec || (x && x['.__controls'] && x['.__controls'][gid]);
+  const ctl = controlSpec;
   if (!ctl || typeof ctl !== 'object' || String(ctl.type) !== 'filters') { clearNode(mountEl); return; }
   const filters = ctl as FiltersControl;
 
@@ -35,30 +35,7 @@ export function render(
   //   - primary: ctl.order (explicit authored order)
   //   - fallback: preserve insertion order of defs keys (do NOT sort)
 
-  const keys = Object.keys(defs);
-  const byNorm = new Map<string, string>();
-  for (const k of keys) byNorm.set(normText(k), k);
-
-  const orderRaw = Array.isArray(filters.order) ? filters.order : null;
-  const seen = new Set<string>();
-  const order: string[] = [];
-  const push = (k: string | undefined): void => {
-    if (!k) return;
-    if (seen.has(k)) return;
-    if (!Object.prototype.hasOwnProperty.call(defs, k)) return;
-    seen.add(k);
-    order.push(k);
-  };
-
-  if (orderRaw && orderRaw.length) {
-    for (const raw of orderRaw) {
-      const s = String(raw == null ? '' : raw);
-      push(Object.prototype.hasOwnProperty.call(defs, s) ? s : byNorm.get(normText(s)));
-    }
-  }
-
-  // Append any controls not present in ctl.order in their natural insertion order.
-  for (const k of keys) push(k);
+  const order = authoredOrder(defs, filters.order);
 
   clearNode(mountEl);
 

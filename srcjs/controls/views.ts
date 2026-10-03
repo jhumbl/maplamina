@@ -89,7 +89,7 @@ export function render(
   if (!mountEl) return;
 
   const gid = normText(groupId) || 'views';
-  const ctl = controlSpec || (spec && spec['.__controls'] && spec['.__controls'][gid]);
+  const ctl = controlSpec;
   if (!ctl || typeof ctl !== 'object') { mountEl.textContent = ''; return; }
   if (ctl.type && String(ctl.type) !== 'views') { mountEl.textContent = ''; return; }
   const views = ctl as ViewsControl;

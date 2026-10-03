@@ -1,23 +1,9 @@
 import { domKey, widgetKey } from '../core/utils';
-import { ensureFiltersContainer, getElState, publishFilterState } from './core';
-import type { PanelMeta, RangeUiSpec } from './core';
+import { ensureFiltersContainer, getElState, publishFilterState, runCleanup } from './core';
+import type { FilterBox, PanelMeta, RangeUiSpec } from './core';
 import { mount } from './range-slider';
 
-type FilterBox = HTMLElement & {
-  __mfCleanup?: (() => void) | null;
-};
-
 // --- helpers ---------------------------------------------------------------
-
-// Ensure per-control listeners/observers are cleaned up between re-renders.
-function runCleanup(box: FilterBox | null): void {
-  if (!box) return;
-  if (typeof box.__mfCleanup === 'function') {
-    try { box.__mfCleanup(); } catch (e) { console.error(e); }
-  }
-  box.__mfCleanup = null;
-}
-
 
 function autoPowerStep(min: number, max: number): number {
   const span = Math.abs((Number(max) || 0) - (Number(min) || 0));
@@ -153,7 +139,7 @@ export function ensureRangeUI(
 
   // Ensure re-renders don't leak observers.
   box.__mfCleanup = () => {
-    try { sliderApi && typeof sliderApi.destroy === 'function' && sliderApi.destroy(); }
+    try { sliderApi.destroy(); }
     catch (e) { console.error(e); }
   };
 
