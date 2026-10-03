@@ -153,12 +153,9 @@ export interface PlaceholderState {
   kind?: string;
   name: string;
   fmt?: string;
-  value?: RefNode | TypedArray;
-  values?: RefNode | TypedArray;
-  ref?: string | RefNode;
-  href?: string | RefNode;
-  codes?: RefNode | TypedArray;
-  dict?: string | string[] | { values?: string[] } | null;
+  value?: RefNode;
+  codes?: RefNode;
+  dict?: string | string[] | null;
   _kind?: string;
   _array?: TypedArray;
   _codes?: TypedArray | null;

@@ -3,7 +3,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { resolveRefOrHref } from '../core/assets';
 import { getIndexers } from '../core/data';
 import type { LayerState, PlaceholderState, RefNode, TemplateState } from '../core/layer-state';
-import { escapeHtml, isTA } from '../core/utils';
+import { escapeHtml } from '../core/utils';
 import type { WidgetElement } from '../core/widget';
 
 export type WidgetPickingInfo = PickingInfo & { __mfContainer?: HTMLElement };
@@ -129,26 +129,21 @@ function stableContainer(info: WidgetPickingInfo | null | undefined): HTMLElemen
 const SPEC_STATE = new WeakMap<TemplateState, TemplateRuntime>(); // spec -> { compiled, fmtByName, hydrating, hydrated }
 
 async function hydratePlaceholder(st: LayerState, ph: PlaceholderState): Promise<void> {
-  // Accept {ref|href} at the top level, or nested under {value|values}.
   const getRefObj = (x: unknown): RefNode | null => {
     if (!x || typeof x !== 'object') return null;
     const node = x as RefNode;
-    if (node.ref || node.href) return node;
-    const v = node.values || node.value;
-    if (v && typeof v === 'object' && (v.ref || v.href)) return v;
+    if (node.ref) return node;
     return null;
   };
 
   const coerceDict = (d: PlaceholderState['dict']): string[] => {
     if (Array.isArray(d)) return d;
     if (typeof d === 'string') return [d];
-    if (d == null) return [];
-    if (typeof d === 'object' && Array.isArray(d.values)) return d.values;
     return [];
   };
 
-  // Numeric path: values/value -> {ref|href} -> typed array
-  const vSpec = (ph.values != null) ? ph.values : ph.value;
+  // Numeric path: value -> {ref} -> typed array
+  const vSpec = ph.value;
   const vRefObj = getRefObj(vSpec);
   if (vRefObj) {
     try {
@@ -165,31 +160,7 @@ async function hydratePlaceholder(st: LayerState, ph: PlaceholderState): Promise
     return;
   }
 
-  // Direct numeric ref/href (fallback)
-  if (ph.ref || ph.href) {
-    const refObj: RefNode | null = (typeof ph.ref === 'string') ? { ref: ph.ref }
-      : (typeof ph.href === 'string') ? { href: ph.href }
-      : (ph.ref && typeof ph.ref === 'object') ? ph.ref
-      : (ph.href && typeof ph.href === 'object') ? ph.href
-      : null;
-
-    if (refObj) {
-      try {
-        const o = await resolveRefOrHref(st, refObj);
-        if (o && o.array != null) {
-          ph._array = o.array;
-          ph._kind = ph._kind || ph.kind || 'numeric';
-        } else {
-          ph._kind = ph._kind || ph.kind || 'missing';
-        }
-      } catch (_) {
-        ph._kind = ph._kind || ph.kind || 'missing';
-      }
-    }
-    return;
-  }
-
-  // Categorical path: codes -> {ref|href} + dict
+  // Categorical path: codes -> {ref} + dict
   const cRefObj = getRefObj(ph.codes);
   if (cRefObj) {
     try {
@@ -204,10 +175,6 @@ async function hydratePlaceholder(st: LayerState, ph: PlaceholderState): Promise
     }
     return;
   }
-
-  // Already-hydrated arrays (tolerate)
-  if (isTA(vSpec)) { ph._array = vSpec; ph._kind = 'numeric'; return; }
-  if (isTA(ph.codes)) { ph._codes = ph.codes; ph._dict = coerceDict(ph.dict); ph._kind = 'categorical'; return; }
 
   // Otherwise mark missing (we'll abort on render)
   ph._kind = ph._kind || ph.kind || 'missing';
@@ -458,20 +425,12 @@ export function buildOnClickPopup(st: LayerState): ((info: WidgetPickingInfo | n
 
     const container = stableContainer(info);
 
-    // Get the MapLibre instance (preferred: widget-scoped getter)
-    const mapCanvas: (HTMLCanvasElement & { _map?: MapLibreMap }) | null = container.querySelector('canvas');
-    const legacyMap = (mapCanvas && mapCanvas._map) || null;
-    const map = __getMapFromContainer(container) || legacyMap;
+    const map = __getMapFromContainer(container);
     if (!map) return;
 
     // Cleanup any previous popup FIRST (prevents second-click no-show)
     const prevStable = POPUP_CLEANUP.get(container);
     if (typeof prevStable === 'function') { prevStable(); POPUP_CLEANUP.delete(container); }
-    else {
-      const legacyKey = containerFromInfo(info); // overlay canvas parent when picked
-      const prevLegacy = POPUP_CLEANUP.get(legacyKey);
-      if (typeof prevLegacy === 'function') { prevLegacy(); POPUP_CLEANUP.delete(legacyKey); }
-    }
 
     // Create panel
     if (!panel || !panel.parentNode) {
