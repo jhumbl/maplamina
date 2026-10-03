@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, screenshot, pixel, measureRadius, measureDrawnRadius, measureColumnAbove,
-  sampleAfter, animated, selectView, zoomOut,
+  sampleAfter, sampleUntil, animated, selectView, zoomOut,
 } from '../lib/widget.mjs';
 
 const DARKBLUE = [0, 0, 139];
@@ -50,8 +50,9 @@ test('V10: icon size and marker size animate on view switch', async ({ page }) =
   const icon = await project(page, 0, 51.51);
   // Markers anchor at the pin tip, so their size is the drawn height above the point.
   const marker = await project(page, 0, 51.49);
-  const samples = await sampleAfter(page, () => selectView(page, 'big'), 2200,
-    (png) => [measureDrawnRadius(png, icon.x, icon.y), measureColumnAbove(png, marker.x, marker.y)]);
+  const samples = await sampleUntil(page, () => selectView(page, 'big'),
+    (png) => [measureDrawnRadius(png, icon.x, icon.y), measureColumnAbove(png, marker.x, marker.y)],
+    (v, first) => v[0] > first[0] * 1.5 && v[1] > first[1] * 1.5);
   const icons = samples.map((s) => ({ t: s.t, v: s.v[0] }));
   const markers = samples.map((s) => ({ t: s.t, v: s.v[1] }));
   expect(animated(icons), `icon widths: ${icons.map((s) => s.v).join(',')}`).toBe(true);
@@ -67,11 +68,11 @@ test('V11: polygon fill colour animates on view switch', async ({ page }) => {
   await openWidget(page, 'polygons-views-fill');
   await zoomOut(page, 1);
   const c = await project(page, 0, 51.5);
-  const samples = await sampleAfter(page, () => selectView(page, 'red'), 2200,
-    (png) => pixel(png, c.x, c.y)[0]);
+  const samples = await sampleUntil(page, () => selectView(page, 'red'),
+    (png) => pixel(png, c.x, c.y)[0], (red) => red > 200);
   const reds = samples.map((s) => s.v);
   expect(reds[0]).toBeLessThan(60);
-  expect(reds[reds.length - 1]).toBeGreaterThan(200);
+  expect(reds[reds.length - 1], `red channel: ${reds.join(',')}`).toBeGreaterThan(200);
   expect(animated(samples), `red channel: ${reds.join(',')}`).toBe(true);
 });
 
@@ -79,12 +80,23 @@ test('V16: a constant fill view overrides a colour scale on the base', async ({ 
   await openWidget(page, 'polygons-scale-views-constant');
   await zoomOut(page, 1);
   const c = await project(page, 0, 51.5);
-  const samples = await sampleAfter(page, () => selectView(page, 'flat'), 2200,
-    (png) => pixel(png, c.x, c.y)[0]);
+  const samples = await sampleUntil(page, () => selectView(page, 'flat'),
+    (png) => pixel(png, c.x, c.y)[0], (red) => red > 200);
   const reds = samples.map((s) => s.v);
   expect(reds[0]).toBeLessThan(60);
-  expect(reds[reds.length - 1]).toBeGreaterThan(200);
+  expect(reds[reds.length - 1], `red channel: ${reds.join(',')}`).toBeGreaterThan(200);
   expect(animated(samples), `red channel: ${reds.join(',')}`).toBe(true);
+});
+
+test('control: a 1 ms duration followed to its end reads as a snap', async ({ page }) => {
+  await openWidget(page, 'circles-views-instant');
+  const c = await project(page, 0, 51.5);
+  const samples = await sampleUntil(page, () => selectView(page, 'small'),
+    (png) => measureRadius(png, c.x, c.y, DARKBLUE), (r) => r < 6);
+  const radii = samples.map((s) => s.v);
+  expect(radii[0]).toBeGreaterThan(8);
+  expect(radii[radii.length - 1]).toBeLessThan(6);
+  expect(animated(samples), `radii over time: ${radii.join(',')}`).toBe(false);
 });
 
 test("V9: a view switch on one layer does not restart the other layer's transition", async ({ page }) => {

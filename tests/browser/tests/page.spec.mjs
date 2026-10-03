@@ -1,7 +1,7 @@
-// Scenarios S1, S2, T5, C5, C7, C8 from notes/regression-scenarios.md: pages rather than single widgets.
+// Scenarios S1, S2, S8, S9, T5, C5, C6, C7, C8, C9 from notes/regression-scenarios.md: pages rather than single widgets.
 import { test, expect } from '@playwright/test';
 import {
-  openWidget, waitForWidgets, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
+  openWidget, waitForWidgets, fixtureUrl, project, screenshot, isDrawnAt, measureDrawnRadius, selectView,
   toggleSelectOption, selectOptionChecked, zoomOut, widgetBox, mapZoom, hoverTooltip, hideTooltip,
   clickPopup, popupBox, setFilter,
 } from '../lib/widget.mjs';
@@ -85,6 +85,34 @@ test('S1: a widget created in a hidden container fits its bounds once shown', as
   expect(errors).toEqual([]);
 });
 
+test('S8: the widget entry script loads and registers once', async ({ page }) => {
+  const { errors } = await openWidget(page, 'page-two-widgets', 2);
+  const found = await page.evaluate(() => ({
+    scripts: Array.from(document.scripts).filter((s) => /\/maplamina\.js$/.test(s.src)).length,
+    bindings: window.HTMLWidgets.widgets.filter((w) => w.name === 'maplamina').length,
+  }));
+  expect(found).toEqual({ scripts: 1, bindings: 1 });
+  expect(errors).toEqual([]);
+});
+
+test('S9: the page publishes controls.panel.sync on the global and nothing else', async ({ page }) => {
+  const { errors } = await openWidget(page, 'circles-views');
+  const found = await page.evaluate(() => {
+    const leaves = [];
+    const seen = new Set();
+    const walk = (v, path) => {
+      const names = (v && typeof v === 'object' && !seen.has(v)) ? Object.getOwnPropertyNames(v) : [];
+      if (!names.length) { leaves.push(`${path}: ${typeof v}`); return; }
+      seen.add(v);
+      for (const name of names) walk(v[name], path ? `${path}.${name}` : name);
+    };
+    walk(window.MAPLAMINA, '');
+    return leaves;
+  });
+  expect(found).toEqual(['controls.panel.sync: function']);
+  expect(errors).toEqual([]);
+});
+
 test('C7: mounting the controls a second time keeps one dock item per group', async ({ page }) => {
   await openWidget(page, 'circles-views');
   const count = () => page.locator('.ml-dock-item.ml-control-standalone').count();
@@ -108,6 +136,17 @@ test('C5: the panel and a standalone control sit in the corners they were given'
   const standalone = await page.locator('.ml-control-standalone').first().boundingBox();
   expect(standalone.x + standalone.width / 2, 'standalone is on the right').toBeGreaterThan(midX);
   expect(standalone.y + standalone.height / 2, 'standalone is at the top').toBeLessThan(midY);
+  expect(errors).toEqual([]);
+});
+
+test('C6, C9: a relative panel icon resolves against the page and renders as a linked image', async ({ page }) => {
+  const { errors } = await openWidget(page, 'panel-icon-relative');
+  const found = await page.evaluate(() => {
+    const img = document.querySelector('.ml-panel-title-link .ml-panel-icon');
+    return { src: img.src, href: img.closest('a').href, loaded: img.complete && img.naturalWidth > 0 };
+  });
+  const beside = new URL('panel-icon.svg', fixtureUrl('panel-icon-relative')).href;
+  expect(found).toEqual({ src: beside, href: beside, loaded: true });
   expect(errors).toEqual([]);
 });
 

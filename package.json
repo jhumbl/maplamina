@@ -1,0 +1,23 @@
+{
+  "name": "maplamina",
+  "private": true,
+  "description": "Browser runtime for the maplamina htmlwidget",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "samples": "Rscript tests/unit/make-spec-samples.R"
+  },
+  "devDependencies": {
+    "@deck.gl/core": "9.1.14",
+    "@deck.gl/extensions": "9.1.14",
+    "@deck.gl/layers": "9.1.14",
+    "@deck.gl/mapbox": "9.1.14",
+    "esbuild": "0.28.2",
+    "jsdom": "30.1.1",
+    "maplibre-gl": "5.6.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  }
+}

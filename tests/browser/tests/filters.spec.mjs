@@ -3,7 +3,7 @@
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, screenshot, pixel, near, isDrawnAt, measureDrawnRadius,
-  sampleAfter, animated, selectView, setFilter, toggleSelectOption, selectOptionChecked, zoomOut,
+  sampleUntil, animated, selectView, setFilter, toggleSelectOption, selectOptionChecked, zoomOut,
 } from '../lib/widget.mjs';
 
 const P = {
@@ -39,14 +39,16 @@ test('V2: a view switch after a filter interaction animates, and so does the swi
   const p = await points(page);
   await setFilter(page, 'x', [4, 9]);
 
-  let samples = await sampleAfter(page, () => selectView(page, 'test2'), 2200,
-    (png) => measureDrawnRadius(png, p.x5.x, p.x5.y));
+  let samples = await sampleUntil(page, () => selectView(page, 'test2'),
+    (png) => measureDrawnRadius(png, p.x5.x, p.x5.y), (r) => r < 7);
   let radii = samples.map((s) => s.v);
   expect(radii[radii.length - 1]).toBeLessThan(7);
   expect(animated(samples), `radii: ${radii.join(',')}`).toBe(true);
 
-  samples = await sampleAfter(page, () => selectView(page, 'test'), 2200,
-    (png) => measureDrawnRadius(png, p.x5.x, p.x5.y));
+  // Sampling stopped inside the transition; let it end so the switch back starts from rest.
+  await page.waitForTimeout(1500);
+  samples = await sampleUntil(page, () => selectView(page, 'test'),
+    (png) => measureDrawnRadius(png, p.x5.x, p.x5.y), (r) => r > 7);
   radii = samples.map((s) => s.v);
   expect(radii[radii.length - 1]).toBeGreaterThan(7);
   expect(animated(samples), `radii back: ${radii.join(',')}`).toBe(true);

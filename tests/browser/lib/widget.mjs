@@ -82,6 +82,21 @@ export async function sampleAfter(page, action, ms, fn) {
   return out;
 }
 
+// Sample fn(png) once before `action` runs and then repeatedly after it, until done(value, first)
+// holds or `cap` milliseconds have passed. The first sample is the state before the action, and
+// a transition that starts late is followed to its end rather than cut off by a fixed window.
+export async function sampleUntil(page, action, fn, done, cap = 8000) {
+  const out = [{ t: 0, v: fn(await screenshot(page)) }];
+  await action();
+  const t0 = Date.now();
+  while (Date.now() - t0 < cap) {
+    const v = fn(await screenshot(page));
+    out.push({ t: Date.now() - t0, v });
+    if (done(v, out[0].v)) break;
+  }
+  return out;
+}
+
 // True when a series of samples interpolated rather than jumped: at least one sample lies
 // strictly between the first and last value, and the series moves in one direction (a wobble
 // of `tol` px from anti-aliasing is tolerated). Robust to a slow frame eating part of the window.

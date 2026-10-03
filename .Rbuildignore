@@ -10,3 +10,11 @@
 ^docs$
 ^pkgdown$
 ^tests/browser$
+^tests/unit$
+^srcjs$
+^node_modules$
+^package\.json$
+^package-lock\.json$
+^tsconfig.*\.json$
+^vitest\.config\.ts$
+^build\.mjs$

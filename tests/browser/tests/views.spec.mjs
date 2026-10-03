@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, screenshot, pixel, near, measureRadius, measureDrawnRadius, measureThickness,
-  sampleAfter, animated, selectView, zoomOut,
+  sampleAfter, sampleUntil, animated, selectView, zoomOut,
 } from '../lib/widget.mjs';
 
 const DARKBLUE = [0, 0, 139];
@@ -13,8 +13,8 @@ test('V1: the very first view switch animates', async ({ page }) => {
   const before = measureRadius(await screenshot(page), c.x, c.y, DARKBLUE);
   expect(before).toBeGreaterThan(8);
 
-  const samples = await sampleAfter(page, () => selectView(page, 'small'), 2200,
-    (png) => measureRadius(png, c.x, c.y, DARKBLUE));
+  const samples = await sampleUntil(page, () => selectView(page, 'small'),
+    (png) => measureRadius(png, c.x, c.y, DARKBLUE), (r) => r < 6);
   const radii = samples.map((s) => s.v);
 
   expect(radii[radii.length - 1]).toBeLessThan(6);
@@ -36,8 +36,8 @@ test('V3: a view that omits a prop animates the revert to base', async ({ page }
   const { errors } = await openWidget(page, 'circles-views-omit');
   const c = await project(page, 0, 51.5);
   expect(measureRadius(await screenshot(page), c.x, c.y, DARKBLUE)).toBeGreaterThan(10);
-  const samples = await sampleAfter(page, () => selectView(page, 'plain'), 2200,
-    (png) => measureDrawnRadius(png, c.x, c.y));
+  const samples = await sampleUntil(page, () => selectView(page, 'plain'),
+    (png) => measureDrawnRadius(png, c.x, c.y), (r) => r < 8);
   const radii = samples.map((s) => s.v);
   expect(radii[radii.length - 1]).toBeLessThan(8);
   expect(animated(samples), `radii: ${radii.join(',')}`).toBe(true);
@@ -50,8 +50,8 @@ test('V4: line width omitted in the first view still animates on the first switc
   const c = await project(page, 0, 51.5);
   const before = measureThickness(await screenshot(page), c.x, c.y);
   expect(before).toBeGreaterThan(3);
-  const samples = await sampleAfter(page, () => selectView(page, 'thick'), 2200,
-    (png) => measureThickness(png, c.x, c.y));
+  const samples = await sampleUntil(page, () => selectView(page, 'thick'),
+    (png) => measureThickness(png, c.x, c.y), (w, first) => w > first * 2);
   const widths = samples.map((s) => s.v);
   expect(widths[widths.length - 1]).toBeGreaterThan(before * 2);
   expect(animated(samples), `widths: ${widths.join(',')}`).toBe(true);
