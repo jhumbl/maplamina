@@ -97,5 +97,5 @@ export function render(
   }
 
   // Apply `when` visibility rules on first mount.
-  try { applyVisibility(widgetEl, spec); } catch (_) {}
+  try { applyVisibility(widgetEl, spec); } catch (e) { console.error(e); }
 }

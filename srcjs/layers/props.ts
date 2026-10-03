@@ -318,7 +318,7 @@ export function composeLayerProps<P extends object>(
         return oc(info);
       };
     }
-  } catch (_) {}
+  } catch (e) { console.error(e); }
 
   attachGPUFiltering(props, st);
   if (readRenderField(st, 'forceHidden')) props.visible = false;

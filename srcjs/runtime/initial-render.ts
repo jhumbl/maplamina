@@ -170,8 +170,8 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
   overlay.setProps({ layers: flatLayers });
   const currentLayers = flatLayers;
 
-  try { sync(el, x); } catch (_) {}
-  try { update(el, x, rt, { reason: 'initial' }); } catch (_) {}
+  try { sync(el, x); } catch (e) { console.error(e); }
+  try { update(el, x, rt, { reason: 'initial' }); } catch (e) { console.error(e); }
 
   try {
     const t1 = now();
@@ -205,7 +205,7 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
     ].join('');
 
     if (parts && parts.notes) parts.notes.innerHTML = warnLines.join('') || '';
-  } catch (_) {}
+  } catch (e) { console.error(e); }
 
   return { currentLayers };
 }

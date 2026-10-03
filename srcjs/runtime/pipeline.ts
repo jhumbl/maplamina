@@ -175,13 +175,13 @@ export function attach(rt: WidgetRuntime | null | undefined, deps?: PipelineDeps
     if (dirtyRehydrate.size && this._viewsPrev && typeof this._viewsPrev === 'object') this._viewsPrev = {};
 
     if (doLegends) {
-      try { applyVisibility(el, x); } catch (_) {}
+      try { applyVisibility(el, x); } catch (e) { console.error(e); }
     }
 
     if (doControls) {
       try {
         update(el, x, this, job);
-      } catch (_) {}
+      } catch (e) { console.error(e); }
     }
   };
 }

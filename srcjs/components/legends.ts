@@ -422,32 +422,30 @@ export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec
   // Derive per-layer active view from runtime state + views components.
   // This avoids relying on any derived fields being written onto spec['.__layers'].
   let activeByLayer = new Map<string, string>();
-  try {
-    const activeByGroup: Record<string, string> = {};
-    const orderedIds = getOrderedControlGroupIds(spec, controls || {});
-    for (const gidRaw of orderedIds) {
-      const gid = normText(gidRaw);
-      const ctl = controls ? controls[gidRaw] : null;
-      if (!gid || !ctl || typeof ctl !== 'object') continue;
-      if (normText(ctl.type) !== 'views') continue;
+  const activeByGroup: Record<string, string> = {};
+  const orderedIds = getOrderedControlGroupIds(spec, controls || {});
+  for (const gidRaw of orderedIds) {
+    const gid = normText(gidRaw);
+    const ctl = controls ? controls[gidRaw] : null;
+    if (!gid || !ctl || typeof ctl !== 'object') continue;
+    if (normText(ctl.type) !== 'views') continue;
 
-      const viewNames = asArray(ctl.view_names).map(normText).filter(Boolean);
-      const cur = normText(stateViews[gid]);
-      const def = normText(ctl.default);
+    const viewNames = asArray(ctl.view_names).map(normText).filter(Boolean);
+    const cur = normText(stateViews[gid]);
+    const def = normText(ctl.default);
 
-      let pick = 'base';
-      if (cur && (!viewNames.length || viewNames.includes(cur))) pick = cur;
-      else if (def && (!viewNames.length || viewNames.includes(def))) pick = def;
-      else if (viewNames.length) pick = viewNames[0];
+    let pick = 'base';
+    if (cur && (!viewNames.length || viewNames.includes(cur))) pick = cur;
+    else if (def && (!viewNames.length || viewNames.includes(def))) pick = def;
+    else if (viewNames.length) pick = viewNames[0];
 
-      activeByGroup[gid] = pick;
-    }
+    activeByGroup[gid] = pick;
+  }
 
-    const ops = computeViewOpsByLayer(spec, activeByGroup);
-    if (ops && ops.activeByLayer && typeof ops.activeByLayer.get === 'function') {
-      activeByLayer = ops.activeByLayer;
-    }
-  } catch (_) {}
+  const ops = computeViewOpsByLayer(spec, activeByGroup);
+  if (ops && ops.activeByLayer && typeof ops.activeByLayer.get === 'function') {
+    activeByLayer = ops.activeByLayer;
+  }
 
   function getOrderedControlGroupIds(spec: Spec, controlsObj: object | null | undefined): string[] {
     const controls = controlsObj || {};

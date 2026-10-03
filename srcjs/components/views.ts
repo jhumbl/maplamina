@@ -105,7 +105,7 @@ export function applyOrderedViewOps(
       touch = unionEncodingKeys(prevEnc, nextEnc);
 
       if (onOp) {
-        try { onOp(op, { patch, touch, layerId, state: out }); } catch (_) {}
+        onOp(op, { patch, touch, layerId, state: out });
       }
 
       if (patch && typeof patch === 'object') {
