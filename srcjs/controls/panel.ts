@@ -1,4 +1,3 @@
-import { depUrl } from '../core/assets';
 import { getControlGroupIdsOrdered, getControlGroups, getPanelSpec } from '../core/spec';
 import type { Control, Corner, Panel, PanelSection, Spec } from '../core/spec-types';
 import { isFiniteNumber, normText, safeId, widgetKey } from '../core/utils';
@@ -38,10 +37,7 @@ function ensureTitleRow(panelEl: HTMLElement, titleText: string): HTMLElement {
 function ensureTitleIconLink(panelEl: HTMLElement | null, panelSpec: Panel | null): void {
   if (!panelEl || !panelSpec) return;
 
-  const resolveStr = (v: unknown): string => {
-    const out = depUrl(v);
-    return (typeof out === 'string') ? out.trim() : '';
-  };
+  const resolveStr = (v: unknown): string => (typeof v === 'string') ? v.trim() : '';
 
   const iconUrl = resolveStr(panelSpec.icon);
   const titleEl = panelEl.querySelector<HTMLElement>('.ml-panel-title');

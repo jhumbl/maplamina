@@ -3,9 +3,7 @@ import { pushWarn } from './utils';
 
 // The URL string out of the shapes an href arrives in. A relative URL is returned as it is
 // and resolves against the page.
-export function depUrl(x: string): string;
-export function depUrl(x: unknown): unknown;
-export function depUrl(x: unknown): unknown {
+function hrefUrl(x: unknown): unknown {
   if (typeof x === "string") return x;
   const o = x as { data?: unknown } | null | undefined;
   if (o && typeof o.data === "string") return o.data;
@@ -68,7 +66,7 @@ async function fetchArray(
   dtype: string | undefined,
   memoKey?: string | null
 ): Promise<TypedArray> {
-  const url = depUrl(href);
+  const url = hrefUrl(href);
   const dt = (dtype || '').toLowerCase();
 
   if (typeof url !== 'string') {

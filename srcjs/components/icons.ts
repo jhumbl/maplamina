@@ -1,4 +1,3 @@
-import { depUrl } from '../core/assets';
 import type { LayerCfgState } from '../core/layer-state';
 import { isFiniteNumber } from '../core/utils';
 
@@ -61,7 +60,7 @@ export function resolveIcon(st: { readonly cfg?: LayerCfgState } | null | undefi
     const arat  = Array.isArray(cfg.iconAnchor) ? cfg.iconAnchor : [0.5, 0.5];
     const [ax, ay] = toPxAnchor(arat, cell);
     const mask  = (cfg.mask !== false);
-    return { url: depUrl(nameOrUrl), width: cell, height: cell, anchorX: ax, anchorY: ay, mask };
+    return { url: nameOrUrl, width: cell, height: cell, anchorX: ax, anchorY: ay, mask };
   }
 
   const ent = REG[String(nameOrUrl || 'marker').toLowerCase()] || null;
