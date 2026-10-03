@@ -7,7 +7,6 @@ import type { FilterValue, WidgetElement } from '../core/widget';
 import { getElState } from '../filters/core';
 import type { PanelMeta } from '../filters/core';
 import { ensureFilterUI } from '../filters/filters';
-import { register } from './registry';
 
 // A filter as the code reads it. R emits `dict` on a select and `domain` on a range; the
 // other fields are read as fallbacks.
@@ -173,7 +172,3 @@ export function render(
     }
   }
 }
-
-try {
-  register('filters', render);
-} catch (_) {}

@@ -2,7 +2,6 @@ import { applyVisibility, buildLegendCard } from '../components/legends';
 import type { Components, Control, LegendsComponent, LegendsControl, Spec } from '../core/spec-types';
 import { asArray, normText as normTextBase } from '../core/utils';
 import type { WidgetElement } from '../core/widget';
-import { register } from './registry';
 
 const normText = (x: unknown): string => String(normTextBase(x) ?? '').trim();
 
@@ -100,7 +99,3 @@ export function render(
   // Apply `when` visibility rules on first mount.
   try { applyVisibility(widgetEl, spec); } catch (_) {}
 }
-
-try {
-  register('legends', render);
-} catch (_) {}

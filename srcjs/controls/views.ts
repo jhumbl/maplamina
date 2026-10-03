@@ -1,7 +1,6 @@
 import type { Control, Spec, ViewsControl } from '../core/spec-types';
 import { asArray, normText } from '../core/utils';
 import type { RuntimeState, WidgetElement, WidgetRuntime } from '../core/widget';
-import { register } from './registry';
 
 function ensureRuntimeState(rt: WidgetRuntime | null | undefined): RuntimeState | null {
   if (!rt) return null;
@@ -105,7 +104,3 @@ export function render(
 
   renderRadioList(mountEl, widgetEl, views, active, gid);
 }
-
-try {
-  register('views', render);
-} catch (_) {}

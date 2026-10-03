@@ -1,11 +1,6 @@
 // htmlwidgets entry point.
 
-// The control renderers register themselves when they load.
-import './controls/filters';
-import './controls/legends';
 import { sync } from './controls/panel';
-import './controls/summaries';
-import './controls/views';
 import { create } from './runtime/widget';
 
 // What is reached from outside the bundle.

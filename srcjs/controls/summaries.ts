@@ -7,7 +7,6 @@ import { formatNumber, isFiniteNumber, normText } from '../core/utils';
 import type { FiltersState, WidgetElement, WidgetRuntime } from '../core/widget';
 import type { RangeSource, SelectSource } from '../filters/runtime';
 import { getLogicalLayer, getRenderState, readRenderField } from '../runtime/assembly';
-import { register } from './registry';
 import type { ControlJob } from './registry';
 
 // What update() keeps on the node it draws into.
@@ -608,7 +607,3 @@ export function update(
   // Fire-and-forget async update; pipeline does not await.
   void updateAsync(mountEl, el, x, rt, groupId, controlSpec, job);
 }
-
-try {
-  register('summaries', { render, update });
-} catch (_) {}
