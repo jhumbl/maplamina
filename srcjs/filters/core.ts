@@ -26,7 +26,6 @@ export interface PanelMeta {
 export interface GroupUiState {
   select?: Record<string, Set<number>>;
   range?: Record<string, number[]>;
-  keepOpen?: Record<string, unknown>;
 }
 
 export type UiState = Record<string, GroupUiState>;
@@ -37,8 +36,6 @@ export function getElState(el: HTMLElement): UiState { let s = UISTATE.get(el); 
 // Callers provide a concrete mount node (panel section body or standalone container)
 // through panelMeta.mountEl.
 export function ensureFiltersContainer(
-  el: HTMLElement,
-  bindId: string,
   panelMeta: PanelMeta | null | undefined
 ): HTMLElement | null {
   if (panelMeta && panelMeta.mountEl) return panelMeta.mountEl;
@@ -74,7 +71,7 @@ function resolveDefaultSelection(sel: SelectUiSpec | null | undefined): number[]
 }
 
 export function seedSelectionSet(ui: UiState, bindId: string, sel: SelectUiSpec): Set<number> {
-  ui[bindId] = ui[bindId] || { select: {}, keepOpen: {} };
+  ui[bindId] = ui[bindId] || { select: {} };
   if (!ui[bindId].select![sel.id]) {
     const seed = resolveDefaultSelection(sel);
     ui[bindId].select![sel.id] = new Set(seed);

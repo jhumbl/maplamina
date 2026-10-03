@@ -81,7 +81,7 @@ export function render(
   const bindId = gid;
 
   if (ui) {
-    ui[bindId] = ui[bindId] || { select: {}, range: {}, keepOpen: {} };
+    ui[bindId] = ui[bindId] || { select: {}, range: {} };
 
     // Seed UI state from runtime (so rerenders preserve selection)
     const stAll = rt && rt.state && rt.state.filters ? rt.state.filters : {};

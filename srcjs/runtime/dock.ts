@@ -154,11 +154,7 @@ export function removeItem(el: WidgetElement, pos: unknown, key: unknown): void 
   if (!container) return;
 
   const item = container.querySelector(`[data-mf-dock-pos="${p}"][data-mf-dock-item="${k}"]`);
-  if (item) {
-    try { item.remove(); } catch (_) {
-      item.parentNode && item.parentNode.removeChild(item);
-    }
-  }
+  if (item) item.remove();
 
   // If the group is now empty, remove it
   const g = getState(el).groups.get(p) || (container.querySelector ? container.querySelector<HTMLElement>(`[data-mf-dock-group="${p}"]`) : null);

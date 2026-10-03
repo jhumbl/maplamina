@@ -164,8 +164,7 @@ async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
   async function hydrateNumeric(
     target: DataColumnsState,
     key: 'radius' | 'lineWidth' | 'size',
-    dtype = 'f32',
-    sizeFallback?: boolean
+    dtype = 'f32'
   ): Promise<void> {
     const src = target[key];
     if (!src) return;
@@ -181,7 +180,6 @@ async function resolveColumnsAndViews(st: LayerState): Promise<LayerState> {
     if (hasRef(src)) {
       const o = await resolveRefOrHref(st, src);
       if (!o) return;
-      if (sizeFallback && src.size == null && o.size) src.size = o.size;
       src.array = toTypedArray(o.array, dtype);
     }
   }

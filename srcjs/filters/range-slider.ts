@@ -8,8 +8,6 @@ export interface RangeSliderOptions {
 }
 
 export interface RangeSliderApi {
-  readonly isDragging: boolean;
-  update(newVals: readonly number[]): void;
   destroy(): void;
 }
 
@@ -186,16 +184,6 @@ export function mount(container: HTMLElement, opts: RangeSliderOptions): RangeSl
 
   // ---- public API ----
   return {
-    get isDragging() { return dragging != null; },
-    update(newVals) {
-      if (!Array.isArray(newVals) || newVals.length !== 2) return;
-      let [nlo, nhi] = [Number(newVals[0]), Number(newVals[1])];
-      nlo = clamp(nlo, min, max); nhi = clamp(nhi, min, max);
-      if (nlo > nhi) [nlo, nhi] = [nhi, nlo];
-      lo = snapToStep(nlo, min, step);
-      hi = snapToStep(nhi, min, step);
-      render();
-    },
     destroy() {
       ro.disconnect();
       thLo.replaceWith(thLo.cloneNode(true));

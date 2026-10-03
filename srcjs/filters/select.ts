@@ -206,7 +206,7 @@ export function ensureSelectUI(
   const ui = getElState(el);
   const selected = seedSelectionSet(ui, bindId, sel);
 
-  const filtersBox = ensureFiltersContainer(el, bindId, panelMeta);
+  const filtersBox = ensureFiltersContainer(panelMeta);
   if (!filtersBox) return;
 
   const useDropdown = (sel.dropdown === true) ||

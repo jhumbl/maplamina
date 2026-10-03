@@ -2,11 +2,9 @@ import { domKey, widgetKey } from '../core/utils';
 import { ensureFiltersContainer, getElState, publishFilterState } from './core';
 import type { PanelMeta, RangeUiSpec } from './core';
 import { mount } from './range-slider';
-import type { RangeSliderApi } from './range-slider';
 
 type FilterBox = HTMLElement & {
   __mfCleanup?: (() => void) | null;
-  __mfRangeSliderApi?: RangeSliderApi | null;
 };
 
 // --- helpers ---------------------------------------------------------------
@@ -18,7 +16,6 @@ function runCleanup(box: FilterBox | null): void {
     try { box.__mfCleanup(); } catch (e) { console.error(e); }
   }
   box.__mfCleanup = null;
-  box.__mfRangeSliderApi = null;
 }
 
 
@@ -60,7 +57,7 @@ export function ensureRangeUI(
   onChange: (() => void) | null | undefined,
   panelMeta: PanelMeta | null | undefined
 ): void {
-  const filtersBox = ensureFiltersContainer(el, bindId, panelMeta);
+  const filtersBox = ensureFiltersContainer(panelMeta);
   if (!filtersBox) return;
 
   const domLayerId = `${widgetKey(el)}-${domKey(bindId)}`;
@@ -154,12 +151,10 @@ export function ensureRangeUI(
     }
   });
 
-  // Persist slider API for cleanup; ensure re-renders don't leak observers.
-  box.__mfRangeSliderApi = sliderApi;
+  // Ensure re-renders don't leak observers.
   box.__mfCleanup = () => {
     try { sliderApi && typeof sliderApi.destroy === 'function' && sliderApi.destroy(); }
     catch (e) { console.error(e); }
-    box.__mfRangeSliderApi = null;
   };
 
   syncLabels();

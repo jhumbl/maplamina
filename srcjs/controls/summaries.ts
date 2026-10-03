@@ -445,12 +445,10 @@ async function computeMemberPartial(
 
 async function updateAsync(
   mountEl: SummariesMount | null,
-  el: WidgetElement | null | undefined,
   x: Spec,
   rt: WidgetRuntime | null | undefined,
   groupId: string | null | undefined,
-  controlSpec: Control | null | undefined,
-  job?: ControlJob | null
+  controlSpec: Control | null | undefined
 ): Promise<void> {
   if (!mountEl || !x || !rt) return;
 
@@ -605,5 +603,5 @@ export function update(
   job?: ControlJob | null
 ): void {
   // Fire-and-forget async update; pipeline does not await.
-  void updateAsync(mountEl, el, x, rt, groupId, controlSpec, job);
+  void updateAsync(mountEl, x, rt, groupId, controlSpec);
 }

@@ -36,7 +36,7 @@ function normKey(x: unknown): string {
 }
 
 // Parse an easing key (string) into a function.
-export function parseEasingKey(e: unknown): EasingFn | undefined {
+function parseEasingKey(e: unknown): EasingFn | undefined {
   if (typeof e === 'function') return e as EasingFn;
   const k = normKey(e) || 'smoothstep';
   return EASINGS[k];
