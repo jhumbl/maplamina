@@ -88,8 +88,6 @@ export function buildPathLayer(st: LayerState, ctx: BuildContext): PathLayer {
     parameters: { depthTest: false } as LayerParameters
   };
 
-  delete baseProps.getPath;
-
   const layerProps = composeLayerProps(st, baseProps, ctx);
   return new PathLayer(layerProps);
 }

@@ -18,7 +18,6 @@ interface PolygonObject {
 }
 
 interface PolygonBucket {
-  holesVersion?: number;
   positions?: TypedArray;
   ringStarts?: TypedArray;
   polyStarts?: TypedArray;
@@ -27,9 +26,6 @@ interface PolygonBucket {
   polyObjs?: (PolygonObject | null)[];
   dataObj?: { i: number }[] | null;
 }
-
-// Bump this if the precompute format/logic changes.
-const HOLES_VERSION = 2;
 
 export function buildPolygonLayer(st: LayerState, ctx: BuildContext): PolygonLayer | null {
   const P: Partial<PolygonColumnState> = st?.data_columns?.polygon || {};
@@ -50,7 +46,6 @@ export function buildPolygonLayer(st: LayerState, ctx: BuildContext): PolygonLay
   // -----------------------------
   const bucket = getLayerBuildCache<PolygonBucket>(ctx, st, 'polygon');
   const cacheOK =
-    bucket.holesVersion === HOLES_VERSION &&
     bucket.positions === positions &&
     bucket.ringStarts === ringStarts &&
     bucket.polyStarts === polyStarts &&
@@ -135,7 +130,6 @@ export function buildPolygonLayer(st: LayerState, ctx: BuildContext): PolygonLay
       }
     }
 
-    bucket.holesVersion = HOLES_VERSION;
     bucket.positions = positions;
     bucket.ringStarts = ringStarts;
     bucket.polyStarts = polyStarts;

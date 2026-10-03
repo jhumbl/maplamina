@@ -60,12 +60,8 @@ export function create(el: WidgetElement, width: number, height: number): Widget
     if (!(cacheRoot.layerBuildCache instanceof Map)) cacheRoot.layerBuildCache = new Map();
 
     return {
-      id: el.id || null,
       el,
-      width,
-      height,
       map,
-      overlay,
       cache: cacheRoot
     };
   }
@@ -194,8 +190,6 @@ export function create(el: WidgetElement, width: number, height: number): Widget
     },
 
     resize: function(w, h) {
-      if (typeof w === 'number') width = w;
-      if (typeof h === 'number') height = h;
       if (map) map.resize();
     },
 

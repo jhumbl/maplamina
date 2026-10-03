@@ -47,14 +47,14 @@ export function mergeEncodings(
 
 function layerCacheKey(st: LayerState): string {
   if (!st || typeof st !== 'object') return '__layer__';
-  return st.filterKey || st.id || '__layer__';
+  return st.id || '__layer__';
 }
 
 // B is what the calling builder keeps in its bucket.
 export function getLayerBuildCache<B extends object = LayerCache>(
   ctx: BuildContext,
   st: LayerState,
-  namespace?: string
+  namespace: string
 ): B {
   const cacheRoot = ctx && ctx.cache && typeof ctx.cache === 'object' ? ctx.cache : null;
   if (!cacheRoot) return {} as B;
@@ -66,8 +66,6 @@ export function getLayerBuildCache<B extends object = LayerCache>(
     layerCache = {};
     byLayer.set(key, layerCache);
   }
-
-  if (!namespace) return layerCache as B;
 
   let bucket = layerCache[namespace];
   if (!bucket || typeof bucket !== 'object') {

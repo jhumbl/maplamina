@@ -97,7 +97,6 @@ function attachGPUFiltering<P extends ComposedProps>(layerProps: P, st: LayerSta
   const hasDFE = existing.some(e => {
     if (!e) return false;
     return e instanceof DataFilterExtension;
-    return !!(e && e.constructor && e.constructor.name === 'DataFilterExtension');
   });
   if (!hasDFE) existing.push(new DataFilterExtension(extOpts));
   layerProps.extensions = existing;

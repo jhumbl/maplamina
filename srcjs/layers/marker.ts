@@ -108,18 +108,13 @@ export function buildMarkerLayer(st: LayerState, ctx: BuildContext): IconLayer |
     alphaCutoff: 0
   };
 
-  // Both sublayers share one filterKey (default: the base id)
-  const filterKey = st.filterKey || st.id;
-
   // ---- STROKE (under) -----------------------------------------------------
   const stStroke: LayerState = Object.assign({}, st, {
     id: st.id ? `${st.id}-stroke` : undefined,
-    filterKey,
     // Make this truly non-interactive: drive via cfg because composeLayerProps reads st.cfg.pickable
     cfg: Object.assign({}, st.cfg, { pickable: false }),
     tooltip: null,
-    popup: null,
-    show_controls: false
+    popup: null
   });
 
   const basePropsStroke: Partial<IconLayerProps> = Object.assign({}, sharedProps, {
@@ -133,7 +128,7 @@ export function buildMarkerLayer(st: LayerState, ctx: BuildContext): IconLayer |
   const propsStroke = composeLayerProps(stStroke, basePropsStroke, ctx);
 
   // ---- FILL (over) --------------------------------------------------------
-  const stFill: LayerState = Object.assign({}, st, { filterKey });
+  const stFill: LayerState = Object.assign({}, st);
 
   const basePropsFill: Partial<IconLayerProps> = Object.assign({}, sharedProps, {
     getIcon: () => iconFillObj,

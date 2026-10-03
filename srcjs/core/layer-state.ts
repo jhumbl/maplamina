@@ -203,9 +203,6 @@ export interface LayerState {
   data_columns?: DataColumnsState;
   base_encodings?: EncodingsState;
   cfg?: LayerCfgState;
-  // Set on the two layers a marker is built from.
-  filterKey?: string | null;
-  show_controls?: boolean;
   __render?: RenderFields;
   __warns?: string[];
 }
