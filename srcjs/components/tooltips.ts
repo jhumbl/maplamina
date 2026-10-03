@@ -506,7 +506,8 @@ export function buildOnClickPopup(st: LayerState): ((info: WidgetPickingInfo | n
     const onRender = () => position();
 
     function close() {
-      try { map!.off('move', onMove); map!.off('render', onRender); } catch(_) {}
+      map!.off('move', onMove);
+      map!.off('render', onRender);
       document.removeEventListener('keydown', onKey);
       if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
       panel = null;

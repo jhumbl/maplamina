@@ -121,14 +121,14 @@ export function create(el: WidgetElement, width: number, height: number): Widget
       if (map && prevProjection && prevProjection !== desiredProjection) {
         mfRuntimeMap.clearDeferredFit(rt, el);
         if (overlay) {
-          try { overlay.setProps({ layers: [] }); } catch (_) {}
-          try { map && map.removeControl(overlay); } catch (_) {}
+          overlay.setProps({ layers: [] });
+          map && map.removeControl(overlay);
           overlay = null;
         }
         currentLayers = [];
         clearMapLibreControls(map, rt);
         resetProjectionManager(rt);
-        try { map.remove(); } catch (_) {}
+        map.remove();
         map = null;
         lastFitHash = null;
       }
@@ -212,8 +212,8 @@ export function create(el: WidgetElement, width: number, height: number): Widget
       }
 
       if (overlay) {
-        try { overlay.setProps({ layers: [] }); } catch (_) {}
-        try { map && map.removeControl(overlay); } catch (_) {}
+        overlay.setProps({ layers: [] });
+        map && map.removeControl(overlay);
         overlay = null;
       }
 
@@ -223,7 +223,7 @@ export function create(el: WidgetElement, width: number, height: number): Widget
       resetProjectionManager(el.__mfRuntime);
 
       if (map) {
-        try { map.remove(); } catch (_) {}
+        map.remove();
         map = null;
       }
 

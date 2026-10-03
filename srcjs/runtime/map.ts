@@ -132,6 +132,7 @@ export function applyMapLibreControls(
     }
 
     if (prev && prev.instance) {
+      // onRemove() throws on a control whose addControl() failed.
       try { map.removeControl(prev.instance); } catch (_) {}
     }
 
@@ -151,6 +152,7 @@ export function applyMapLibreControls(
     if (nextTypes.has(t)) continue;
     const prev = byType[t];
     if (prev && prev.instance) {
+      // onRemove() throws on a control whose addControl() failed.
       try { map.removeControl(prev.instance); } catch (_) {}
     }
     delete byType[t];
@@ -166,6 +168,7 @@ export function clearMapLibreControls(
   for (const t of Object.keys(bag)) {
     const prev = bag[t];
     if (prev && prev.instance) {
+      // onRemove() throws on a control whose addControl() failed.
       try { map.removeControl(prev.instance); } catch (_) {}
     }
   }
@@ -182,7 +185,7 @@ export function resetProjectionManager(rt: WidgetRuntime | null | undefined): vo
   if (!rt || typeof rt !== 'object') return;
   const pm = rt._projectionMgr;
   if (pm && pm.map && pm.handler && typeof pm.map.off === 'function') {
-    try { pm.map.off('style.load', pm.handler); } catch (_) {}
+    pm.map.off('style.load', pm.handler);
   }
   rt._projectionMgr = null;
 }
@@ -224,7 +227,7 @@ export function ensureMapProjection(
 
   if (!pm || pm.map !== map) {
     if (pm && pm.map && pm.handler && typeof pm.map.off === 'function') {
-      try { pm.map.off('style.load', pm.handler); } catch (_) {}
+      pm.map.off('style.load', pm.handler);
     }
 
     const next: ProjectionManager = pm = {
@@ -247,19 +250,17 @@ export function ensureMapProjection(
     rt._projectionMgr = next;
 
     if (map && typeof map.on === 'function') {
-      try { map.on('style.load', next.handler); } catch (_) {}
+      map.on('style.load', next.handler);
     }
   } else {
     pm.desired = d;
   }
 
-  try {
-    const styleLoaded =
-      (map && typeof map.isStyleLoaded === 'function') ? map.isStyleLoaded()
-      : (map && typeof map.loaded === 'function') ? map.loaded()
-      : false;
-    if (styleLoaded) applyProjectionFromManager(pm);
-  } catch (_) {}
+  const styleLoaded =
+    (map && typeof map.isStyleLoaded === 'function') ? map.isStyleLoaded()
+    : (map && typeof map.loaded === 'function') ? map.loaded()
+    : false;
+  if (styleLoaded) applyProjectionFromManager(pm);
 
   return pm.promise || Promise.resolve();
 }
@@ -347,7 +348,7 @@ function armDeferredFit(
     if (!elHasSize(el)) return;
 
     const ph = mgr.pendingHash;
-    try { map && typeof map.resize === 'function' && map.resize(); } catch (_) {}
+    map && typeof map.resize === 'function' && map.resize();
     const ok = safeFitBoundsNow(map, mgr.pendingBbox, options);
 
     // Only clear the pending bbox if fitBounds was actually applied.

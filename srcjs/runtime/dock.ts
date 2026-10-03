@@ -34,10 +34,8 @@ function getState(el: HTMLElement): DockState {
 }
 
 function getMapContainer(el: WidgetElement): HTMLElement {
-  try {
-    const map = el && typeof el.__mfGetMap === 'function' ? el.__mfGetMap() : null;
-    if (map && typeof map.getContainer === 'function') return map.getContainer();
-  } catch (_) {}
+  const map = el && typeof el.__mfGetMap === 'function' ? el.__mfGetMap() : null;
+  if (map && typeof map.getContainer === 'function') return map.getContainer();
   return el;
 }
 
