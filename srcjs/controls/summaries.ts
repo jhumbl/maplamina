@@ -2,10 +2,9 @@ import { resolveRefOrHref } from '../core/assets';
 import { getIndexers } from '../core/data';
 import type { Indexers } from '../core/data';
 import type { LayerState, ResolvedArray } from '../core/layer-state';
-import type { Control, Ref, Spec, SummariesComponent, SummariesControl, SummaryRow } from '../core/spec-types';
+import type { Control, RangeComponent, Ref, SelectComponent, Spec, SummariesComponent, SummariesControl, SummaryRow } from '../core/spec-types';
 import { formatNumber, isFiniteNumber, normText } from '../core/utils';
 import type { FiltersState, WidgetElement, WidgetRuntime } from '../core/widget';
-import type { RangeSource, SelectSource } from '../filters/runtime';
 import { getLogicalLayer, getRenderState, readRenderField } from '../runtime/assembly';
 import type { ControlJob } from './registry';
 
@@ -28,8 +27,8 @@ interface LayerMask {
   indexers: Indexers | null;
 }
 
-// A component as the code reads it. R emits `values`; `codes` is read as a fallback.
-type SummarySource = SummariesComponent & { readonly values?: Ref; readonly codes?: Ref };
+// A summary component as the code reads it. A count carries no `values`.
+type SummarySource = SummariesComponent & { readonly values?: Ref };
 
 type MemberPartial =
   | { kind: 'count'; n: number; empty: false; na: false }
@@ -274,7 +273,7 @@ async function computeLayerMask(
 
   // --- Select dims ---
   for (const dim of selDims) {
-    const comp: Partial<SelectSource> = dim && dim.comp ? dim.comp : {};
+    const comp: Partial<SelectComponent> = dim && dim.comp ? dim.comp : {};
     const gid = normText(dim.groupId);
     const label = normText(dim.label);
     const groupState: Record<string, unknown> = (gid && stateAll[gid] && typeof stateAll[gid] === 'object') ? stateAll[gid] : {};
@@ -283,7 +282,6 @@ async function computeLayerMask(
     // Empty selection disables the dim.
     let selected: Set<string> | null = null;
     if (sel instanceof Set && sel.size) selected = new Set(Array.from(sel, v => String(v)));
-    else if (Array.isArray(sel) && sel.length) selected = new Set(sel.map(v => String(v)));
     if (!selected) continue;
 
     const dict = Array.isArray(comp.dict) ? comp.dict : [];
@@ -299,7 +297,7 @@ async function computeLayerMask(
 
     let res: ResolvedArray | null = null;
     try {
-      res = await resolveRefOrHref(st, comp.codes || comp.values);
+      res = await resolveRefOrHref(st, comp.codes);
     } catch (_) { res = null; }
     const codes = res && res.array;
     if (!codes || !ArrayBuffer.isView(codes)) continue;
@@ -318,7 +316,7 @@ async function computeLayerMask(
 
   // --- Range dims ---
   for (const dim of rngDims) {
-    const comp: Partial<RangeSource> = dim && dim.comp ? dim.comp : {};
+    const comp: Partial<RangeComponent> = dim && dim.comp ? dim.comp : {};
     const gid = normText(dim.groupId);
     const label = normText(dim.label);
 
@@ -328,9 +326,8 @@ async function computeLayerMask(
     if (Array.isArray(r) && r.length >= 2) { lo = +r[0]; hi = +r[1]; }
     else {
       const cmin = comp.min as number, cmax = comp.max as number;
-      const dmin = comp.domain?.min as number, dmax = comp.domain?.max as number;
-      lo = Number.isFinite(+cmin) ? +cmin : (Number.isFinite(+dmin) ? +dmin : 0);
-      hi = Number.isFinite(+cmax) ? +cmax : (Number.isFinite(+dmax) ? +dmax : lo);
+      lo = Number.isFinite(+cmin) ? +cmin : 0;
+      hi = Number.isFinite(+cmax) ? +cmax : lo;
     }
     if (!isFiniteNumber(lo)) lo = 0;
     if (!isFiniteNumber(hi)) hi = lo;
@@ -338,7 +335,7 @@ async function computeLayerMask(
 
     let res: ResolvedArray | null = null;
     try {
-      res = await resolveRefOrHref(st, comp.values || comp.codes);
+      res = await resolveRefOrHref(st, comp.values);
     } catch (_) { res = null; }
     const vals = res && res.array;
     if (!vals || !ArrayBuffer.isView(vals)) continue;
@@ -380,7 +377,7 @@ async function computeMemberPartial(
   // Resolve values array
   let res: ResolvedArray | null = null;
   try {
-    res = await resolveRefOrHref(st, comp.values || comp.codes);
+    res = await resolveRefOrHref(st, comp.values);
   } catch (_) { res = null; }
   const arr = res && res.array;
   if (!arr || !ArrayBuffer.isView(arr)) {

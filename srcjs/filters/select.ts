@@ -22,7 +22,6 @@ function runCleanup(box: FilterBox | null): void {
 
 function safeLabel(label: unknown, fallback: unknown): string {
   const raw = (label != null) ? label : fallback;
-  if (Array.isArray(raw)) return String(raw[raw.length - 1]);
   return String(raw ?? '');
 }
 

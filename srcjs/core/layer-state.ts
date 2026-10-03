@@ -144,8 +144,6 @@ export interface LayerCfgState {
   sizeMaxPixels?: number;
   mask?: boolean;
   occlude?: boolean;
-  fillScale?: number;
-  strokeDarken?: number;
 }
 
 // A template placeholder; hydration writes the underscore fields.

@@ -5,7 +5,6 @@ import type { RangeFilterControl, SelectFilterControl } from '../core/spec-types
 export interface SelectUiSpec extends SelectFilterControl {
   readonly id: string;
   readonly dom_id: string;
-  readonly default_indices?: unknown;
 }
 
 export interface RangeUiSpec extends RangeFilterControl {
@@ -42,15 +41,8 @@ export function ensureFiltersContainer(
   return null;
 }
 
-function toArrayDefaultIndices(di: unknown): number[] {
-  if (Array.isArray(di)) return di;
-  if (Number.isFinite(di)) return [di as number];
-  return [];
-}
-
 function resolveDefaultSelection(sel: SelectUiSpec | null | undefined): number[] {
   if (!sel) return [];
-  if (sel.default_indices != null) return toArrayDefaultIndices(sel.default_indices);
 
   const d: unknown = sel.default;
   if (Array.isArray(d) && d.every(v => typeof v === 'number' && Number.isFinite(v))) return d.slice();

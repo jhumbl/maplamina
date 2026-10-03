@@ -8,11 +8,7 @@ import { getElState } from '../filters/core';
 import type { PanelMeta } from '../filters/core';
 import { ensureFilterUI } from '../filters/filters';
 
-// A filter as the code reads it. R emits `dict` on a select and `domain` on a range; the
-// other fields are read as fallbacks.
-type SelectDef = SelectFilterControl & { readonly domain?: readonly string[] };
-type RangeDef = RangeFilterControl & { readonly min?: number; readonly max?: number };
-type FilterDef = SelectDef | RangeDef;
+type FilterDef = SelectFilterControl | RangeFilterControl;
 
 function clearNode(node: Node | null | undefined): void {
   while (node && node.firstChild) node.removeChild(node.firstChild);
@@ -93,7 +89,7 @@ export function render(
       const sel = st[label];
       if (spec.type === 'select' && sel instanceof Set) {
         // UI widgets store selected *indices* into dict; runtime stores selected *values*.
-        const dict = (spec.dict && Array.isArray(spec.dict)) ? spec.dict : (Array.isArray(spec.domain) ? spec.domain : []);
+        const dict = (spec.dict && Array.isArray(spec.dict)) ? spec.dict : [];
         const idx = new Set<number>();
         for (const v of sel) {
           const sv = String(v);
@@ -118,20 +114,13 @@ export function render(
       const set = ui && ui[bindId] && ui[bindId].select ? ui[bindId].select[label] : null;
 
       // UI widgets store indices into the merged dict; runtime expects selected values.
-      const dict = (spec.dict && Array.isArray(spec.dict)) ? spec.dict : (Array.isArray(spec.domain) ? spec.domain : []);
+      const dict = (spec.dict && Array.isArray(spec.dict)) ? spec.dict : [];
       let out = new Set<string>();
 
       if (set instanceof Set && set.size) {
-        const arr = Array.from(set);
-        const allInt = arr.every(v => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < dict.length);
-        if (allInt && dict.length) {
-          for (const i of arr) {
-            const v = dict[i];
-            if (v !== undefined) out.add(String(v));
-          }
-        } else {
-          // Treat as already-values (fallback)
-          for (const v of arr) out.add(String(v));
+        for (const i of set) {
+          const v = dict[i];
+          if (v !== undefined) out.add(String(v));
         }
       }
 
@@ -163,8 +152,8 @@ export function render(
         id: label,
         dom_id: domKey(label),
         label: spec0.label || label,
-        min: Number.isFinite(+spec0.min!) ? +spec0.min! : +domain.min!,
-        max: Number.isFinite(+spec0.max!) ? +spec0.max! : +domain.max!,
+        min: +domain.min!,
+        max: +domain.max!,
         // The runtime scheduler coalesces overlay updates, so the UI can emit live changes directly.
         live: (spec0.live !== false)
       });

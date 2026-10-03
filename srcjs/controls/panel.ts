@@ -7,11 +7,6 @@ import { ensurePanelHost, ensureStandaloneGroup, removePanelHost, removeStandalo
 import { getHandler } from './registry';
 import type { ControlJob } from './registry';
 
-// The panel and its sections as the code reads them. R emits neither `key` nor `order` on
-// the panel and only `id` on a section; the other fields are read with fallbacks.
-type PanelSource = Panel & { readonly key?: string; readonly order?: number };
-type SectionSource = PanelSection & { readonly label?: string; readonly order?: number };
-
 interface SlotOptions {
   label?: string;
   order?: number;
@@ -318,19 +313,19 @@ export function sync(el: WidgetElement, x: Spec): void {
   // Panel order first (if present), then insertion order in .__controls.
   const allGroups = getControlGroupIdsOrdered(x);
 
-  const panelSpec: PanelSource | null = getPanelSpec(x);
-  const sections: readonly SectionSource[] | null = panelSpec && Array.isArray(panelSpec.sections) ? panelSpec.sections : null;
+  const panelSpec: Panel | null = getPanelSpec(x);
+  const sections: readonly PanelSection[] | null = panelSpec && Array.isArray(panelSpec.sections) ? panelSpec.sections : null;
 
   // PANEL MOUNTING
   const panelGroups = new Set<string>();
   if (panelSpec && sections && sections.length) {
     const corner = normText(panelSpec.position) || 'topleft';
-    const key = normText(panelSpec.key) || 'controls-panel';
+    const key = 'controls-panel';
 
     const panelHost = ensurePanelHost(el, {
       corner,
       key,
-      order: isFiniteNumber(panelSpec.order) ? panelSpec.order : 10,
+      order: 10,
       className: 'ml-layer-panel ml-control-panel'
     });
 
@@ -344,15 +339,15 @@ export function sync(el: WidgetElement, x: Spec): void {
       // Create/update slots in declared order
       const seenSlots = new Set<string>();
       for (let i = 0; i < sections.length; i++) {
-        const sec: Partial<SectionSource> = sections[i] || {};
+        const sec: Partial<PanelSection> = sections[i] || {};
         const gid = normText(sec.id);
         if (!gid) continue;
 
         panelGroups.add(gid);
         const sid = `ml-controls-slot-${widgetKey(el)}-${safeId(gid)}`;
         const body = ensureSectionSlot(panelHost, sid, gid, {
-          label: normText(sec.label) || gid,
-          order: isFiniteNumber(sec.order) ? sec.order : (10 + i * 10)
+          label: gid,
+          order: 10 + i * 10
         });
 
         seenSlots.add(sid);

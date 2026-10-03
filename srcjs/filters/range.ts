@@ -77,7 +77,7 @@ export function ensureRangeUI(
 
   const title = document.createElement('div');
   title.className = 'ml-filter-title';
-  const niceLabel = Array.isArray(rng.label) ? String(rng.label[rng.label.length - 1]) : String(rng.label || rng.id);
+  const niceLabel = String(rng.label || rng.id);
   title.textContent = niceLabel;
   box.appendChild(title);
 

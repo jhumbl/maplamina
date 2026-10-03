@@ -3,17 +3,9 @@ import { getIndexers } from '../core/data';
 import type { AccessorInfo } from '../core/data';
 import type { LayerState, ResolvedArray, TypedArray } from '../core/layer-state';
 import { getControlGroupsByType, wireMap } from '../core/spec';
-import type { RangeComponent, Ref, SelectComponent, Spec } from '../core/spec-types';
+import type { RangeComponent, SelectComponent, Spec } from '../core/spec-types';
 import { isFiniteNumber, normText } from '../core/utils';
 import type { FilterIndex, FilterValue, FiltersState, RuntimeState, WidgetRuntime } from '../core/widget';
-
-// A component as the code reads it. R emits `codes` on a select and `values`, `min` and `max`
-// on a range; the other fields are read as fallbacks.
-export type SelectSource = SelectComponent & { readonly values?: Ref };
-export type RangeSource = RangeComponent & {
-  readonly codes?: Ref;
-  readonly domain?: { readonly min: number; readonly max: number };
-};
 
 export interface GpuFiltering {
   filterCategories?: number[] | number[][];
@@ -157,8 +149,6 @@ export function initFiltersState(
 
         if (hasPrev) {
           if (p instanceof Set) next[label] = new Set(p);
-          else if (Array.isArray(p)) next[label] = new Set(p.map(v => String(v)).filter(v => v.length));
-          else if (p != null && p !== '') next[label] = new Set([String(p)]);
           else next[label] = new Set();
           continue;
         }
@@ -209,13 +199,12 @@ export function initFiltersState(
         if (!seed && Array.isArray(spec.members)) {
           for (const midRaw of spec.members) {
             const mid = normText(midRaw);
-            const comp: RangeSource = compRanges[mid];
+            const comp: RangeComponent = compRanges[mid];
             if (!comp || comp.default == null) continue;
 
             let cmin = dmin, cmax = dmax;
             if (!(Number.isFinite(cmin) && Number.isFinite(cmax))) {
               if (Number.isFinite(+comp.min) && Number.isFinite(+comp.max)) { cmin = +comp.min; cmax = +comp.max; }
-              else if (comp.domain && Number.isFinite(+comp.domain.min) && Number.isFinite(+comp.domain.max)) { cmin = +comp.domain.min; cmax = +comp.domain.max; }
             }
 
             seed = coerceRangeDefault(comp.default, cmin, cmax);
@@ -357,12 +346,12 @@ export async function getGPUFilterContribution(
 
   for (const dim of selDims) {
     const label = dim.label;
-    const comp: Partial<SelectSource> = dim.comp || {};
+    const comp: Partial<SelectComponent> = dim.comp || {};
     const compDict = Array.isArray(comp.dict) ? comp.dict : [];
 
     let res: ResolvedArray | null = null;
     try {
-      res = await resolveRefOrHref(st, comp.codes || comp.values);
+      res = await resolveRefOrHref(st, comp.codes);
     } catch (_) { res = null; }
     const codes = res && res.array;
     if (!codes || !ArrayBuffer.isView(codes)) continue;
@@ -376,7 +365,6 @@ export async function getGPUFilterContribution(
 
     let selected: Set<string> | null = null;
     if (sel instanceof Set && sel.size) selected = new Set(Array.from(sel, v => String(v)));
-    else if (Array.isArray(sel) && sel.length) selected = new Set(sel.map(v => String(v)));
 
     if (selected) {
       allowed = [];
@@ -401,11 +389,11 @@ export async function getGPUFilterContribution(
 
   for (const dim of rngDims) {
     const label = dim.label;
-    const comp: Partial<RangeSource> = dim.comp || {};
+    const comp: Partial<RangeComponent> = dim.comp || {};
 
     let res: ResolvedArray | null = null;
     try {
-      res = await resolveRefOrHref(st, comp.values || comp.codes);
+      res = await resolveRefOrHref(st, comp.values);
     } catch (_) { res = null; }
     const vals = res && res.array;
     if (!vals || !ArrayBuffer.isView(vals)) continue;
@@ -417,9 +405,8 @@ export async function getGPUFilterContribution(
     if (Array.isArray(r) && r.length >= 2) { lo = +r[0]; hi = +r[1]; }
     else {
       const cmin = comp.min as number, cmax = comp.max as number;
-      const dmin = comp.domain?.min as number, dmax = comp.domain?.max as number;
-      lo = Number.isFinite(+cmin) ? +cmin : (Number.isFinite(+dmin) ? +dmin : 0);
-      hi = Number.isFinite(+cmax) ? +cmax : (Number.isFinite(+dmax) ? +dmax : lo);
+      lo = Number.isFinite(+cmin) ? +cmin : 0;
+      hi = Number.isFinite(+cmax) ? +cmax : lo;
     }
     if (!isFiniteNumber(lo)) lo = 0;
     if (!isFiniteNumber(hi)) hi = lo;

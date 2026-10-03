@@ -11,6 +11,10 @@ import type { LayerParameters } from './props';
 import { getLayerBuildCache } from './utils';
 import type { BuildContext } from './utils';
 
+// The stroke icon is the fill colour darkened; the fill icon is drawn smaller, inside it.
+const STROKE_DARKEN = 0.6;
+const FILL_SCALE = 0.91;
+
 interface MarkerBucket {
   sharedData?: PointData;
 }
@@ -70,10 +74,6 @@ export function buildMarkerLayer(st: LayerState, ctx: BuildContext): IconLayer |
   const getColorBase = colorAccessorFrom(st, 'fillColor', [33,150,243,255]);
   const getSizeBase = numericAccessorFrom(st, 'size', 18);
 
-  // Configurable factors
-  const strokeDarken = isFiniteNumber(st.cfg?.strokeDarken) ? st.cfg.strokeDarken : 0.6;
-  const fillScale    = isFiniteNumber(st.cfg?.fillScale)    ? st.cfg.fillScale    : 0.91;
-
   const clamp255 = (x: number) => Math.max(0, Math.min(255, x | 0));
 
   // Avoid per-feature allocations for stroke colors by writing into a reusable scratch array.
@@ -91,11 +91,11 @@ export function buildMarkerLayer(st: LayerState, ctx: BuildContext): IconLayer |
     return out;
   };
 
-  const getColorStroke = (d: unknown, info?: AccessorInfo | null) => darkenRGBAInto(getColorBase(d, info), strokeDarken, _scratchStroke);
+  const getColorStroke = (d: unknown, info?: AccessorInfo | null) => darkenRGBAInto(getColorBase(d, info), STROKE_DARKEN, _scratchStroke);
   const getColorFill   = getColorBase;
 
   const getSizeStroke  = getSizeBase;
-  const getSizeFill    = (d: unknown, info?: AccessorInfo | null) => fillScale * getSizeBase(d, info);
+  const getSizeFill    = (d: unknown, info?: AccessorInfo | null) => FILL_SCALE * getSizeBase(d, info);
 
   // Common props for both sublayers
   const sharedProps: Partial<IconLayerProps> = {
@@ -134,8 +134,8 @@ export function buildMarkerLayer(st: LayerState, ctx: BuildContext): IconLayer |
     getIcon: () => iconFillObj,
     getColor: getColorFill,
     getSize:  getSizeFill,
-    sizeMinPixels: isFiniteNumber(st.cfg?.sizeMinPixels) ? st.cfg.sizeMinPixels * 0.91 : 0,
-    sizeMaxPixels: isFiniteNumber(st.cfg?.sizeMaxPixels) ? st.cfg.sizeMaxPixels * 0.91 : 80 * 0.91
+    sizeMinPixels: isFiniteNumber(st.cfg?.sizeMinPixels) ? st.cfg.sizeMinPixels * FILL_SCALE : 0,
+    sizeMaxPixels: isFiniteNumber(st.cfg?.sizeMaxPixels) ? st.cfg.sizeMaxPixels * FILL_SCALE : 80 * FILL_SCALE
   });
 
   const propsFill = composeLayerProps(stFill, basePropsFill, ctx);
