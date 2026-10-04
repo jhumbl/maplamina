@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyVisibility, buildLegendCard } from '../../srcjs/components/legends';
 import type { Control, LegendsComponent, Spec, WireSpec } from '../../srcjs/core/spec-types';
-import type { WidgetElement, WidgetRuntime } from '../../srcjs/core/widget';
+import type { WidgetElement, WidgetRuntime, WritableRuntime } from '../../srcjs/core/widget';
 import { render } from '../../srcjs/controls/legends';
 import legends from './spec-samples/legends';
 import lengthOne from './spec-samples/length-one';
@@ -178,7 +178,7 @@ describe('visibility', () => {
     expect(stack(mount).style.display).toBe('none');
     expect(stack(open).style.display).toBe('');
 
-    f.el.__mfRuntime!.state.views = { views1: 'b' };
+    (f.el.__mfRuntime as WritableRuntime).state.views = { views1: 'b' };
     applyVisibility(f.el, f.x);
     expect(cards(mount)[0].style.display).toBe('');
     expect(stack(mount).style.display).toBe('');

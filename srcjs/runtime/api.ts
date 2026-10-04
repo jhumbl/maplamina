@@ -2,7 +2,7 @@ import type { computeViewOpsByLayer } from '../components/views';
 import { getControlGroupsByType, getControlSpec } from '../core/spec';
 import type { FilterControl, FiltersControl, RangeFilterControl, Spec } from '../core/spec-types';
 import { asArray, isArray, isFiniteNumber, normText } from '../core/utils';
-import type { FilterValue, FiltersState, RuntimeState, WidgetElement, WidgetRuntime } from '../core/widget';
+import type { FilterValue, FiltersState, RuntimeState, WidgetElement, WidgetRuntime, WritableRuntime } from '../core/widget';
 import type { initFiltersState } from '../filters/runtime';
 import { getLogicalLayer, getRenderState } from './assembly';
 import * as motion from './motion';
@@ -20,8 +20,8 @@ export interface RuntimeDeps {
 
 type GroupedState = RuntimeState & { views: Record<string, string>; filters: FiltersState };
 
-function ensureGroupedState(rt: WidgetRuntime | null | undefined): GroupedState {
-  if (!rt) return {} as GroupedState;
+function ensureGroupedState(rt: WritableRuntime | null | undefined): GroupedState {
+  if (!rt) return { views: {}, filters: {} };
   if (!rt.state || typeof rt.state !== 'object') rt.state = {};
   if (!rt.state.filters || typeof rt.state.filters !== 'object') rt.state.filters = {};
   if (!rt.state.views || typeof rt.state.views !== 'object') rt.state.views = {};
@@ -145,8 +145,6 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
     const x = this.specRef;
     if (!x) return;
 
-    const disableRuntimeTransitions = motion.disableRuntimeTransitions;
-
     let gid: string | null = null, lab: typeof label | null = null, val: unknown = null;
     if (arguments.length === 2) {
       gid = this._defaultFiltersGroupId || 'filters';
@@ -226,7 +224,6 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       : (idx && idx.byGroup && idx.byGroup.get(gid)) ? Array.from(idx.byGroup.get(gid)!)
       : Array.from(this.layers.keys());
 
-    disableRuntimeTransitions(this, affected);
     if (typeof this.invalidate === 'function') this.invalidate({ layers: affected, controls: true, reason: 'filters' });
   };
 
@@ -239,13 +236,10 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       ? deps.initFiltersState
       : (rt0) => { ensureGroupedState(rt0); return (rt0!.state && rt0!.state.filters) ? rt0!.state.filters : {}; };
 
-    const disableRuntimeTransitions = motion.disableRuntimeTransitions;
-
     if (groupId == null) {
       initFiltersState(this, x);
       const idx = this._filterIndex;
       const allIds = (idx && idx.byLayer) ? Array.from(idx.byLayer.keys()) : Array.from(this.layers.keys());
-      disableRuntimeTransitions(this, allIds);
       if (typeof this.invalidate === 'function') this.invalidate({ layers: allIds, controls: true, reason: 'filters-clear' });
       return;
     }
@@ -258,7 +252,6 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       (idx && idx.byGroup && idx.byGroup.get(gid)) ? Array.from(idx.byGroup.get(gid)!)
       : Array.from(this.layers.keys());
 
-    disableRuntimeTransitions(this, affected);
     if (typeof this.invalidate === 'function') this.invalidate({ layers: affected, controls: true, reason: 'filters-clear' });
   };
 }
@@ -291,7 +284,6 @@ export function ensureRuntime(el: WidgetElement | null | undefined, deps?: Runti
   rt = {
     specRef: null,
     layers: new Map(),
-    pruneTasks: new Set(),
     state: {},
     _renderEpoch: 0,
     _mfApiDeps: depObj

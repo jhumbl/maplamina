@@ -35,8 +35,13 @@ function setup(wire: WireSpec, views?: Record<string, string>, elementId = 'w1')
 const radios = (mount: HTMLElement): HTMLInputElement[] =>
   Array.from(mount.querySelectorAll<HTMLInputElement>('input[type="radio"]'));
 const checked = (mount: HTMLElement): string[] => radios(mount).filter(r => r.checked).map(r => r.value);
-const draw = (f: Fixture, control: Control | null = f.control): void =>
-  render(f.mount, f.el, f.x, f.gid, control);
+// A control altered by hand takes the place of the sample's in the spec, as the panel
+// hands render() the control the spec holds.
+const draw = (f: Fixture, control: Control | null = f.control): void => {
+  const controls = f.x['.__controls'] as Record<string, Control>;
+  const x = control && control !== f.control ? { ...f.x, '.__controls': { ...controls, [f.gid]: control } } as Spec : f.x;
+  render(f.mount, f.el, x, f.gid, control);
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -112,13 +117,14 @@ describe('the view checked at first', () => {
     expect(checked(f.mount)).toEqual(['thin']);
   });
 
-  it('is written to the state under the group id, which is made when absent', () => {
+  it('is the one pickActiveViews() seeds in a state it makes when absent', () => {
     const f = setup(polygonsComponents);
     expect(f.gid).toBe('views');
     // By hand: a runtime that has no state yet.
     (f.rt as { state?: unknown }).state = undefined;
     draw(f);
-    expect(f.rt.state).toEqual({ views: { views: 'scale' } });
+    expect(checked(f.mount)).toEqual(['scale']);
+    expect(f.rt.state).toEqual({ views: { views: 'scale' }, filters: {} });
   });
 });
 

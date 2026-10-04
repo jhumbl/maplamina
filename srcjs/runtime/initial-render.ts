@@ -4,7 +4,6 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { applyOrderedViewOps, collectPrimeViewEncodingKeys } from '../components/views';
 import type { ViewOp, computeViewOpsByLayer } from '../components/views';
 import { sync, update } from '../controls/panel';
-import { cancelIdlePrune } from '../core/assets';
 import type { TransitionsMap } from '../core/layer-state';
 import { assertV3Spec } from '../core/spec';
 import type { Spec } from '../core/spec-types';
@@ -12,6 +11,7 @@ import { escapeHtml, now } from '../core/utils';
 import type { WidgetElement, WidgetRuntime } from '../core/widget';
 import * as filtersRuntime from '../filters/runtime';
 import { gpuMeta } from '../layers/props';
+import { flattenLayers } from '../layers/utils';
 import type { mergeEncodings } from '../layers/utils';
 import type { pickActiveViews } from './api';
 import * as assembly from './assembly';
@@ -25,7 +25,6 @@ export interface RenderInitialOptions {
   rt: WidgetRuntime | null;
   map: MapLibreMap | null;
   overlay: MapboxOverlay | null;
-  currentLayers?: Layer[];
   t0?: number | null;
   mfRuntimeMap?: typeof runtimeMap | null;
   pickActiveViews?: typeof pickActiveViews;
@@ -50,8 +49,9 @@ function readInitialTransitions(
   return null;
 }
 
-export async function renderInitial(opts: RenderInitialOptions): Promise<{ currentLayers: Layer[] }> {
-  if (!opts || typeof opts !== 'object') return { currentLayers: [] };
+// Resolves to the deck layers each layer id built, in spec order.
+export async function renderInitial(opts: RenderInitialOptions): Promise<Map<string, Layer[]> | null> {
+  if (!opts || typeof opts !== 'object') return null;
 
   const el = opts.el;
   const x = opts.x;
@@ -71,7 +71,7 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
   const transitionsForBuild = opts.transitionsForBuild || motion.transitionsForBuild;
   const ensureHudParts = opts.ensureHudParts;
 
-  if (!el || !x || !rt || !overlay) return { currentLayers: opts.currentLayers || [] };
+  if (!el || !x || !rt || !overlay) return null;
   if (!runtimeAssembly || typeof runtimeAssembly.buildRenderArtifacts !== 'function' || typeof runtimeAssembly.getLogicalLayer !== 'function') {
     throw new Error('[maplamina] Missing runtime assembly helpers required by runtime/initial-render');
   }
@@ -98,11 +98,6 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
     s.chain = Promise.resolve();
   }
 
-  if (rt.pruneTasks && rt.pruneTasks.size) {
-    for (const id of rt.pruneTasks) cancelIdlePrune(id);
-    rt.pruneTasks.clear();
-  }
-
   rt.layers && rt.layers.clear && rt.layers.clear();
   rt.specRef = x;
 
@@ -120,7 +115,7 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
 
   const specs = x['.__layers'] || {};
   const ids = Object.keys(specs);
-  const layers: (Layer | Layer[] | null)[] = [];
+  const built = new Map<string, Layer[]>();
 
   for (const id of ids) {
     const st0 = specs[id];
@@ -156,19 +151,16 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
       result.entry.runtime.lastMotionPolicy = {
         reason: 'initial',
         allowTransitions: false,
-        motionEligible: false,
-        invalidation: { initial: true, render: true, encodings: true, motionEligible: false }
+        motionEligible: false
       };
       result.entry.runtime.lastInvalidation = { initial: true, render: true, encodings: true, motionEligible: false };
     }
-    layers.push(result.layer);
+    built.set(id, flattenLayers(result.layer));
     rt.layers.set(id, result.entry);
   }
 
-  // A builder may return null; deck.gl skips it.
-  const flatLayers = (Array.isArray(layers) && layers.flat ? layers.flat(Infinity) : ([] as unknown[]).concat.apply([], layers)) as Layer[];
+  const flatLayers = flattenLayers(Array.from(built.values()));
   overlay.setProps({ layers: flatLayers });
-  const currentLayers = flatLayers;
 
   try { sync(el, x); } catch (e) { console.error(e); }
   try { update(el, x, rt, { reason: 'initial' }); } catch (e) { console.error(e); }
@@ -176,7 +168,7 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
   try {
     const t1 = now();
     const parts = (typeof ensureHudParts === 'function') ? ensureHudParts(el) : null;
-    if (parts && parts.summary) parts.summary.textContent = `layers: ${currentLayers.length} • build ${(t1 - t0).toFixed(1)}ms`;
+    if (parts && parts.summary) parts.summary.textContent = `layers: ${flatLayers.length} • build ${(t1 - t0).toFixed(1)}ms`;
 
     let totalRangeDims = 0;
     let totalCategoryDims = 0;
@@ -207,5 +199,5 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<{ curre
     if (parts && parts.notes) parts.notes.innerHTML = warnLines.join('') || '';
   } catch (e) { console.error(e); }
 
-  return { currentLayers };
+  return built;
 }

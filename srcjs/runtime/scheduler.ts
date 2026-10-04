@@ -54,8 +54,8 @@ export interface RenderJob {
   allowMotionViews: boolean;
   reason: string | null;
   reasons: string[];
-  invalidation?: FlushInvalidation;
-  motionPolicy?: MotionPolicy;
+  invalidation: FlushInvalidation;
+  motionPolicy: MotionPolicy;
 }
 
 interface PendingFlush {
@@ -113,7 +113,10 @@ function pickPrimaryReason(reasons: readonly string[], fallback: unknown): strin
   return normalizeReason(fallback) || (set.length ? set[set.length - 1] : null);
 }
 
-function deriveInvalidation(job: RenderJob, reasons: readonly string[]): FlushInvalidation {
+// What a flush was asked for, before the invalidation and the policy are derived from it.
+type Asked = Pick<RenderJob, 'layers' | 'rehydrate' | 'legends' | 'controls' | 'tooltip' | 'allowMotionViews'>;
+
+function deriveInvalidation(job: Asked, reasons: readonly string[]): FlushInvalidation {
   const list = isArray(reasons) ? reasons.filter(Boolean) : [];
   const has = (x: string): boolean => list.includes(x);
   const rehydrate = !!(job && Array.isArray(job.rehydrate) && job.rehydrate.length);
@@ -196,24 +199,29 @@ export function attach(rt: WidgetRuntime | null | undefined): void {
       s.raf = null;
 
       const reasons = Array.from(s.reasons);
-      const job: RenderJob = {
+      const asked: Asked = {
         layers: Array.from(s.layers),
         rehydrate: Array.from(s.rehydrate),
         legends: s.legends,
         controls: s.controls,
         tooltip: s.tooltip,
+        allowMotionViews: !!s.allowMotionViews
+      };
+      const reason = pickPrimaryReason(reasons, o.reason);
+      const invalidation = deriveInvalidation(asked, reasons);
+      const job: RenderJob = {
+        ...asked,
         epoch: ++s.epoch,
         renderEpoch: this._renderEpoch,
         specRef: this.specRef,
-        allowMotionViews: !!s.allowMotionViews,
-        reason: pickPrimaryReason(reasons, o.reason),
-        reasons
-      };
-      job.invalidation = deriveInvalidation(job, reasons);
-      job.motionPolicy = {
-        reason: job.reason,
-        allowTransitions: !!job.invalidation.motionEligible,
-        motionEligible: !!job.invalidation.motionEligible
+        reason,
+        reasons,
+        invalidation,
+        motionPolicy: {
+          reason,
+          allowTransitions: invalidation.motionEligible,
+          motionEligible: invalidation.motionEligible
+        }
       };
 
       s.layers.clear();

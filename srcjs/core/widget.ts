@@ -70,8 +70,11 @@ export interface LayerEntry {
 export interface WidgetRuntime {
   specRef: Spec | null;
   layers: Map<string, LayerEntry>;
-  pruneTasks: Set<number>;
-  state: RuntimeState;
+  // Written by runtime/api and filters/runtime alone, which take the runtime as WritableRuntime.
+  readonly state: {
+    readonly views?: Readonly<Record<string, string>>;
+    readonly filters?: Readonly<Record<string, Readonly<Record<string, FilterValue>>>>;
+  };
   _renderEpoch: number;
   _mfApiDeps: RuntimeDeps;
   _mfPipelineDeps?: PipelineDeps;
@@ -81,9 +84,9 @@ export interface WidgetRuntime {
   _defaultFiltersGroupId?: string | null;
   // The view each group showed before the switch being built, by group id.
   _viewsPrev?: Record<string, string | null>;
-  // By layer id.
-  _layerTransitions?: Map<string, TransitionsMap>;
-  _transitionTokens?: Map<string, TransitionTokens>;
+  // By layer id. Written by runtime/motion alone.
+  readonly _layerTransitions?: Map<string, Readonly<TransitionsMap>>;
+  readonly _transitionTokens?: Map<string, Readonly<TransitionTokens>>;
   _transitionTokenSeq?: number;
   _maplibreControls?: MapLibreControls;
   _projectionMgr?: ProjectionManager | null;
@@ -108,6 +111,13 @@ export interface WidgetRuntime {
   };
   clearFilters?(groupId?: unknown): void;
 }
+
+// The runtime as the writers of its state and its transition maps declare it.
+export type WritableRuntime = Omit<WidgetRuntime, 'state' | '_layerTransitions' | '_transitionTokens'> & {
+  state: RuntimeState;
+  _layerTransitions?: Map<string, TransitionsMap>;
+  _transitionTokens?: Map<string, TransitionTokens>;
+};
 
 // A control group as the panel mounted it: the node its renderer drew into and its spec.
 export interface MountedControl {

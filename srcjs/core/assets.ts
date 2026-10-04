@@ -12,7 +12,6 @@ function hrefUrl(x: unknown): unknown {
 
 const __ric: (cb: IdleRequestCallback) => number =
   globalThis.requestIdleCallback || ((cb) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 0 }), 0));
-const __cic: (id: number) => void = globalThis.cancelIdleCallback || clearTimeout;
 
 // ------------------------ blob pruning ------------------------
 export function pruneEmbeddedBlobs(st: Pick<LayerState, 'dataStore'>): { pruned: number; skipped: number } {
@@ -37,8 +36,6 @@ export function pruneEmbeddedBlobsIdle(st: Pick<LayerState, 'dataStore'>): numbe
     }
   });
 }
-
-export function cancelIdlePrune(id: number | null | undefined): void { if (id) __cic(id); }
 
 // ------------------------ fetch + hydration helpers ------------------------
 // Decoded arrays by blob id, so a column shared by several layers is decoded once. Keyed on

@@ -88,45 +88,9 @@ export function flattenLayers(L: LayerTree): Layer[] {
   return [L];
 }
 
-export function swapOverlayLayers(
-  current: readonly Layer[] | null | undefined,
-  replacements: Map<string, Layer[]>
-): Layer[] {
-  const swapped: Layer[] = [];
-  const inserted = new Set<string>();
-  const keys = Array.from(replacements.keys());
-
-  // Deterministic matching: if layer ids overlap as prefixes (e.g. "roads" and "roads_major"),
-  // always match the longest id first so sublayers swap correctly.
-  const matchKeys = keys.slice().sort((a, b) => b.length - a.length);
-
-  for (const old of (current || [])) {
-    const oid = old && old.id;
-    let match: string | null = null;
-
-    if (typeof oid === 'string') {
-      for (const k of matchKeys) {
-        if (oid === k || oid.startsWith(k + '-')) { match = k; break; }
-      }
-    }
-
-    if (match) {
-      if (!inserted.has(match)) {
-        const reps = replacements.get(match) || [];
-        for (const nl of reps) swapped.push(nl);
-        inserted.add(match);
-      }
-    } else {
-      swapped.push(old);
-    }
-  }
-
-  // Append any replacements that didn't correspond to an existing overlay layer id.
-  for (const k of keys) {
-    if (inserted.has(k)) continue;
-    const reps = replacements.get(k) || [];
-    for (const nl of reps) swapped.push(nl);
-  }
-
-  return swapped;
+// Sets the deck layers built for each layer id in `replacements` and returns the layers of
+// every id, in the order of `built`. An id `built` lacks goes last.
+export function replaceBuiltLayers(built: Map<string, Layer[]>, replacements: Map<string, Layer[]>): Layer[] {
+  for (const [id, layers] of replacements) built.set(id, layers);
+  return flattenLayers(Array.from(built.values()));
 }

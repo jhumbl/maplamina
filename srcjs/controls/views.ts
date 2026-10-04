@@ -1,31 +1,7 @@
 import type { Control, Spec, ViewsControl } from '../core/spec-types';
 import { asArray, normText } from '../core/utils';
-import type { RuntimeState, WidgetElement, WidgetRuntime } from '../core/widget';
-
-function ensureRuntimeState(rt: WidgetRuntime | null | undefined): RuntimeState | null {
-  if (!rt) return null;
-  if (!rt.state || typeof rt.state !== 'object') rt.state = {};
-  if (!rt.state.views || typeof rt.state.views !== 'object') rt.state.views = {};
-  return rt.state;
-}
-
-function pickInitialActive(
-  rt: WidgetRuntime | null | undefined,
-  controlSpec: ViewsControl | null | undefined,
-  groupId: string
-): string {
-  const state: RuntimeState = ensureRuntimeState(rt) || {};
-  const gid = normText(groupId) || 'views';
-  const viewNames = asArray(controlSpec && controlSpec.view_names).map(normText).filter(Boolean);
-
-  const current = normText(state.views && state.views[gid]);
-  if (current && viewNames.includes(current)) return current;
-
-  const def = normText(controlSpec && controlSpec.default);
-  if (def && viewNames.includes(def)) return def;
-
-  return viewNames.length ? viewNames[0] : 'base';
-}
+import type { WidgetElement } from '../core/widget';
+import { pickActiveViews } from '../runtime/api';
 
 function renderRadioList(
   mountEl: HTMLElement,
@@ -94,13 +70,7 @@ export function render(
   if (ctl.type && String(ctl.type) !== 'views') { mountEl.textContent = ''; return; }
   const views = ctl as ViewsControl;
 
-  const rt = widgetEl && widgetEl.__mfRuntime;
-  const state = ensureRuntimeState(rt);
-  const active = pickInitialActive(rt, views, gid);
-  if (state) {
-    if (!state.views || typeof state.views !== 'object') state.views = {};
-    state.views[gid] = active;
-  }
+  const active = pickActiveViews(widgetEl && widgetEl.__mfRuntime, spec)[gid];
 
   renderRadioList(mountEl, widgetEl, views, active, gid);
 }

@@ -187,3 +187,11 @@ maplamina() |>
     bind = "summaries"
   ) |>
   save("summaries-na")
+
+# A count beside a range over values that are not exact in float32.
+pts_f <- data.frame(lon = c(-0.04, -0.02, 0, 0.02, 0.04), lat = 51.5, v = c(0.3, 0.5, 0.7, 0.9, 1.1))
+maplamina(pts_f) |>
+  add_circles() |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(summary_count(label = "n"), bind = "summaries") |>
+  save("range-float32")

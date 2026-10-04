@@ -20,7 +20,7 @@ export interface PipelineDeps {
   runtimeAssembly?: typeof assembly;
   el?: WidgetElement;
   getOverlay?: () => MapboxOverlay | null;
-  applyOverlayReplacements?: (replacements: Map<string, Layer[]>) => Layer[];
+  applyOverlayReplacements?: (replacements: Map<string, Layer[]>) => void;
   pickActiveViews?: typeof pickActiveViews;
   computeViewOpsByLayerV3?: typeof computeViewOpsByLayer;
   mergeEncodings?: typeof layerUtils.mergeEncodings;
@@ -104,7 +104,7 @@ export function attach(rt: WidgetRuntime | null | undefined, deps?: PipelineDeps
     if (!dirtyRehydrate.size && !dirtyLayers.size && !doLegends && !doControls) return;
 
     const transitionTargets = Array.from(new Set(([] as string[]).concat(Array.from(dirtyLayers), Array.from(dirtyRehydrate))));
-    const motionPolicy = syncJobTransitions(this, transitionTargets, job || { reason: null });
+    const motionPolicy = syncJobTransitions(this, transitionTargets, job.motionPolicy);
     const replacements = new Map<string, Layer[]>();
 
     let activeViews: Record<string, string> | null = null;
@@ -144,7 +144,7 @@ export function attach(rt: WidgetRuntime | null | undefined, deps?: PipelineDeps
       });
 
       if (!result) return;
-      setEntryRuntimeMeta(result.entry, motionPolicy, (job && job.invalidation) || null, motionPolicy.reason || (job && job.reason) || null);
+      setEntryRuntimeMeta(result.entry, motionPolicy, job.invalidation, motionPolicy.reason);
       replacements.set(layerId, flattenLayers(result.layer));
       this.layers.set(layerId, result.entry);
     };

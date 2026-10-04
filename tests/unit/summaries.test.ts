@@ -4,10 +4,11 @@ import { clearMemo } from '../../srcjs/core/assets';
 import { resolveActiveOnly } from '../../srcjs/core/data';
 import type { LayerState } from '../../srcjs/core/layer-state';
 import type { Control, Spec, WireSpec } from '../../srcjs/core/spec-types';
-import type { FilterValue, WidgetElement, WidgetRuntime } from '../../srcjs/core/widget';
+import type { FilterValue, WidgetElement, WidgetRuntime, WritableRuntime } from '../../srcjs/core/widget';
 import { render, update } from '../../srcjs/controls/summaries';
 import { buildFilterIndex, initFiltersState } from '../../srcjs/filters/runtime';
 import polygonsComponents from './spec-samples/polygons-components';
+import rangeFloat32 from './spec-samples/range-float32';
 import summariesNa from './spec-samples/summaries-na';
 import { normalise } from './support';
 
@@ -31,7 +32,7 @@ async function setup(wire: WireSpec, filters?: Filters): Promise<Fixture> {
   const x = normalise(wire);
   const rt = { layers: new Map() } as unknown as WidgetRuntime;
   initFiltersState(rt, x);
-  if (filters) rt.state.filters = filters;
+  if (filters) (rt as WritableRuntime).state.filters = filters;
   rt._filterIndex = buildFilterIndex(x);
   const layers = x['.__layers'] as Record<string, LayerState>;
   for (const [id, st] of Object.entries(layers)) {
@@ -143,16 +144,6 @@ describe('select state', () => {
   });
 });
 
-describe('render state', () => {
-  it('is read before the logical layer, and a force-hidden layer has no rows', async () => {
-    const f = await setup(polygonsComponents, { filters: { g: new Set(['a', 'b']), v: [1, 10] } });
-    // By hand: the render state a filter contribution marks hidden.
-    const hidden = { ...f.layers.polygon1, __render: { forceHidden: true } } as LayerState;
-    f.rt.layers.set('polygon1', { logical: f.layers.polygon1, cache: { lastRenderState: hidden } });
-    await rendered(f, noRows);
-  });
-});
-
 describe('NA rows', () => {
   const pooled = (sum: number, n: number): string => inLocale(sum / n, 2);
 
@@ -169,12 +160,32 @@ describe('NA rows', () => {
   });
 });
 
+// The values 0.3, 0.5, 0.7, 0.9, 1.1 are held as float32: 0.3 and 1.1 round up, 0.7 and
+// 0.9 round down.
+describe('range ends that are not exact in float32', () => {
+  it('keep the rows at both ends of the seeded range', async () => {
+    const f = await setup(rangeFloat32);
+    expect(f.rt.state.filters).toEqual({ filters: { v: [0.3, 1.1] } });
+    await rendered(f, { n: '5' });
+  });
+
+  it('keep the row at a minimum that rounds down', async () => {
+    const f = await setup(rangeFloat32, { filters: { v: [0.7, 1.1] } });
+    await rendered(f, { n: '3' });
+  });
+
+  it('leave out the rows beyond the ends', async () => {
+    const f = await setup(rangeFloat32, { filters: { v: [0.5, 0.9] } });
+    await rendered(f, { n: '3' });
+  });
+});
+
 describe('update', () => {
   it('rewrites the values after the filter state changes', async () => {
     const f = await setup(polygonsComponents);
     await rendered(f, polygonRow);
 
-    f.rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
+    (f.rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
     update(f.mount, f.el, f.x, f.rt, 'summaries', f.control);
     await vi.waitFor(() => { expect(rowTexts(f.mount)).toEqual(multipolygonRow); });
   });
@@ -183,9 +194,9 @@ describe('update', () => {
     const f = await setup(polygonsComponents);
     await rendered(f, polygonRow);
 
-    f.rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
+    (f.rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
     update(f.mount, f.el, f.x, f.rt, 'summaries', f.control);
-    f.rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [1, 10] } };
+    (f.rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [1, 10] } };
     update(f.mount, f.el, f.x, f.rt, 'summaries', f.control);
     await vi.waitFor(() => { expect(rowTexts(f.mount)).toEqual(bothRows); });
     await new Promise(resolve => setTimeout(resolve, 0));

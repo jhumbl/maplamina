@@ -324,6 +324,25 @@ maplamina(na) |>
   add_summaries(summary_count(label = "n"), bind = "summaries") |>
   save("circles-range-na")
 
+# F18: a range filter whose domain ends are not exact in float32, beside a count.
+f32 <- data.frame(lon = c(-0.03, -0.01, 0.01, 0.03), lat = 51.5, v = c(0.3, 0.5, 0.9, 1.1))
+maplamina(f32) |>
+  add_circles(stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10) |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_summaries(summary_count(label = "n"), bind = "summaries") |>
+  save("circles-range-float32")
+
+# F19: a layer whose id starts with another layer's id and a hyphen; a range filter and
+# views on the other.
+pa <- data.frame(lon = c(-0.02, 0, 0.02), lat = 51.49, v = 1:3)
+pb <- data.frame(lon = c(-0.02, 0, 0.02), lat = 51.51)
+maplamina() |>
+  add_circles(pa, stroke = FALSE, fill_color = "darkblue", fill_opacity = 1, radius = 10, id = "a") |>
+  add_views(view("big", radius = 10), view("small", radius = 5), duration = 1) |>
+  add_filters(filter_range(~v), bind = "filters") |>
+  add_circles(pb, stroke = FALSE, fill_color = "darkred", fill_opacity = 1, radius = 10, id = "a-b") |>
+  save("circles-id-prefix")
+
 # C3, C7: one legend group holding a categorical legend (a circle and an icon shape) and a
 # continuous legend shown for view "b"; a second group whose only legend is shown for view
 # "b" of layer "pts". Standalone, then the same inside a panel.

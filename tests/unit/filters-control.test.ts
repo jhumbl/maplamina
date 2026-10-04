@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Control, FiltersControl, Spec, WireSpec } from '../../srcjs/core/spec-types';
-import type { FilterValue, WidgetElement, WidgetRuntime } from '../../srcjs/core/widget';
+import type { FilterValue, WidgetElement, WidgetRuntime, WritableRuntime } from '../../srcjs/core/widget';
 import { render } from '../../srcjs/controls/filters';
 import { initFiltersState } from '../../srcjs/filters/runtime';
 import filtersTwoLayers from './spec-samples/filters-two-layers';
@@ -39,7 +39,7 @@ function setup(wire: WireSpec, opts: Options = {}): Fixture {
   if (opts.runtime !== false) {
     rt = { setFilter } as unknown as WidgetRuntime;
     initFiltersState(rt, x);
-    if (opts.filters) rt.state.filters = opts.filters;
+    if (opts.filters) (rt as WritableRuntime).state.filters = opts.filters;
   }
   const el = document.body.appendChild(document.createElement('div')) as WidgetElement;
   el.id = 'w1';

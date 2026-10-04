@@ -1,9 +1,8 @@
 import type { TransitionsMap } from '../core/layer-state';
 import type { LayerType } from '../core/spec-types';
 import { isArray, isFiniteNumber, normText } from '../core/utils';
-import type { WidgetRuntime } from '../core/widget';
+import type { WidgetRuntime, WritableRuntime } from '../core/widget';
 import { deckPropsTouchedByEncodingPatch as propsTouchedByPatch } from '../layers/props';
-import type { Invalidation, RenderJob } from './scheduler';
 import {
   buildTransitionEntry,
   disableTransitionEntry,
@@ -16,7 +15,6 @@ export interface MotionPolicy {
   reason: string | null;
   allowTransitions: boolean;
   motionEligible: boolean;
-  invalidation?: Invalidation | null;
 }
 
 // By deck.gl prop name, the token of the transition armed last.
@@ -24,37 +22,11 @@ export type TransitionTokens = Record<string, number>;
 
 type LayerIds = readonly string[] | string | null | undefined;
 
-// A job as the scheduler builds it, or the reason alone.
-type JobLike = Partial<Pick<RenderJob, 'reason' | 'motionPolicy' | 'invalidation' | 'allowMotionViews'>>;
-
 function deckPropsTouchedByEncodingPatch(
   layerType: LayerType | null | undefined,
   encPatch: object | null | undefined
 ): string[] {
   return propsTouchedByPatch(layerType, encPatch) || [];
-}
-
-function normalizeReason(reason: unknown): string | null {
-  return normText(reason) || null;
-}
-
-function deriveMotionPolicy(job: JobLike | null | undefined): MotionPolicy {
-  const j: JobLike = (job && typeof job === 'object') ? job : {};
-  const reason = normalizeReason(j.reason || (j.motionPolicy && j.motionPolicy.reason));
-  const invalidation = (j.invalidation && typeof j.invalidation === 'object') ? j.invalidation : null;
-  const allowTransitions = !!(
-    (j.motionPolicy && j.motionPolicy.allowTransitions) ||
-    j.allowMotionViews ||
-    (invalidation && invalidation.motionEligible) ||
-    reason === 'views'
-  );
-  const policy = {
-    reason,
-    allowTransitions,
-    motionEligible: allowTransitions,
-    invalidation
-  };
-  return policy;
 }
 
 export function transitionsForBuild(rt: WidgetRuntime | null | undefined, layerId: unknown): TransitionsMap | null {
@@ -70,16 +42,13 @@ export function transitionsForBuild(rt: WidgetRuntime | null | undefined, layerI
 export function syncJobTransitions(
   rt: WidgetRuntime | null | undefined,
   layerIds: LayerIds,
-  jobOrPolicy: JobLike | MotionPolicy | null | undefined
+  policy: MotionPolicy
 ): MotionPolicy {
-  const policy = (jobOrPolicy && typeof jobOrPolicy === 'object' && Object.prototype.hasOwnProperty.call(jobOrPolicy, 'allowTransitions'))
-    ? jobOrPolicy as MotionPolicy
-    : deriveMotionPolicy(jobOrPolicy as JobLike | null | undefined);
   if (!policy.allowTransitions) disableRuntimeTransitions(rt, layerIds);
   return policy;
 }
 
-function ensureLayerTransitions(rt: WidgetRuntime | null | undefined, layerId: unknown): TransitionsMap | null {
+function ensureLayerTransitions(rt: WritableRuntime | null | undefined, layerId: unknown): TransitionsMap | null {
   if (!rt) return null;
   if (!rt._layerTransitions || typeof rt._layerTransitions.get !== 'function') rt._layerTransitions = new Map();
   const lid = normText(layerId);
@@ -92,7 +61,7 @@ function ensureLayerTransitions(rt: WidgetRuntime | null | undefined, layerId: u
   return t;
 }
 
-function ensureTransitionTokens(rt: WidgetRuntime | null | undefined, layerId: unknown): TransitionTokens | null {
+function ensureTransitionTokens(rt: WritableRuntime | null | undefined, layerId: unknown): TransitionTokens | null {
   if (!rt) return null;
   if (!rt._transitionTokens || typeof rt._transitionTokens.get !== 'function') rt._transitionTokens = new Map();
   const lid = normText(layerId);
@@ -112,7 +81,7 @@ function nextTransitionToken(rt: WidgetRuntime | null | undefined): number {
   return rt._transitionTokenSeq;
 }
 
-function clearRuntimeTransition(rt: WidgetRuntime, layerId: unknown, prop: string, token: number): void {
+function clearRuntimeTransition(rt: WritableRuntime, layerId: unknown, prop: string, token: number): void {
   const lid = normText(layerId);
   const p = String(prop || '');
   if (!lid || !p) return;
@@ -205,7 +174,7 @@ export function injectMotionTransitions(
   }
 }
 
-export function attach(rt: WidgetRuntime | null | undefined): WidgetRuntime | null | undefined {
+export function attach(rt: WritableRuntime | null | undefined): WidgetRuntime | null | undefined {
   if (!rt || typeof rt !== 'object') return rt;
   if (!rt._layerTransitions || typeof rt._layerTransitions.get !== 'function') rt._layerTransitions = new Map();
   if (!rt._transitionTokens || typeof rt._transitionTokens.get !== 'function') rt._transitionTokens = new Map();

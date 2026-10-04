@@ -248,16 +248,15 @@ describe('what setFilter asks of the runtime', () => {
     expect(scheduledLayers(f)).toEqual(['a', 'b', 'c']);
   });
 
-  it('disables the transitions of those layers and leaves the others armed', () => {
+  it('leaves the transitions as they are: the flush disables them, by the reason it is given', () => {
     const f = setup(filtersTwoLayers);
-    for (const id of ['a', 'b', 'c']) {
+    for (const id of ['a', 'b']) {
       injectMotionTransitions(f.rt, id, 'circle', { radius: 1, fillColor: 1 }, { duration: 300 });
     }
     f.set('filters', 'v', [1, 2]);
-    expect(durations(f.rt, 'a')).toEqual([0, 0]);
-    expect(durations(f.rt, 'b')).toEqual([0, 0]);
-    expect(durations(f.rt, 'c')).toEqual([300, 300]);
-    expect(Array.from(f.rt._transitionTokens!.keys())).toEqual(['c']);
-    expect(f.schedule).toHaveBeenCalledTimes(1);
+    expect(durations(f.rt, 'a')).toEqual([300, 300]);
+    expect(durations(f.rt, 'b')).toEqual([300, 300]);
+    expect(Array.from(f.rt._transitionTokens!.keys())).toEqual(['a', 'b']);
+    expect(jobs(f)).toEqual([{ layers: expect.any(Array), controls: true, reason: 'filters' }]);
   });
 });
