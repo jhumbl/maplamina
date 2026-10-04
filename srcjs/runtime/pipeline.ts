@@ -20,7 +20,7 @@ export interface PipelineDeps {
   runtimeAssembly?: typeof assembly;
   el?: WidgetElement;
   getOverlay?: () => MapboxOverlay | null;
-  applyOverlayReplacements?: (replacements: Map<string, Layer[]>) => Layer[];
+  applyOverlayReplacements?: (replacements: Map<string, Layer[]>) => void;
   pickActiveViews?: typeof pickActiveViews;
   computeViewOpsByLayerV3?: typeof computeViewOpsByLayer;
   mergeEncodings?: typeof layerUtils.mergeEncodings;

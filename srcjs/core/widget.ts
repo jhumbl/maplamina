@@ -70,7 +70,6 @@ export interface LayerEntry {
 export interface WidgetRuntime {
   specRef: Spec | null;
   layers: Map<string, LayerEntry>;
-  pruneTasks: Set<number>;
   state: RuntimeState;
   _renderEpoch: number;
   _mfApiDeps: RuntimeDeps;

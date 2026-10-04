@@ -4,7 +4,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { destroy as destroyTooltips, init as initTooltips } from '../components/tooltips';
 import { computeViewOpsByLayer as computeViewOpsByLayerV3 } from '../components/views';
 import { clear as clearPanel } from '../controls/panel';
-import { cancelIdlePrune, clearMemo } from '../core/assets';
+import { clearMemo } from '../core/assets';
 import type { LayerState } from '../core/layer-state';
 import { assertV3Spec, hashBbox, normalizeSpec, unionBboxFromSpec } from '../core/spec';
 import type { Spec } from '../core/spec-types';
@@ -13,7 +13,7 @@ import type { WidgetElement } from '../core/widget';
 import { buildFilterIndex, getGPUFilterContribution, initFiltersState } from '../filters/runtime';
 import { originNearView } from '../layers/props';
 import { layers } from '../layers/registry';
-import { flattenLayers, mergeEncodings, swapOverlayLayers } from '../layers/utils';
+import { flattenLayers, mergeEncodings, replaceBuiltLayers } from '../layers/utils';
 import { ensureRuntime, pickActiveViews } from './api';
 import type { RuntimeDeps } from './api';
 import * as mfRuntimeAssembly from './assembly';
@@ -38,14 +38,13 @@ export interface WidgetInstance {
 
 export function create(el: WidgetElement, width: number, height: number): WidgetInstance {
   let map: HookedMap | null = null, overlay: MapboxOverlay | null = null;
-  let currentLayers: Layer[] = [];
+  // The deck layers each layer id built, in spec order.
+  let builtLayers = new Map<string, Layer[]>();
   let lastFitHash: string | null = null;
 
-  function applyOverlayReplacements(replacements: Map<string, Layer[]>): Layer[] {
-    const swapped = swapOverlayLayers(currentLayers || [], replacements);
-    if (overlay) overlay.setProps({ layers: swapped });
-    currentLayers = swapped;
-    return swapped;
+  function applyOverlayReplacements(replacements: Map<string, Layer[]>): void {
+    const flat = replaceBuiltLayers(builtLayers, replacements);
+    if (overlay) overlay.setProps({ layers: flat });
   }
 
   const normProjection = mfRuntimeMap.normProjection;
@@ -121,7 +120,7 @@ export function create(el: WidgetElement, width: number, height: number): Widget
           map && map.removeControl(overlay);
           overlay = null;
         }
-        currentLayers = [];
+        builtLayers = new Map();
         clearMapLibreControls(map, rt);
         resetProjectionManager(rt);
         map.remove();
@@ -154,26 +153,28 @@ export function create(el: WidgetElement, width: number, height: number): Widget
         map.__mfOriginHook = true;
         map.on('move', () => {
           let moved = false;
-          const next = (currentLayers || []).map((l) => {
-            const o = l && l.props && l.props.coordinateOrigin;
-            if (!Array.isArray(o)) return l;
-            const near = originNearView(o, map);
-            if (near === o) return l;
-            moved = true;
-            return l.clone({ coordinateOrigin: near as typeof o }) as Layer;
-          });
-          if (moved && overlay) { currentLayers = next; overlay.setProps({ layers: next }); }
+          const next = new Map<string, Layer[]>();
+          for (const [id, built] of builtLayers) {
+            next.set(id, built.map((l) => {
+              const o = l && l.props && l.props.coordinateOrigin;
+              if (!Array.isArray(o)) return l;
+              const near = originNearView(o, map);
+              if (near === o) return l;
+              moved = true;
+              return l.clone({ coordinateOrigin: near as typeof o }) as Layer;
+            }));
+          }
+          if (moved && overlay) overlay.setProps({ layers: replaceBuiltLayers(builtLayers, next) });
         });
       }
       initTooltips(el);
 
-      const out = await renderInitial({
+      const built = await renderInitial({
         el,
         x,
         rt,
         map,
         overlay,
-        currentLayers,
         t0,
         mfRuntimeMap,
         pickActiveViews,
@@ -186,7 +187,7 @@ export function create(el: WidgetElement, width: number, height: number): Widget
         primeRuntimeTransitions,
         ensureHudParts: showHud ? ensureHudParts : null
       });
-      if (out && Array.isArray(out.currentLayers)) currentLayers = out.currentLayers;
+      if (built) builtLayers = built;
     },
 
     resize: function(w, h) {
@@ -200,10 +201,6 @@ export function create(el: WidgetElement, width: number, height: number): Widget
 
       const rt = el.__mfRuntime;
       mfRuntimeMap.clearDeferredFit(rt, el);
-      if (rt && rt.pruneTasks && rt.pruneTasks.size) {
-        for (const id of rt.pruneTasks) cancelIdlePrune(id);
-        rt.pruneTasks.clear();
-      }
 
       if (overlay) {
         overlay.setProps({ layers: [] });
@@ -225,7 +222,7 @@ export function create(el: WidgetElement, width: number, height: number): Widget
       clearMemo();
       el.__mfCtxCache?.layerBuildCache?.clear?.();
       delete el.__mfCtxCache;
-      currentLayers = [];
+      builtLayers = new Map();
       lastFitHash = null;
     }
   };

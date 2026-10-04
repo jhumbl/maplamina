@@ -291,7 +291,6 @@ export function ensureRuntime(el: WidgetElement | null | undefined, deps?: Runti
   rt = {
     specRef: null,
     layers: new Map(),
-    pruneTasks: new Set(),
     state: {},
     _renderEpoch: 0,
     _mfApiDeps: depObj
