@@ -304,6 +304,9 @@ async function computeLayerMask(
     if (!isFiniteNumber(lo)) lo = 0;
     if (!isFiniteNumber(hi)) hi = lo;
     if (lo > hi) { const t = lo; lo = hi; hi = t; }
+    // The values are float32 and the GPU holds the bounds as float32.
+    lo = Math.fround(lo);
+    hi = Math.fround(hi);
 
     let res: ResolvedArray | null = null;
     try {

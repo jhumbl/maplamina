@@ -1,4 +1,4 @@
-// Priority B filter and template scenarios F6, F9, F10, F12, F14, T3, T4.
+// Priority B filter and template scenarios F6, F9, F10, F12, F14, F18, T3, T4.
 import { test, expect } from '@playwright/test';
 import {
   openWidget, project, screenshot, isDrawnAt, measureDrawnRadius, setFilter, toggleSelectOption,
@@ -103,5 +103,30 @@ test('F14: an NA row stays hidden from a range filter whose range includes 0', a
   await setFilter(page, 'v', [-1, 1]);
   await page.waitForTimeout(500);
   await check('after set');
+  expect(errors).toEqual([]);
+});
+
+test('F18: a count beside a range filter equals the circles drawn when the range ends are not exact in float32', async ({ page }) => {
+  const { errors } = await openWidget(page, 'circles-range-float32');
+  await zoomOut(page, 1);
+  const count = async () => (await page.locator('.ml-summary-value').first().innerText()).trim();
+  const circles = async () => {
+    const png = await screenshot(page);
+    let n = 0;
+    for (const lon of [-0.03, -0.01, 0.01, 0.03]) {
+      const p = await project(page, lon, 51.5);
+      if (isDrawnAt(png, p.x, p.y)) n++;
+    }
+    return n;
+  };
+  expect(await circles(), 'initial: circles').toBe(4);
+  expect(await count(), 'initial: count').toBe('4');
+  // 1.1 is held above the bound 1.1, 0.9 below the bound 0.9.
+  for (const [range, n] of [[[0.5, 1.1], 3], [[0.9, 1.1], 2], [[0.3, 0.9], 3]]) {
+    await setFilter(page, 'v', range);
+    await page.waitForTimeout(500);
+    expect(await circles(), `${range}: circles`).toBe(n);
+    expect(await count(), `${range}: count`).toBe(String(n));
+  }
   expect(errors).toEqual([]);
 });

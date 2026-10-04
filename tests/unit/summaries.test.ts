@@ -8,6 +8,7 @@ import type { FilterValue, WidgetElement, WidgetRuntime } from '../../srcjs/core
 import { render, update } from '../../srcjs/controls/summaries';
 import { buildFilterIndex, initFiltersState } from '../../srcjs/filters/runtime';
 import polygonsComponents from './spec-samples/polygons-components';
+import rangeFloat32 from './spec-samples/range-float32';
 import summariesNa from './spec-samples/summaries-na';
 import { normalise } from './support';
 
@@ -166,6 +167,26 @@ describe('NA rows', () => {
   it('stay out when the range moves', async () => {
     const f = await setup(summariesNa, { filters: { v: [0.5, 3] } });
     await rendered(f, { n: '3', known: '3', sum: '3', mean: pooled(3, 2), min: '1', max: '2' });
+  });
+});
+
+// The values 0.3, 0.5, 0.7, 0.9, 1.1 are held as float32: 0.3 and 1.1 round up, 0.7 and
+// 0.9 round down.
+describe('range ends that are not exact in float32', () => {
+  it('keep the rows at both ends of the seeded range', async () => {
+    const f = await setup(rangeFloat32);
+    expect(f.rt.state.filters).toEqual({ filters: { v: [0.3, 1.1] } });
+    await rendered(f, { n: '5' });
+  });
+
+  it('keep the row at a minimum that rounds down', async () => {
+    const f = await setup(rangeFloat32, { filters: { v: [0.7, 1.1] } });
+    await rendered(f, { n: '3' });
+  });
+
+  it('leave out the rows beyond the ends', async () => {
+    const f = await setup(rangeFloat32, { filters: { v: [0.5, 0.9] } });
+    await rendered(f, { n: '3' });
   });
 });
 
