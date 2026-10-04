@@ -6,7 +6,7 @@ import type { Control, Ref, Spec, SummariesComponent, SummariesControl, SummaryR
 import { authoredOrder, formatNumber, isFiniteNumber, normText } from '../core/utils';
 import type { WidgetElement, WidgetRuntime } from '../core/widget';
 import { resolveFilterDims } from '../filters/runtime';
-import { getLogicalLayer, getRenderState, readRenderField } from '../runtime/assembly';
+import { getLogicalLayer, getRenderState } from '../runtime/assembly';
 import type { ControlJob } from './registry';
 
 // What update() keeps on the node it draws into.
@@ -222,13 +222,6 @@ export async function computeLayerMask(
   const indexForArray = indexers && typeof indexers.indexForArray === 'function'
     ? indexers.indexForArray
     : ((arr: ArrayLike<number> | null | undefined, p: number) => (Number.isFinite(p) ? (p >>> 0) : 0));
-
-  // If layer is force-hidden (e.g. select dim has no overlapping values), nothing passes.
-  const forceHidden = !!readRenderField(st, 'forceHidden');
-  if (forceHidden) {
-    const z = new Uint8Array(n);
-    return { st, n, passCount: 0, mask: z, indexers };
-  }
 
   const dims = await resolveFilterDims(st, layerId, rt);
   if (!dims.length) {

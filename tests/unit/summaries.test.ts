@@ -144,16 +144,6 @@ describe('select state', () => {
   });
 });
 
-describe('render state', () => {
-  it('is read before the logical layer, and a force-hidden layer has no rows', async () => {
-    const f = await setup(polygonsComponents, { filters: { g: new Set(['a', 'b']), v: [1, 10] } });
-    // By hand: the render state a filter contribution marks hidden.
-    const hidden = { ...f.layers.polygon1, __render: { forceHidden: true } } as LayerState;
-    f.rt.layers.set('polygon1', { logical: f.layers.polygon1, cache: { lastRenderState: hidden } });
-    await rendered(f, noRows);
-  });
-});
-
 describe('NA rows', () => {
   const pooled = (sum: number, n: number): string => inLocale(sum / n, 2);
 
