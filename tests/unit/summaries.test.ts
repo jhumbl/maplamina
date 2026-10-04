@@ -4,7 +4,7 @@ import { clearMemo } from '../../srcjs/core/assets';
 import { resolveActiveOnly } from '../../srcjs/core/data';
 import type { LayerState } from '../../srcjs/core/layer-state';
 import type { Control, Spec, WireSpec } from '../../srcjs/core/spec-types';
-import type { FilterValue, WidgetElement, WidgetRuntime } from '../../srcjs/core/widget';
+import type { FilterValue, WidgetElement, WidgetRuntime, WritableRuntime } from '../../srcjs/core/widget';
 import { render, update } from '../../srcjs/controls/summaries';
 import { buildFilterIndex, initFiltersState } from '../../srcjs/filters/runtime';
 import polygonsComponents from './spec-samples/polygons-components';
@@ -32,7 +32,7 @@ async function setup(wire: WireSpec, filters?: Filters): Promise<Fixture> {
   const x = normalise(wire);
   const rt = { layers: new Map() } as unknown as WidgetRuntime;
   initFiltersState(rt, x);
-  if (filters) rt.state.filters = filters;
+  if (filters) (rt as WritableRuntime).state.filters = filters;
   rt._filterIndex = buildFilterIndex(x);
   const layers = x['.__layers'] as Record<string, LayerState>;
   for (const [id, st] of Object.entries(layers)) {
@@ -185,7 +185,7 @@ describe('update', () => {
     const f = await setup(polygonsComponents);
     await rendered(f, polygonRow);
 
-    f.rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
+    (f.rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
     update(f.mount, f.el, f.x, f.rt, 'summaries', f.control);
     await vi.waitFor(() => { expect(rowTexts(f.mount)).toEqual(multipolygonRow); });
   });
@@ -194,9 +194,9 @@ describe('update', () => {
     const f = await setup(polygonsComponents);
     await rendered(f, polygonRow);
 
-    f.rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
+    (f.rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [5, 10] } };
     update(f.mount, f.el, f.x, f.rt, 'summaries', f.control);
-    f.rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [1, 10] } };
+    (f.rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [1, 10] } };
     update(f.mount, f.el, f.x, f.rt, 'summaries', f.control);
     await vi.waitFor(() => { expect(rowTexts(f.mount)).toEqual(bothRows); });
     await new Promise(resolve => setTimeout(resolve, 0));

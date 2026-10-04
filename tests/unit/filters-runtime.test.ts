@@ -4,7 +4,7 @@ import { resolveActiveOnly } from '../../srcjs/core/data';
 import type { LayerState } from '../../srcjs/core/layer-state';
 import { assertV3Spec, getControlGroupsByType } from '../../srcjs/core/spec';
 import type { Spec, WireSpec } from '../../srcjs/core/spec-types';
-import type { FilterValue, WidgetRuntime } from '../../srcjs/core/widget';
+import type { FilterValue, WritableRuntime } from '../../srcjs/core/widget';
 import { computeLayerMask } from '../../srcjs/controls/summaries';
 import { buildFilterIndex, getGPUFilterContribution, initFiltersState } from '../../srcjs/filters/runtime';
 import type { FilterContribution } from '../../srcjs/filters/runtime';
@@ -21,12 +21,12 @@ import { normalise } from './support';
 const selectNumericDefault = selectNumericDefaultSample as unknown as WireSpec;
 
 const NA_RANGE_VALUE = -3.4028234663852886e38;
-const newRt = (): WidgetRuntime => ({}) as WidgetRuntime;
+const newRt = (): WritableRuntime => ({}) as WritableRuntime;
 const at = (index: number): [null, { index: number }] => [null, { index }];
 
 // A spec, its runtime with the filter state seeded or given, and one hydrated layer.
 async function setup(wire: WireSpec, layerId: string, filters?: Record<string, Record<string, FilterValue>>): Promise<{
-  x: Spec; rt: WidgetRuntime; st: LayerState;
+  x: Spec; rt: WritableRuntime; st: LayerState;
 }> {
   const x = normalise(wire);
   const rt = newRt();
@@ -317,7 +317,7 @@ describe('the summaries mask and the GPU props', () => {
   for (const [name, wire] of Object.entries(samples)) {
     it(`pass the same parts in ${name}`, async () => {
       const x = normalise(wire);
-      const rt = { layers: new Map() } as unknown as WidgetRuntime;
+      const rt = { layers: new Map() } as unknown as WritableRuntime;
       const seeded = initFiltersState(rt, x) as Record<string, Record<string, FilterValue>>;
       rt._filterIndex = buildFilterIndex(x);
       const layerIds = Array.from(rt._filterIndex.byLayer.keys());

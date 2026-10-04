@@ -1,7 +1,7 @@
 import type { TransitionsMap } from '../core/layer-state';
 import type { LayerType } from '../core/spec-types';
 import { isArray, isFiniteNumber, normText } from '../core/utils';
-import type { WidgetRuntime } from '../core/widget';
+import type { WidgetRuntime, WritableRuntime } from '../core/widget';
 import { deckPropsTouchedByEncodingPatch as propsTouchedByPatch } from '../layers/props';
 import {
   buildTransitionEntry,
@@ -48,7 +48,7 @@ export function syncJobTransitions(
   return policy;
 }
 
-function ensureLayerTransitions(rt: WidgetRuntime | null | undefined, layerId: unknown): TransitionsMap | null {
+function ensureLayerTransitions(rt: WritableRuntime | null | undefined, layerId: unknown): TransitionsMap | null {
   if (!rt) return null;
   if (!rt._layerTransitions || typeof rt._layerTransitions.get !== 'function') rt._layerTransitions = new Map();
   const lid = normText(layerId);
@@ -61,7 +61,7 @@ function ensureLayerTransitions(rt: WidgetRuntime | null | undefined, layerId: u
   return t;
 }
 
-function ensureTransitionTokens(rt: WidgetRuntime | null | undefined, layerId: unknown): TransitionTokens | null {
+function ensureTransitionTokens(rt: WritableRuntime | null | undefined, layerId: unknown): TransitionTokens | null {
   if (!rt) return null;
   if (!rt._transitionTokens || typeof rt._transitionTokens.get !== 'function') rt._transitionTokens = new Map();
   const lid = normText(layerId);
@@ -81,7 +81,7 @@ function nextTransitionToken(rt: WidgetRuntime | null | undefined): number {
   return rt._transitionTokenSeq;
 }
 
-function clearRuntimeTransition(rt: WidgetRuntime, layerId: unknown, prop: string, token: number): void {
+function clearRuntimeTransition(rt: WritableRuntime, layerId: unknown, prop: string, token: number): void {
   const lid = normText(layerId);
   const p = String(prop || '');
   if (!lid || !p) return;
@@ -174,7 +174,7 @@ export function injectMotionTransitions(
   }
 }
 
-export function attach(rt: WidgetRuntime | null | undefined): WidgetRuntime | null | undefined {
+export function attach(rt: WritableRuntime | null | undefined): WidgetRuntime | null | undefined {
   if (!rt || typeof rt !== 'object') return rt;
   if (!rt._layerTransitions || typeof rt._layerTransitions.get !== 'function') rt._layerTransitions = new Map();
   if (!rt._transitionTokens || typeof rt._transitionTokens.get !== 'function') rt._transitionTokens = new Map();

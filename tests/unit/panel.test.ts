@@ -4,7 +4,7 @@ import { applyVisibility } from '../../srcjs/components/legends';
 import { resolveActiveOnly } from '../../srcjs/core/data';
 import type { LayerState } from '../../srcjs/core/layer-state';
 import type { Spec, WireSpec } from '../../srcjs/core/spec-types';
-import type { WidgetElement, WidgetRuntime } from '../../srcjs/core/widget';
+import type { WidgetElement, WidgetRuntime, WritableRuntime } from '../../srcjs/core/widget';
 import { clear, sync, update } from '../../srcjs/controls/panel';
 import { getHandler } from '../../srcjs/controls/registry';
 import { buildFilterIndex, initFiltersState } from '../../srcjs/filters/runtime';
@@ -362,7 +362,7 @@ describe('update', () => {
     const children = mounts.map(m => m!.firstElementChild);
 
     // By hand: the range of the seeded filter state widened to admit both rows.
-    rt.state.filters = { filters: { g: new Set(['a', 'b']), v: [1, 10] } };
+    (rt as WritableRuntime).state.filters = { filters: { g: new Set(['a', 'b']), v: [1, 10] } };
     update(el, x, rt);
     await vi.waitFor(() => expect(summaryValue(el, 'n')).toBe('2'));
     expect(mounts.map(m => m!.firstElementChild)).toEqual(children);
@@ -414,7 +414,7 @@ describe('a legend group whose cards are all hidden', () => {
     expect(item(el, 'legend1').style.display).toBe('');
     expect(item(el, 'views1').style.display).toBe('');
 
-    el.__mfRuntime!.state.views = { views1: 'b' };
+    (el.__mfRuntime as WritableRuntime).state.views = { views1: 'b' };
     applyVisibility(el, x);
     expect(item(el, 'scale').style.display).toBe('');
   });
@@ -441,7 +441,7 @@ describe('a legend group whose cards are all hidden', () => {
     expect(hosts(el)[0].style.display).toBe('');
     expect(slot(el, 'scale').querySelector<HTMLElement>('.ml-legend-stack')!.style.display).toBe('');
 
-    el.__mfRuntime!.state.views = { views1: 'b' };
+    (el.__mfRuntime as WritableRuntime).state.views = { views1: 'b' };
     applyVisibility(el, x);
     expect(slot(el, 'scale').style.display).toBe('');
   });

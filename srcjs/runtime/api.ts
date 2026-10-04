@@ -2,7 +2,7 @@ import type { computeViewOpsByLayer } from '../components/views';
 import { getControlGroupsByType, getControlSpec } from '../core/spec';
 import type { FilterControl, FiltersControl, RangeFilterControl, Spec } from '../core/spec-types';
 import { asArray, isArray, isFiniteNumber, normText } from '../core/utils';
-import type { FilterValue, FiltersState, RuntimeState, WidgetElement, WidgetRuntime } from '../core/widget';
+import type { FilterValue, FiltersState, RuntimeState, WidgetElement, WidgetRuntime, WritableRuntime } from '../core/widget';
 import type { initFiltersState } from '../filters/runtime';
 import { getLogicalLayer, getRenderState } from './assembly';
 import * as motion from './motion';
@@ -20,7 +20,7 @@ export interface RuntimeDeps {
 
 type GroupedState = RuntimeState & { views: Record<string, string>; filters: FiltersState };
 
-function ensureGroupedState(rt: WidgetRuntime | null | undefined): GroupedState {
+function ensureGroupedState(rt: WritableRuntime | null | undefined): GroupedState {
   if (!rt) return { views: {}, filters: {} };
   if (!rt.state || typeof rt.state !== 'object') rt.state = {};
   if (!rt.state.filters || typeof rt.state.filters !== 'object') rt.state.filters = {};

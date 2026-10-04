@@ -5,7 +5,7 @@ import type { LayerState, ResolvedArray, TypedArray } from '../core/layer-state'
 import { getControlGroupsByType, wireMap } from '../core/spec';
 import type { RangeComponent, SelectComponent, Spec } from '../core/spec-types';
 import { isFiniteNumber, normText } from '../core/utils';
-import type { FilterIndex, FilterValue, FiltersState, RuntimeState, WidgetRuntime } from '../core/widget';
+import type { FilterIndex, FilterValue, FiltersState, RuntimeState, WidgetRuntime, WritableRuntime } from '../core/widget';
 
 export interface GpuFiltering {
   filterCategories?: number[] | number[][];
@@ -30,7 +30,7 @@ export interface FilterContribution {
 // than -Infinity, which the GPU range test does not reliably place below the minimum.
 const NA_RANGE_VALUE = -3.4028234663852886e38;
 
-function ensureFiltersState(rt: WidgetRuntime | null | undefined): RuntimeState {
+function ensureFiltersState(rt: WritableRuntime | null | undefined): RuntimeState {
   if (!rt || typeof rt !== 'object') return { filters: {} };
   if (!rt.state || typeof rt.state !== 'object') rt.state = {};
   if (!rt.state.filters || typeof rt.state.filters !== 'object') rt.state.filters = {};

@@ -207,3 +207,28 @@ describe('renderInitial', () => {
     }
   });
 });
+
+// Checked by tsc and never run: a module that holds the runtime as WidgetRuntime cannot
+// write its state or the entries of its transition maps. The writers take WritableRuntime.
+export function refusedWrites(rt: WidgetRuntime): void {
+  // @ts-expect-error read-only
+  rt.state = {};
+  // @ts-expect-error read-only
+  rt.state.views = {};
+  // @ts-expect-error read-only
+  rt.state.views!.views1 = 'a';
+  // @ts-expect-error read-only
+  rt.state.filters = {};
+  // @ts-expect-error read-only
+  rt.state.filters!.filters = {};
+  // @ts-expect-error read-only
+  rt.state.filters!.filters.v = [0, 1];
+  // @ts-expect-error read-only
+  rt._layerTransitions = new Map();
+  // @ts-expect-error read-only
+  rt._layerTransitions!.get('a')!.getRadius = 0;
+  // @ts-expect-error read-only
+  rt._transitionTokens = new Map();
+  // @ts-expect-error read-only
+  rt._transitionTokens!.get('a')!.getRadius = 1;
+}
