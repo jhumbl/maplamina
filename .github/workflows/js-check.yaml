@@ -1,0 +1,51 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+name: js-check.yaml
+
+permissions: read-all
+
+jobs:
+  js-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run test
+
+      - run: npm run build
+
+      # The files the build writes are committed. A difference means srcjs, build.mjs or
+      # the lock changed without a rebuild.
+      - name: Check that the committed build output is current
+        run: |
+          sha256sum inst/htmlwidgets/maplamina.js inst/htmlwidgets/third-party-licenses.txt inst/htmlwidgets/lib/maplibre-gl/maplibre-gl.css
+          changed="$(git status --porcelain -- inst/htmlwidgets)"
+          if [ -n "$changed" ]; then
+            echo "The build changed files under inst/htmlwidgets:"
+            echo "$changed"
+            git diff --stat -- inst/htmlwidgets
+            exit 1
+          fi
+
+      - name: Upload the build output when it differs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            inst/htmlwidgets/maplamina.js
+            inst/htmlwidgets/third-party-licenses.txt
+            inst/htmlwidgets/lib/maplibre-gl/maplibre-gl.css
