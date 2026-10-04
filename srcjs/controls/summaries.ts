@@ -2,9 +2,10 @@ import { resolveRefOrHref } from '../core/assets';
 import { getIndexers } from '../core/data';
 import type { Indexers } from '../core/data';
 import type { LayerState, ResolvedArray } from '../core/layer-state';
-import type { Control, RangeComponent, Ref, SelectComponent, Spec, SummariesComponent, SummariesControl, SummaryRow } from '../core/spec-types';
+import type { Control, Ref, Spec, SummariesComponent, SummariesControl, SummaryRow } from '../core/spec-types';
 import { authoredOrder, formatNumber, isFiniteNumber, normText } from '../core/utils';
-import type { FiltersState, WidgetElement, WidgetRuntime } from '../core/widget';
+import type { WidgetElement, WidgetRuntime } from '../core/widget';
+import { resolveFilterDims } from '../filters/runtime';
 import { getLogicalLayer, getRenderState, readRenderField } from '../runtime/assembly';
 import type { ControlJob } from './registry';
 
@@ -200,7 +201,7 @@ function renderValue(rowSpec: Partial<SummaryRow>, value: SummaryValue): string 
   return `${prefix}${txt}${suffix}`;
 }
 
-async function computeLayerMask(
+export async function computeLayerMask(
   rt: WidgetRuntime | null | undefined,
   x: Spec,
   layerId: string
@@ -229,102 +230,40 @@ async function computeLayerMask(
     return { st, n, passCount: 0, mask: z, indexers };
   }
 
-  const idx = rt && rt._filterIndex;
-  const entryIdx = idx && idx.byLayer && typeof idx.byLayer.get === 'function' ? idx.byLayer.get(layerId) : null;
-  const selDims = (entryIdx && Array.isArray(entryIdx.select)) ? entryIdx.select.slice(0, 4) : [];
-  const rngDims = (entryIdx && Array.isArray(entryIdx.range))  ? entryIdx.range.slice(0, 4)  : [];
-
-  if (!selDims.length && !rngDims.length) {
+  const dims = await resolveFilterDims(st, layerId, rt);
+  if (!dims.length) {
     // No filters affect this layer.
     return { st, n, passCount: countRows(n, null, indexers), mask: null, indexers };
   }
 
-  const stateAll: FiltersState = (rt && rt.state && rt.state.filters && typeof rt.state.filters === 'object') ? rt.state.filters : {};
   const mask = new Uint8Array(n);
   mask.fill(1);
 
-  // --- Select dims ---
-  for (const dim of selDims) {
-    const comp: Partial<SelectComponent> = dim && dim.comp ? dim.comp : {};
-    const gid = normText(dim.groupId);
-    const label = normText(dim.label);
-    const groupState: Record<string, unknown> = (gid && stateAll[gid] && typeof stateAll[gid] === 'object') ? stateAll[gid] : {};
-    const sel = groupState[label];
-
-    // Empty selection disables the dim.
-    let selected: Set<string> | null = null;
-    if (sel instanceof Set && sel.size) selected = new Set(Array.from(sel, v => String(v)));
-    if (!selected) continue;
-
-    const dict = Array.isArray(comp.dict) ? comp.dict : [];
-    const allowed = new Set<number>();
-    for (let i = 0; i < dict.length; i++) {
-      if (selected.has(String(dict[i]))) allowed.add(i);
-    }
-    if (allowed.size === 0) {
-      // Deterministic match-nothing.
-      mask.fill(0);
-      return { st, n, passCount: 0, mask, indexers };
-    }
-
-    let res: ResolvedArray | null = null;
-    try {
-      res = await resolveRefOrHref(st, comp.codes);
-    } catch (_) { res = null; }
-    const codes = res && res.array;
-    if (!codes || !ArrayBuffer.isView(codes)) continue;
-
-    for (let p = 0; p < n; p++) {
-      if (mask[p] === 0) continue;
-      const ii = indexForArray(codes, p);
-      const code = (codes && codes[ii] != null) ? (codes[ii] >>> 0) : 0;
-      if (!allowed.has(code)) mask[p] = 0;
+  for (const dim of dims) {
+    if (dim.kind === 'select') {
+      if (dim.allowed === 'disabled') continue;
+      if (dim.allowed === 'no match') {
+        mask.fill(0);
+        return { st, n, passCount: 0, mask, indexers };
+      }
+      const codes = dim.codes;
+      const allowed = new Set(dim.allowed);
+      for (let p = 0; p < n; p++) {
+        if (mask[p] === 0) continue;
+        if (!allowed.has(codes[indexForArray(codes, p)] >>> 0)) mask[p] = 0;
+      }
+    } else {
+      const vals = dim.values;
+      const [lo, hi] = dim.bounds;
+      for (let p = 0; p < n; p++) {
+        if (mask[p] === 0) continue;
+        const v = vals[indexForArray(vals, p)];
+        if (!Number.isFinite(v) || v < lo || v > hi) mask[p] = 0;
+      }
     }
   }
 
-  // Early exit
-  let passCount = countRows(n, mask, indexers);
-  if (!passCount) return { st, n, passCount: 0, mask, indexers };
-
-  // --- Range dims ---
-  for (const dim of rngDims) {
-    const comp: Partial<RangeComponent> = dim && dim.comp ? dim.comp : {};
-    const gid = normText(dim.groupId);
-    const label = normText(dim.label);
-
-    const groupState: Record<string, unknown> = (gid && stateAll[gid] && typeof stateAll[gid] === 'object') ? stateAll[gid] : {};
-    const r = groupState[label];
-    let lo: number | null = null, hi: number | null = null;
-    if (Array.isArray(r) && r.length >= 2) { lo = +r[0]; hi = +r[1]; }
-    else {
-      const cmin = comp.min as number, cmax = comp.max as number;
-      lo = Number.isFinite(+cmin) ? +cmin : 0;
-      hi = Number.isFinite(+cmax) ? +cmax : lo;
-    }
-    if (!isFiniteNumber(lo)) lo = 0;
-    if (!isFiniteNumber(hi)) hi = lo;
-    if (lo > hi) { const t = lo; lo = hi; hi = t; }
-    // The values are float32 and the GPU holds the bounds as float32.
-    lo = Math.fround(lo);
-    hi = Math.fround(hi);
-
-    let res: ResolvedArray | null = null;
-    try {
-      res = await resolveRefOrHref(st, comp.values);
-    } catch (_) { res = null; }
-    const vals = res && res.array;
-    if (!vals || !ArrayBuffer.isView(vals)) continue;
-
-    for (let p = 0; p < n; p++) {
-      if (mask[p] === 0) continue;
-      const ii = indexForArray(vals, p);
-      const v = vals ? vals[ii] : NaN;
-      if (!Number.isFinite(v) || v < lo || v > hi) mask[p] = 0;
-    }
-  }
-
-  passCount = countRows(n, mask, indexers);
-  return { st, n, passCount, mask, indexers };
+  return { st, n, passCount: countRows(n, mask, indexers), mask, indexers };
 }
 
 async function computeMemberPartial(

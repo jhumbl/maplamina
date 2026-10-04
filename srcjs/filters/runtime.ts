@@ -314,35 +314,37 @@ function retOneOrMany<T>(arr: T[]): T | T[] {
   return (Array.isArray(arr) && arr.length === 1) ? arr[0] : arr;
 }
 
-export async function getGPUFilterContribution(
+// A layer's filter dimensions as the current filter state resolves them, selects first.
+// The GPU props and the summaries mask are both built from this list.
+export interface SelectDim {
+  kind: 'select';
+  codes: TypedArray;
+  allowed: number[] | 'disabled' | 'no match';
+}
+
+export interface RangeDim {
+  kind: 'range';
+  values: TypedArray;
+  bounds: [number, number];
+}
+
+export type FilterDim = SelectDim | RangeDim;
+
+export async function resolveFilterDims(
   st: LayerState,
   layerId: unknown,
-  x: Spec,
   rt: WidgetRuntime | null | undefined
-): Promise<FilterContribution | null> {
-  void x;
+): Promise<FilterDim[]> {
   const lid = normText(layerId);
   const idx = rt && rt._filterIndex;
-  if (!lid || !idx || !idx.byLayer || !idx.byLayer.has(lid)) {
-    return null;
-  }
+  const entry = (lid && idx && idx.byLayer) ? idx.byLayer.get(lid) : null;
+  if (!entry) return [];
 
-  const entry = idx.byLayer.get(lid);
-  const selDims = (entry && Array.isArray(entry.select)) ? entry.select.slice(0, 4) : [];
-  const rngDims = (entry && Array.isArray(entry.range))  ? entry.range.slice(0, 4)  : [];
+  const selDims = Array.isArray(entry.select) ? entry.select.slice(0, 4) : [];
+  const rngDims = Array.isArray(entry.range)  ? entry.range.slice(0, 4)  : [];
   const stateAll: FiltersState = (rt && rt.state && rt.state.filters && typeof rt.state.filters === 'object') ? rt.state.filters : {};
 
-  const { pickPartIndex: pickIndex, indexForArray } = getIndexers(st);
-
-  const gpu: GpuFiltering = {};
-  let forceHidden = false;
-
-  const catArrays: TypedArray[] = [];
-  const catAllowed: number[][] = [];
-  const catNoMatch: boolean[] = [];
-  const catDisabled: boolean[] = [];
-  const rngArrays: TypedArray[] = [];
-  const rngPairs: [number, number][] = [];
+  const dims: FilterDim[] = [];
 
   for (const dim of selDims) {
     const label = dim.label;
@@ -359,32 +361,20 @@ export async function getGPUFilterContribution(
     const gid = dim.groupId;
     const groupState: Record<string, unknown> = (stateAll[gid] && typeof stateAll[gid] === 'object') ? stateAll[gid] : {};
     const sel = groupState[label];
-    let allowed: number[] | null = null;
-    let noMatch = false;
-    let disabled = false;
 
+    // An empty selection disables the dimension.
     let selected: Set<string> | null = null;
     if (sel instanceof Set && sel.size) selected = new Set(Array.from(sel, v => String(v)));
-
-    if (selected) {
-      allowed = [];
-      for (let i = 0; i < compDict.length; i++) {
-        if (selected.has(String(compDict[i]))) allowed.push(i);
-      }
-      if (allowed.length === 0) {
-        forceHidden = true;
-        allowed = [0];
-        noMatch = true;
-      }
-    } else {
-      disabled = true;
-      allowed = [0];
+    if (!selected) {
+      dims.push({ kind: 'select', codes, allowed: 'disabled' });
+      continue;
     }
 
-    catArrays.push(codes);
-    catAllowed.push(allowed);
-    catNoMatch.push(!!noMatch);
-    catDisabled.push(!!disabled);
+    const allowed: number[] = [];
+    for (let i = 0; i < compDict.length; i++) {
+      if (selected.has(String(compDict[i]))) allowed.push(i);
+    }
+    dims.push({ kind: 'select', codes, allowed: allowed.length ? allowed : 'no match' });
   }
 
   for (const dim of rngDims) {
@@ -412,18 +402,46 @@ export async function getGPUFilterContribution(
     if (!isFiniteNumber(hi)) hi = lo;
     if (lo > hi) { const t = lo; lo = hi; hi = t; }
 
-    rngArrays.push(vals);
-    rngPairs.push([lo, hi]);
+    // The values are float32 and the GPU holds the bounds as float32.
+    dims.push({ kind: 'range', values: vals, bounds: [Math.fround(lo), Math.fround(hi)] });
   }
 
-  const categoryDims = catArrays.length;
-  const rangeDims = rngArrays.length;
-  if (categoryDims === 0 && rangeDims === 0) return null;
+  return dims;
+}
 
+export async function getGPUFilterContribution(
+  st: LayerState,
+  layerId: unknown,
+  x: Spec,
+  rt: WidgetRuntime | null | undefined
+): Promise<FilterContribution | null> {
+  void x;
+  const dims = await resolveFilterDims(st, layerId, rt);
+  if (!dims.length) return null;
+
+  const cats: SelectDim[] = [];
+  const rngs: RangeDim[] = [];
+  for (const dim of dims) {
+    if (dim.kind === 'select') cats.push(dim);
+    else rngs.push(dim);
+  }
+
+  const { pickPartIndex: pickIndex, indexForArray } = getIndexers(st);
+
+  const gpu: GpuFiltering = {};
+
+  const catArrays = cats.map(d => d.codes);
+  const catNoMatch = cats.map(d => d.allowed === 'no match');
+  const catDisabled = cats.map(d => d.allowed === 'disabled');
+  const rngArrays = rngs.map(d => d.values);
+  const forceHidden = catNoMatch.includes(true);
+
+  const categoryDims = cats.length;
+  const rangeDims = rngs.length;
   const gpuMeta: GpuMeta = { categoryDims, rangeDims };
 
   if (categoryDims) {
-    gpu.filterCategories = retOneOrMany(catAllowed);
+    gpu.filterCategories = retOneOrMany(cats.map(d => Array.isArray(d.allowed) ? d.allowed : [0]));
     gpu.__catDisabledKey = retOneOrMany(catDisabled.map(d => d ? 1 : 0));
     const scratchCategory: number[] | null = (categoryDims > 1) ? new Array(categoryDims) : null;
     gpu.getFilterCategory = (d, info) => {
@@ -451,7 +469,7 @@ export async function getGPUFilterContribution(
   }
 
   if (rangeDims) {
-    gpu.filterRange = retOneOrMany(rngPairs);
+    gpu.filterRange = retOneOrMany(rngs.map(d => d.bounds));
     const scratchRange: number[] | null = (rangeDims > 1) ? new Array(rangeDims) : null;
     gpu.getFilterValue = (d, info) => {
       const partIdx = pickIndex(d, info);

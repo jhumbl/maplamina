@@ -2,15 +2,19 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { clearMemo } from '../../srcjs/core/assets';
 import { resolveActiveOnly } from '../../srcjs/core/data';
 import type { LayerState } from '../../srcjs/core/layer-state';
-import { assertV3Spec } from '../../srcjs/core/spec';
+import { assertV3Spec, getControlGroupsByType } from '../../srcjs/core/spec';
 import type { Spec, WireSpec } from '../../srcjs/core/spec-types';
 import type { FilterValue, WidgetRuntime } from '../../srcjs/core/widget';
+import { computeLayerMask } from '../../srcjs/controls/summaries';
 import { buildFilterIndex, getGPUFilterContribution, initFiltersState } from '../../srcjs/filters/runtime';
+import type { FilterContribution } from '../../srcjs/filters/runtime';
 import circlesConstant from './spec-samples/circles-constant';
 import filtersTwoLayers from './spec-samples/filters-two-layers';
 import lengthOne from './spec-samples/length-one';
 import polygonsComponents from './spec-samples/polygons-components';
+import rangeFloat32 from './spec-samples/range-float32';
 import selectNumericDefaultSample from './spec-samples/select-numeric-default';
+import summariesNa from './spec-samples/summaries-na';
 import { normalise } from './support';
 
 // Outside WireSpec: a select default is typed as strings and this one is a number.
@@ -255,4 +259,87 @@ describe('getGPUFilterContribution', () => {
     expect(c.gpuFiltering.getFilterCategory!(...at(2))).toEqual([1, 1, 1, 1]);
     expect(c.gpuFiltering.getFilterValue!(...at(2))).toEqual([1, 1, 1, 1]);
   });
+});
+
+// The filter test as deck.gl applies it to one part: every category among the allowed
+// ones and every value, as float32, inside its range.
+function drawn(c: FilterContribution, p: number): boolean {
+  if (c.forceHidden) return false;
+  const g = c.gpuFiltering;
+  const many = <T>(v: unknown, dims: number): T[] => (dims === 1 ? [v] : v) as T[];
+  if (c.gpuMeta.categoryDims) {
+    const allowed = many<number[]>(g.filterCategories, c.gpuMeta.categoryDims);
+    const codes = many<number>(g.getFilterCategory!(...at(p)), c.gpuMeta.categoryDims);
+    if (!codes.every((code, k) => allowed[k].includes(code))) return false;
+  }
+  if (c.gpuMeta.rangeDims) {
+    const ranges = many<[number, number]>(g.filterRange, c.gpuMeta.rangeDims);
+    const values = many<number>(g.getFilterValue!(...at(p)), c.gpuMeta.rangeDims);
+    if (!values.every((v, k) => Math.fround(v) >= Math.fround(ranges[k][0]) && Math.fround(v) <= Math.fround(ranges[k][1]))) return false;
+  }
+  return true;
+}
+
+describe('the summaries mask and the GPU props', () => {
+  const samples: Record<string, WireSpec> = {
+    'filters-two-layers': filtersTwoLayers,
+    'length-one': lengthOne,
+    'polygons-components': polygonsComponents,
+    'range-float32': rangeFloat32,
+    'select-numeric-default': selectNumericDefault,
+    'summaries-na': summariesNa,
+  };
+
+  // The seeded state, then every select on its first value with every range narrowed to
+  // ends that are not exact in float32, then every select on a value no dict holds.
+  function states(x: Spec, seeded: Record<string, Record<string, FilterValue>>): Record<string, Record<string, FilterValue>>[] {
+    const narrowed: Record<string, Record<string, FilterValue>> = {};
+    const none: Record<string, Record<string, FilterValue>> = {};
+    for (const g of getControlGroupsByType(x, 'filters')) {
+      const gid = g.groupId as string;
+      narrowed[gid] = {};
+      none[gid] = {};
+      for (const [label, v] of Object.entries(seeded[gid])) {
+        if (v instanceof Set) {
+          const dict = (g.spec.controls as Record<string, { dict?: string[] }>)[label].dict || [];
+          narrowed[gid][label] = new Set(dict.slice(0, 1).map(String));
+          none[gid][label] = new Set(['zz']);
+        } else {
+          const [lo, hi] = v as [number, number];
+          narrowed[gid][label] = [lo + (hi - lo) * 0.3, hi - (hi - lo) * 0.1];
+          none[gid][label] = [lo, hi];
+        }
+      }
+    }
+    return [seeded, narrowed, none];
+  }
+
+  for (const [name, wire] of Object.entries(samples)) {
+    it(`pass the same parts in ${name}`, async () => {
+      const x = normalise(wire);
+      const rt = { layers: new Map() } as unknown as WidgetRuntime;
+      const seeded = initFiltersState(rt, x) as Record<string, Record<string, FilterValue>>;
+      rt._filterIndex = buildFilterIndex(x);
+      const layerIds = Array.from(rt._filterIndex.byLayer.keys());
+      expect(layerIds.length).toBeGreaterThan(0);
+      for (const id of layerIds) {
+        const st = (x['.__layers'] as Record<string, LayerState>)[id];
+        await resolveActiveOnly(st);
+        rt.layers.set(id, { logical: st });
+      }
+
+      for (const filters of states(x, seeded)) {
+        rt.state!.filters = filters;
+        for (const id of layerIds) {
+          const st = rt.layers.get(id)!.logical!;
+          const c = (await getGPUFilterContribution(st, id, x, rt))!;
+          const m = await computeLayerMask(rt, x, id);
+          expect(m.n).toBeGreaterThan(0);
+          const byMask = Array.from(m.mask!, (v) => v === 1);
+          const byProps = byMask.map((_, p) => drawn(c, p));
+          expect(byMask, `${id} ${JSON.stringify(filters, (_, v) => (v instanceof Set ? Array.from(v) : v))}`).toEqual(byProps);
+        }
+      }
+    });
+  }
 });
