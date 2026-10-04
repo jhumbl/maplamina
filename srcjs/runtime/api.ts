@@ -21,7 +21,7 @@ export interface RuntimeDeps {
 type GroupedState = RuntimeState & { views: Record<string, string>; filters: FiltersState };
 
 function ensureGroupedState(rt: WidgetRuntime | null | undefined): GroupedState {
-  if (!rt) return {} as GroupedState;
+  if (!rt) return { views: {}, filters: {} };
   if (!rt.state || typeof rt.state !== 'object') rt.state = {};
   if (!rt.state.filters || typeof rt.state.filters !== 'object') rt.state.filters = {};
   if (!rt.state.views || typeof rt.state.views !== 'object') rt.state.views = {};

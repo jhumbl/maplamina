@@ -1,6 +1,5 @@
-import { getControlGroupIdsOrdered, wireMap } from '../core/spec';
+import { getControlGroupsByType, wireMap } from '../core/spec';
 import type {
-  Control,
   Corner,
   Layer,
   Legend,
@@ -12,6 +11,7 @@ import type {
 } from '../core/spec-types';
 import { asArray, normText } from '../core/utils';
 import type { WidgetElement } from '../core/widget';
+import { pickActiveViews } from '../runtime/api';
 import { resolveIcon } from './icons';
 import { computeViewOpsByLayer } from './views';
 
@@ -396,45 +396,16 @@ export function buildLegendCard(component: LegendsComponent): HTMLDivElement {
   return card;
 }
 
-type ViewsLikeControl = Control & {
-  readonly view_names?: OneOrMany<string>;
-  readonly default?: unknown;
-};
-
 export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec): void {
   if (!el) return;
 
   const nodes = el.querySelectorAll<LegendCardElement>('.ml-legend');
   const layers = wireMap(spec && spec['.__layers']);
-  const controls: Readonly<Record<string, ViewsLikeControl>> = wireMap(spec && spec['.__controls']);
-
-  const rt = el.__mfRuntime;
-  const stateViews = (rt && rt.state && rt.state.views && typeof rt.state.views === 'object')
-    ? rt.state.views
-    : {};
 
   // Derive per-layer active view from runtime state + views components.
   // This avoids relying on any derived fields being written onto spec['.__layers'].
   let activeByLayer = new Map<string, string>();
-  const activeByGroup: Record<string, string> = {};
-  const orderedIds = getControlGroupIdsOrdered(spec);
-  for (const gidRaw of orderedIds) {
-    const gid = normText(gidRaw);
-    const ctl = controls ? controls[gidRaw] : null;
-    if (!gid || !ctl || typeof ctl !== 'object') continue;
-    if (normText(ctl.type) !== 'views') continue;
-
-    const viewNames = asArray(ctl.view_names).map(normText).filter(Boolean);
-    const cur = normText(stateViews[gid]);
-    const def = normText(ctl.default);
-
-    let pick = 'base';
-    if (cur && (!viewNames.length || viewNames.includes(cur))) pick = cur;
-    else if (def && (!viewNames.length || viewNames.includes(def))) pick = def;
-    else if (viewNames.length) pick = viewNames[0];
-
-    activeByGroup[gid] = pick;
-  }
+  const activeByGroup = pickActiveViews(el.__mfRuntime, spec);
 
   const ops = computeViewOpsByLayer(spec, activeByGroup);
   if (ops && ops.activeByLayer && typeof ops.activeByLayer.get === 'function') {
@@ -452,38 +423,11 @@ export function applyVisibility(el: WidgetElement | null | undefined, spec: Spec
     return s ? [s] : null;
   };
 
-  function pickGlobalActiveView(): string {
-    // Pick a deterministic "global" view selection used when when.view is set
-    // but when.layer is not.
-    const groups: { gid: string; ctl: ViewsLikeControl }[] = [];
-
-    const orderedIds = getControlGroupIdsOrdered(spec);
-    for (const gidRaw of orderedIds) {
-      const gid = normText(gidRaw);
-      const ctl = controls ? controls[gidRaw] : null;
-      if (!gid || !ctl || typeof ctl !== 'object') continue;
-      if (normText(ctl.type) === 'views') groups.push({ gid, ctl });
-    }
-
-    if (!groups.length) return 'base';
-
-    const pref = groups.find(g => g.gid === 'views') || groups[0];
-    const gid = pref.gid;
-    const ctl: Partial<ViewsLikeControl> = pref.ctl || {};
-
-    const viewNames = asArray(ctl.view_names).map(normText).filter(Boolean);
-
-    const cur = normText(stateViews[gid]);
-    if (cur && (!viewNames.length || viewNames.includes(cur))) return cur;
-
-    const def = normText(ctl.default);
-    if (def && (!viewNames.length || viewNames.includes(def))) return def;
-
-    if (viewNames.length) return viewNames[0];
-    return 'base';
-  }
-
-  const globalActiveView = pickGlobalActiveView();
+  // The view used when when.view is set but when.layer is not: that of the group
+  // named 'views', or of the first views group.
+  const groups = getControlGroupsByType(spec, 'views');
+  const pref = groups.find(g => normText(g.groupId) === 'views') || groups[0];
+  const globalActiveView = pref ? activeByGroup[normText(pref.groupId)] : 'base';
 
   nodes.forEach(node => {
     const lg = node.__mfLegendSpec;
