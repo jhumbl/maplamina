@@ -41,27 +41,21 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const allow = { reason: 'views', allowTransitions: true, motionEligible: true };
+const deny = { reason: 'filters', allowTransitions: false, motionEligible: false };
+
 describe('the policy of a job', () => {
-  it('allows transitions for the reason `views` and leaves what is armed alone', () => {
+  it('leaves what is armed alone when it allows transitions, and is returned', () => {
     const rt = armed();
-    const policy = syncJobTransitions(rt, ['a', 'b'], { reason: 'views' });
-    expect(policy).toEqual({ reason: 'views', allowTransitions: true, motionEligible: true, invalidation: null });
+    expect(syncJobTransitions(rt, ['a', 'b'], allow)).toBe(allow);
     expect(durations(rt, 'a')).toEqual({ getRadius: 300, getFillColor: 300 });
     expect(durations(rt, 'b')).toEqual({ getRadius: 300 });
     expect(Object.keys(rt._transitionTokens!.get('a')!)).toEqual(['getRadius', 'getFillColor']);
   });
 
-  it.each([
-    ['filters', { reason: 'filters' }],
-    ['init', { reason: 'init' }],
-    ['no reason', {}],
-    ['no job', null]
-  ])('disables the layers it names for any other reason: %s', (_name, job) => {
+  it('disables the layers it names when it does not, and is returned', () => {
     const rt = armed();
-    const policy = syncJobTransitions(rt, ['a'], job);
-    expect(policy.allowTransitions).toBe(false);
-    expect(policy.motionEligible).toBe(false);
-    expect(policy.reason).toBe(job && 'reason' in job ? job.reason : null);
+    expect(syncJobTransitions(rt, ['a'], deny)).toBe(deny);
 
     expect(durations(rt, 'a')).toEqual({ getRadius: 0, getFillColor: 0 });
     expect(hasCallbacks(entry(rt, 'a', 'getRadius'))).toBe(false);
@@ -74,54 +68,24 @@ describe('the policy of a job', () => {
     expect(rt._transitionTokens!.has('b')).toBe(true);
   });
 
+  it('goes by what the policy allows, not by its reason', () => {
+    const rt = armed();
+    syncJobTransitions(rt, ['a'], { ...allow, reason: 'filters' });
+    expect(durations(rt, 'a')).toEqual({ getRadius: 300, getFillColor: 300 });
+    syncJobTransitions(rt, ['a'], { ...deny, reason: 'views' });
+    expect(durations(rt, 'a')).toEqual({ getRadius: 0, getFillColor: 0 });
+  });
+
   it('takes one layer id as a string and none as nothing to do', () => {
     const rt = armed();
-    syncJobTransitions(rt, 'b', { reason: 'filters' });
+    syncJobTransitions(rt, 'b', deny);
     expect(durations(rt, 'b')).toEqual({ getRadius: 0 });
     expect(durations(rt, 'a')).toEqual({ getRadius: 300, getFillColor: 300 });
 
-    syncJobTransitions(rt, null, { reason: 'filters' });
-    syncJobTransitions(rt, ['', 'unknown'], { reason: 'filters' });
+    syncJobTransitions(rt, null, deny);
+    syncJobTransitions(rt, ['', 'unknown'], deny);
     expect(durations(rt, 'a')).toEqual({ getRadius: 300, getFillColor: 300 });
-    expect(syncJobTransitions(null, ['a'], { reason: 'filters' }).allowTransitions).toBe(false);
-  });
-
-  it('allows them under another reason when the job says so', () => {
-    const invalidation = { motionEligible: true };
-    // By hand: jobs with the three other fields the policy reads.
-    const jobs = [
-      { reason: 'filters', allowMotionViews: true },
-      { reason: 'filters', invalidation },
-      { reason: 'filters', motionPolicy: { reason: 'views', allowTransitions: true, motionEligible: true } }
-    ] as Parameters<typeof syncJobTransitions>[2][];
-    for (const job of jobs) {
-      const rt = armed();
-      const policy = syncJobTransitions(rt, ['a', 'b'], job);
-      expect(policy.reason).toBe('filters');
-      expect(policy.allowTransitions).toBe(true);
-      expect(policy.motionEligible).toBe(true);
-      expect(durations(rt, 'a')).toEqual({ getRadius: 300, getFillColor: 300 });
-    }
-    expect(syncJobTransitions(armed(), ['a'], jobs[1]).invalidation).toBe(invalidation);
-  });
-
-  it('reads the reason of the policy a job carries when the job has none, trimmed', () => {
-    // By hand: a job with no reason of its own, carrying a policy.
-    const job = { motionPolicy: { reason: ' views ', allowTransitions: false, motionEligible: false } };
-    const policy = syncJobTransitions(armed(), ['a'], job);
-    expect(policy.reason).toBe('views');
-    expect(policy.allowTransitions).toBe(true);
-  });
-
-  it('obeys a policy passed in its place and returns the same object', () => {
-    const allow = { reason: 'filters', allowTransitions: true, motionEligible: true };
-    const rt = armed();
-    expect(syncJobTransitions(rt, ['a'], allow)).toBe(allow);
-    expect(durations(rt, 'a')).toEqual({ getRadius: 300, getFillColor: 300 });
-
-    const deny = { reason: 'views', allowTransitions: false, motionEligible: false };
-    expect(syncJobTransitions(rt, ['a'], deny)).toBe(deny);
-    expect(durations(rt, 'a')).toEqual({ getRadius: 0, getFillColor: 0 });
+    expect(syncJobTransitions(null, ['a'], deny)).toBe(deny);
   });
 });
 

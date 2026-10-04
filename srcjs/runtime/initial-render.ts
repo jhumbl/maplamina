@@ -151,8 +151,7 @@ export async function renderInitial(opts: RenderInitialOptions): Promise<Map<str
       result.entry.runtime.lastMotionPolicy = {
         reason: 'initial',
         allowTransitions: false,
-        motionEligible: false,
-        invalidation: { initial: true, render: true, encodings: true, motionEligible: false }
+        motionEligible: false
       };
       result.entry.runtime.lastInvalidation = { initial: true, render: true, encodings: true, motionEligible: false };
     }

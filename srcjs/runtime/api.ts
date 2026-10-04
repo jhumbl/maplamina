@@ -145,8 +145,6 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
     const x = this.specRef;
     if (!x) return;
 
-    const disableRuntimeTransitions = motion.disableRuntimeTransitions;
-
     let gid: string | null = null, lab: typeof label | null = null, val: unknown = null;
     if (arguments.length === 2) {
       gid = this._defaultFiltersGroupId || 'filters';
@@ -226,7 +224,6 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       : (idx && idx.byGroup && idx.byGroup.get(gid)) ? Array.from(idx.byGroup.get(gid)!)
       : Array.from(this.layers.keys());
 
-    disableRuntimeTransitions(this, affected);
     if (typeof this.invalidate === 'function') this.invalidate({ layers: affected, controls: true, reason: 'filters' });
   };
 
@@ -239,13 +236,10 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       ? deps.initFiltersState
       : (rt0) => { ensureGroupedState(rt0); return (rt0!.state && rt0!.state.filters) ? rt0!.state.filters : {}; };
 
-    const disableRuntimeTransitions = motion.disableRuntimeTransitions;
-
     if (groupId == null) {
       initFiltersState(this, x);
       const idx = this._filterIndex;
       const allIds = (idx && idx.byLayer) ? Array.from(idx.byLayer.keys()) : Array.from(this.layers.keys());
-      disableRuntimeTransitions(this, allIds);
       if (typeof this.invalidate === 'function') this.invalidate({ layers: allIds, controls: true, reason: 'filters-clear' });
       return;
     }
@@ -258,7 +252,6 @@ function attachRuntimeMethods(rt: WidgetRuntime | null | undefined): void {
       (idx && idx.byGroup && idx.byGroup.get(gid)) ? Array.from(idx.byGroup.get(gid)!)
       : Array.from(this.layers.keys());
 
-    disableRuntimeTransitions(this, affected);
     if (typeof this.invalidate === 'function') this.invalidate({ layers: affected, controls: true, reason: 'filters-clear' });
   };
 }
